@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ topic }} {% if subtopic %}- {{ subtopic }}{% endif %} Quiz</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #f7f9fb; }
+    .question { background: white; padding: 15px; margin: 15px auto; width: 60%; border-radius: 10px; box-shadow: 0 0 10px gray; }
+    button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+  <h2>{{ topic }} {% if subtopic %}- {{ subtopic }}{% endif %} Quiz</h2>
+
+  {% if not submitted %}
+  <form method="POST">
+    {% for q in questions %}
+      <div class="question">
+        <p><strong>Q{{ loop.index }}. {{ q.q }}</strong></p>
+        {% for opt in q.options %}
+          <input type="radio" name="q{{ loop.index0 }}" value="{{ opt }}" required> {{ opt }}<br>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit">Submit</button>
+  </form>
+  {% else %}
+    <h3>Your Score: {{ score }}/{{ questions|length }}</h3>
+    <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+  {% endif %}
+</body>
+</html>

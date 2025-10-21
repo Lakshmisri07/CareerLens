@@ -1,0 +1,85 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(120deg, #007bff, #00c6ff);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container, .dashboard, .technical {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  text-align: center;
+  width: 90%;
+  max-width: 450px;
+}
+
+.form-box input {
+  width: 90%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+button {
+  background: #fff;
+  color: #007bff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #007bff;
+  color: #fff;
+}
+
+a {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.sections, .extras, .topics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.logout-btn, .back-btn {
+  display: inline-block;
+  margin-top: 20px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.flash {
+  color: yellow;
+  font-weight: bold;
+  margin-top: 10px;
+}
+.dashboard-card {
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  border-radius: 15px;
+  transition: all 0.3s ease-in-out;
+  text-decoration: none;
+  color: #333;
+}
+
+.dashboard-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  text-decoration: none;
+  color: #000;
+}

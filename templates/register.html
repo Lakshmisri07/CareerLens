@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - Placement Prep</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+    }
+    .card {
+        border-radius: 12px;
+    }
+    .card-title {
+        font-weight: bold;
+        color: #2575fc;
+    }
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #2575fc;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg p-4">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Register</h3>
+
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ messages[0] }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <form action="{{ url_for('register') }}" method="POST">
+                        <div class="mb-3">
+                            <input type="text" name="name" class="form-control" placeholder="Full Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="Email" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="branch" class="form-control" placeholder="Branch" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="number" step="0.01" name="cgpa" class="form-control" placeholder="CGPA" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="number" name="backlogs" class="form-control" placeholder="Backlogs" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="internships" class="form-control" placeholder="Internships" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Register</button>
+                    </form>
+
+                    <p class="text-center mt-3 text-blue">
+                        Already have an account? 
+                        <a href="{{ url_for('index') }}" class="text-decoration-none fw-bold">Login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
