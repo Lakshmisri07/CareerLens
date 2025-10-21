@@ -4,44 +4,80 @@
     <meta charset="UTF-8">
     <title>Resume Draft - CareerLens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        body { background: #f0f4f8; font-family: Arial, sans-serif; }
-        .container { margin-top: 50px; }
-        h2 { text-align: center; margin-bottom: 30px; }
-        .resume-box {
-            background: #ffffff;
-            padding: 20px;
+        body {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px 0;
+            color: #fff;
+        }
+        .container {
+            max-width: 900px;
+            background-color: #fff;
             border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            color: #000;
         }
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 10px;
-            margin-top: 10px;
+        h2 {
+            color: #2575fc;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .section-title {
+            color: #6a11cb;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #2575fc;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            margin-bottom: 8px;
+        }
+        .btn-primary {
+            background-color: #2575fc;
+            border-color: #2575fc;
+            font-weight: 600;
             border-radius: 8px;
-            border: 1px solid #ccc;
         }
-        .btn-generate {
-            margin-top: 15px;
-            background-color: #6BCB77;
-            color: white;
-            font-weight: bold;
+        .btn-primary:hover {
+            background-color: #6a11cb;
+            border-color: #6a11cb;
         }
-        .btn-generate:hover { background-color: #57b065; }
     </style>
 </head>
+
 <body>
 <div class="container">
     <h2>Resume Draft</h2>
-    <div class="resume-box">
-        <p>Draft your resume based on your profile and quiz performance:</p>
-        <textarea placeholder="Your resume draft will appear here..."></textarea>
-        <button class="btn btn-generate">Generate Resume</button>
+
+    <div class="mb-4">
+        <div class="section-title">Personal Information</div>
+        <div class="info-item"><strong>Name:</strong> {{ user['name'] }}</div>
+        <div class="info-item"><strong>Email:</strong> {{ user['email'] }}</div>
+        <div class="info-item"><strong>Branch:</strong> {{ user['branch'] }}</div>
+        <div class="info-item"><strong>CGPA:</strong> {{ user['cgpa'] }}</div>
+        <div class="info-item"><strong>Backlogs:</strong> {{ user['backlogs'] }}</div>
+        <div class="info-item"><strong>Internships:</strong> {{ user['internships'] }}</div>
     </div>
-    <div class="text-center mt-3">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Back to Dashboard</a>
+
+    <div class="mb-4">
+        <div class="section-title">Skill Analysis</div>
+        <div class="info-item"><strong>Core Technical Skills:</strong> {{ skills['core_skills'] }}</div>
+        <div class="info-item"><strong>Programming Skills:</strong> {{ skills['programming'] }}</div>
+        <div class="info-item"><strong>Aptitude Strength:</strong> {{ skills['aptitude'] }}</div>
+        <div class="info-item"><strong>Soft Skills:</strong> {{ skills['soft_skills'] }}</div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('download_resume') }}" class="btn btn-primary">Download Resume (PDF)</a>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

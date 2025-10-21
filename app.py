@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
+from models.db import get_db_connection  # assuming you have this helper
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -340,30 +341,46 @@ def resume_draft():
     if 'user' not in session:
         return redirect(url_for('index'))
 
+    user_email = session.get('user_email')
+    if not user_email:
+        flash("User email not found in session.")
+        return redirect(url_for('dashboard'))
+
     cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT name, branch, cgpa, internships, backlogs
-        FROM users
-        WHERE email=%s
-    """, (session['user_email'],))
-    user = cur.fetchone()
+    # Fetch user info as dictionary
+    cur.execute("SELECT name, email, branch, cgpa, internships, backlogs FROM users WHERE email=%s", (user_email,))
+    row = cur.fetchone()
     cur.close()
 
-    # Optional: Add top skills based on scores
+    if not row:
+        flash("User data not found!")
+        return redirect(url_for('dashboard'))
+
+    # Convert row to dict
+    user = {
+        "name": row[0],
+        "email": row[1],
+        "branch": row[2],
+        "cgpa": row[3],
+        "internships": row[4],
+        "backlogs": row[5],
+    }
+
+    # Fetch user scores and generate skills
     cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT topic, SUM(score)
-        FROM user_scores
-        WHERE user_email=%s
-        GROUP BY topic
-        ORDER BY SUM(score) DESC
-        LIMIT 5
-    """, (session['user_email'],))
-    skills = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT topic, SUM(score) FROM user_scores WHERE user_email=%s GROUP BY topic", (user_email,))
+    scores = cur.fetchall()
     cur.close()
+
+    # Convert scores into a dict for template
+    skills = {
+        "core_skills": ", ".join([s[0] for s in scores[:2]]) if scores else "N/A",
+        "programming": ", ".join([s[0] for s in scores[2:4]]) if len(scores) > 2 else "N/A",
+        "aptitude": ", ".join([s[0] for s in scores[4:5]]) if len(scores) > 4 else "N/A",
+        "soft_skills": ", ".join([s[0] for s in scores[5:]]) if len(scores) > 5 else "N/A"
+    }
 
     return render_template('resume_draft.html', user=user, skills=skills)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
