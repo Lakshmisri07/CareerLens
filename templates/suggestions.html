@@ -91,20 +91,56 @@
         <h2>🔍 Personalized Suggestions</h2>
     </div>
 
+    {% if readiness %}
+    <div class="readiness-card" style="background: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.2);">
+        <h3 style="color: #2575fc; margin-bottom: 20px;">Overall Placement Readiness</h3>
+        <div style="font-size: 3rem; font-weight: 900; color: {% if readiness.score >= 80 %}#28a745{% elif readiness.score >= 65 %}#ffc107{% elif readiness.score >= 50 %}#fd7e14{% else %}#dc3545{% endif %};">
+            {{ readiness.score }}%
+        </div>
+        <div style="font-size: 1.5rem; color: #666; font-weight: 600; margin: 15px 0;">
+            {{ readiness.status }}
+        </div>
+        <p style="color: #777; font-size: 1.1rem; margin-bottom: 10px;">{{ readiness.message }}</p>
+        <p style="color: #999; font-size: 0.9rem;">Based on {{ readiness.total_quizzes }} quiz attempts</p>
+    </div>
+    {% endif %}
+
     <div class="info-box">
-        <p style="margin: 0;">Based on your quiz performance, here are personalized recommendations to improve your skills.</p>
+        <p style="margin: 0;">AI-powered analysis of your performance. Focus on high-priority topics to improve faster!</p>
     </div>
 
     {% if suggestions %}
         {% for s in suggestions %}
-        <div class="suggestion-card">
-            <p class="suggestion-text">{{ s }}</p>
+        <div class="suggestion-card" style="border-left-color: {% if s.priority == 3 %}#dc3545{% elif s.priority == 2 %}#ffc107{% else %}#28a745{% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                <h5 style="color: #2575fc; margin: 0; font-weight: 700;">{{ s.topic }}</h5>
+                <span style="background: {% if s.priority == 3 %}#dc3545{% elif s.priority == 2 %}#ffc107{% else %}#28a745{% endif %}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                    {{ s.level }}
+                </span>
+            </div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #666; font-weight: 600;">Score:</span>
+                    <span style="color: #333; font-weight: 700;">{{ s.percentage }}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666; font-weight: 600;">Attempts:</span>
+                    <span style="color: #333; font-weight: 700;">{{ s.attempts }}</span>
+                </div>
+            </div>
+            <p style="color: #555; margin-bottom: 10px; font-size: 1rem;">{{ s.recommendation }}</p>
+            <div style="background: linear-gradient(to right, #6a11cb, #2575fc); color: white; padding: 10px 15px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">
+                Action: {{ s.action }}
+            </div>
         </div>
         {% endfor %}
     {% else %}
         <div class="no-suggestions">
-            <h4>📊 No Suggestions Yet</h4>
-            <p>Complete some quizzes to get personalized recommendations!</p>
+            <h4>🎯 No Data Yet</h4>
+            <p>Complete some quizzes to get AI-powered personalized recommendations!</p>
+            <a href="{{ url_for('dashboard') }}" style="display: inline-block; margin-top: 20px; background: linear-gradient(to right, #6a11cb, #2575fc); color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Take Your First Quiz
+            </a>
         </div>
     {% endif %}
 </div>
