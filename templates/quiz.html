@@ -19,7 +19,7 @@
       <div class="question">
         <p><strong>Q{{ loop.index }}. {{ q.q }}</strong></p>
         {% for opt in q.options %}
-          <input type="radio" name="q{{ loop.index0 }}" value="{{ opt }}" required> {{ opt }}<br>
+          <input type="radio" name="q{{ loop.index - 1 }}" value="{{ opt }}" required> {{ opt }}<br>
         {% endfor %}
       </div>
     {% endfor %}
@@ -27,7 +27,8 @@
   </form>
   {% else %}
     <h3>Your Score: {{ score }}/{{ questions|length }}</h3>
-    <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+    <a href="{{ url_for('suggestions') }}">View Suggestions</a> |
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
   {% endif %}
 </body>
 </html>

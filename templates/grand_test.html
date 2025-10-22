@@ -37,7 +37,9 @@
 
     {% if submitted %}
     <div class="alert alert-success text-center">
-        You scored {{ score }} out of {{ all_questions|length }}!
+        <h3>Your Score: {{ score }} / {{ all_questions|length }}</h3>
+        <a href="{{ url_for('suggestions') }}" class="btn btn-primary mt-3">View Suggestions</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
     </div>
     {% else %}
     <form method="POST">
@@ -46,13 +48,13 @@
             <h5>Q{{ loop.index }}: {{ q.q }}</h5>
             {% for option in q.options %}
             <div class="form-check">
-                <input class="form-check-input" 
-                       type="radio" 
-                       name="q{{ loop.index0 }}" 
-                       id="q{{ loop.index0 }}_{{ loop.index }}" 
-                       value="{{ option }}" 
+                <input class="form-check-input"
+                       type="radio"
+                       name="q{{ loop.parent.loop.index - 1 }}"
+                       id="q{{ loop.parent.loop.index - 1 }}_{{ loop.index }}"
+                       value="{{ option }}"
                        required>
-                <label class="form-check-label" for="q{{ loop.index0 }}_{{ loop.index }}">{{ option }}</label>
+                <label class="form-check-label" for="q{{ loop.parent.loop.index - 1 }}_{{ loop.index }}">{{ option }}</label>
             </div>
             {% endfor %}
         </div>

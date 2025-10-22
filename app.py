@@ -227,12 +227,18 @@ def suggestions():
     suggestions_list = []
     for row in performance:
         topic, subtopic, score, total = row
+        # Skip Grand Test from suggestions
+        if topic == 'Grand Test':
+            continue
         percent = (score / total) * 100 if total else 0
         if percent < 60:
             if subtopic:
                 suggestions_list.append(f"Focus on {subtopic} in {topic}")
             else:
                 suggestions_list.append(f"Focus on {topic}")
+
+    if not suggestions_list:
+        suggestions_list.append("Great job! You're performing well across all topics. Keep practicing!")
 
     return render_template('suggestions.html', suggestions=suggestions_list)
 
