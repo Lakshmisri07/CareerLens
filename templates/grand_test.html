@@ -2,63 +2,219 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grand Test</title>
+    <title>Grand Test - CareerLens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(to right, #6a11cb, #2575fc);
             min-height: 100vh;
+            color: white;
             font-family: Arial, sans-serif;
             padding: 30px 0;
-            color: #fff;
         }
-        .card {
-            border-radius: 12px;
-            background-color: white; /* white background */
-            color: black; /* make text visible */
+
+        .container {
+            max-width: 900px;
         }
-        .card h5 {
-            color: #2575fc;
+
+        .header {
+            position: relative;
+            margin-bottom: 40px;
         }
-        .btn-primary {
-            background-color: #2575fc;
-            border-color: #2575fc;
+
+        .header h2 {
             font-weight: bold;
+            text-align: center;
+            color: white;
         }
-        .btn-primary:hover {
-            background-color: #6a11cb;
-            border-color: #6a11cb;
+
+        .btn-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #35b2dcff;
+            border-color: #3554dcff;
+            font-weight: bold;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background-color: #23a7c8ff;
+            border-color: #232ec8ff;
+            color: white;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .question-number {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.1rem;
+        }
+
+        .question-text {
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .form-check {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .form-check:hover {
+            background: #e9ecef;
+            border-color: #2575fc;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+        }
+
+        .form-check-label {
+            color: #555;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 1rem;
+        }
+
+        .btn-submit {
+            background-color: #356fdcff;
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background-color: #8335dcff;
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            color: #333;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        .percentage {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .result-message {
+            font-size: 1.3rem;
+            color: #2575fc;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2 class="text-center mb-4">Grand Test</h2>
+    <div class="header">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back</a>
+        <h2>🎯 Grand Test</h2>
+    </div>
 
     {% if submitted %}
-    <div class="alert alert-success text-center">
-        You scored {{ score }} out of {{ all_questions|length }}!
+    <div class="result-card">
+        {% set percent = (score / all_questions|length * 100)|round(1) %}
+        <div class="result-message">
+            {% if percent >= 80 %}
+                🏆 Outstanding Performance!
+            {% elif percent >= 60 %}
+                ⭐ Great Job!
+            {% else %}
+                📚 Keep Working Hard!
+            {% endif %}
+        </div>
+        <div class="score-display">{{ score }}/{{ all_questions|length }}</div>
+        <div class="percentage">{{ percent }}%</div>
+        <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+            You answered {{ score }} questions correctly out of {{ all_questions|length }} total questions.
+        </p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-submit">Back to Dashboard</a>
     </div>
     {% else %}
-    <form method="POST">
+    <div class="info-box">
+        <h5>📝 Total Questions: {{ all_questions|length }}</h5>
+        <p>This comprehensive test covers all topics. Take your time and answer carefully!</p>
+    </div>
+
+    <form method="POST" id="grandTestForm">
         {% for q in all_questions %}
-        <div class="card mb-3 p-3">
-            <h5>Q{{ loop.index }}: {{ q.q }}</h5>
-            {% for option in q.options %}
-            <div class="form-check">
-                <input class="form-check-input" 
-                       type="radio" 
-                       name="q{{ loop.index0 }}" 
-                       id="q{{ loop.index0 }}_{{ loop.index }}" 
-                       value="{{ option }}" 
-                       required>
-                <label class="form-check-label" for="q{{ loop.index0 }}_{{ loop.index }}">{{ option }}</label>
+        <div class="question-card">
+            <div class="d-flex align-items-start">
+                <span class="question-number">{{ loop.index }}</span>
+                <div class="flex-grow-1">
+                    <div class="question-text">{{ q.q }}</div>
+                    {% set outer_loop = loop %}
+                    {% for option in q.options %}
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="radio" 
+                               name="q{{ outer_loop.index0 }}" 
+                               id="q{{ outer_loop.index0 }}_opt{{ loop.index }}" 
+                               value="{{ option }}" 
+                               required>
+                        <label class="form-check-label" for="q{{ outer_loop.index0 }}_opt{{ loop.index }}">
+                            {{ option }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            {% endfor %}
         </div>
         {% endfor %}
+        
         <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-submit">Submit Grand Test</button>
         </div>
     </form>
     {% endif %}

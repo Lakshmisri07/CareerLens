@@ -4,77 +4,124 @@
     <meta charset="UTF-8">
     <title>Resume Draft - CareerLens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <style>
         body {
             background: linear-gradient(to right, #6a11cb, #2575fc);
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            font-family: Arial, sans-serif;
             padding: 30px 0;
-            color: #fff;
         }
+
         .container {
             max-width: 900px;
-            background-color: #fff;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-            color: #000;
         }
-        h2 {
-            color: #2575fc;
-            font-weight: 600;
+
+        .header {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .header h2 {
+            font-weight: bold;
             text-align: center;
-            margin-bottom: 25px;
+            color: white;
         }
+
+        .btn-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #35b2dcff;
+            border-color: #3554dcff;
+            font-weight: bold;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background-color: #23a7c8ff;
+            border-color: #232ec8ff;
+            color: white;
+        }
+
+        .resume-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: #333;
+        }
+
         .section-title {
-            color: #6a11cb;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-bottom: 2px solid #2575fc;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            color: #2575fc;
+            font-size: 1.3rem;
+            font-weight: 700;
+            border-bottom: 3px solid #2575fc;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
         }
+
         .info-item {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            font-size: 1rem;
         }
-        .btn-primary {
-            background-color: #2575fc;
-            border-color: #2575fc;
-            font-weight: 600;
-            border-radius: 8px;
+
+        .info-item strong {
+            color: #555;
+            min-width: 150px;
+            display: inline-block;
         }
-        .btn-primary:hover {
-            background-color: #6a11cb;
-            border-color: #6a11cb;
+
+        .btn-download {
+            background-color: #356fdcff;
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-download:hover {
+            background-color: #8335dcff;
+            transform: translateY(-2px);
+            color: white;
         }
     </style>
 </head>
 
 <body>
 <div class="container">
-    <h2>Resume Draft</h2>
-
-    <div class="mb-4">
-        <div class="section-title">Personal Information</div>
-        <div class="info-item"><strong>Name:</strong> {{ user['name'] }}</div>
-        <div class="info-item"><strong>Email:</strong> {{ user['email'] }}</div>
-        <div class="info-item"><strong>Branch:</strong> {{ user['branch'] }}</div>
-        <div class="info-item"><strong>CGPA:</strong> {{ user['cgpa'] }}</div>
-        <div class="info-item"><strong>Backlogs:</strong> {{ user['backlogs'] }}</div>
-        <div class="info-item"><strong>Internships:</strong> {{ user['internships'] }}</div>
+    <div class="header">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back</a>
+        <h2>📄 Resume Draft</h2>
     </div>
 
-    <div class="mb-4">
-        <div class="section-title">Skill Analysis</div>
-        <div class="info-item"><strong>Core Technical Skills:</strong> {{ skills['core_skills'] }}</div>
-        <div class="info-item"><strong>Programming Skills:</strong> {{ skills['programming'] }}</div>
-        <div class="info-item"><strong>Aptitude Strength:</strong> {{ skills['aptitude'] }}</div>
-        <div class="info-item"><strong>Soft Skills:</strong> {{ skills['soft_skills'] }}</div>
-    </div>
+    <div class="resume-container">
+        <div class="mb-4">
+            <div class="section-title">Personal Information</div>
+            <div class="info-item"><strong>Name:</strong> {{ user['name'] }}</div>
+            <div class="info-item"><strong>Email:</strong> {{ user['email'] }}</div>
+            <div class="info-item"><strong>Branch:</strong> {{ user['branch'] }}</div>
+            <div class="info-item"><strong>CGPA:</strong> {{ user['cgpa'] }}</div>
+            <div class="info-item"><strong>Backlogs:</strong> {{ user['backlogs'] }}</div>
+            <div class="info-item"><strong>Internships:</strong> {{ user['internships'] }}</div>
+        </div>
 
-    <div class="text-center mt-4">
-        <a href="{{ url_for('download_resume') }}" class="btn btn-primary">Download Resume (PDF)</a>
+        <div class="mb-4">
+            <div class="section-title">Skill Analysis</div>
+            <div class="info-item"><strong>Core Skills:</strong> {{ skills['core_skills'] }}</div>
+            <div class="info-item"><strong>Programming:</strong> {{ skills['programming'] }}</div>
+            <div class="info-item"><strong>Aptitude:</strong> {{ skills['aptitude'] }}</div>
+            <div class="info-item"><strong>Soft Skills:</strong> {{ skills['soft_skills'] }}</div>
+        </div>
+
+        <div class="text-center mt-4">
+            <p style="color: #999; font-style: italic;">Resume download feature coming soon!</p>
+        </div>
     </div>
 </div>
 
