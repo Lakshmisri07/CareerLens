@@ -176,10 +176,21 @@
         </div>
         <div class="score-display">{{ score }}/{{ all_questions|length }}</div>
         <div class="percentage">{{ percent }}%</div>
-        <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+        <p style="color: #666; font-size: 1.1rem; margin-bottom: 20px;">
             You answered {{ score }} questions correctly out of {{ all_questions|length }} total questions.
         </p>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-submit">Back to Dashboard</a>
+
+        {% if suggestion %}
+        <div style="background: #fff3cd; border-left: 5px solid #ffc107; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
+            <h5 style="color: #856404; margin: 0 0 10px 0;">📊 Performance Feedback</h5>
+            <p style="color: #856404; margin: 0; font-size: 1rem;">{{ suggestion }}</p>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 30px;">
+            <a href="{{ url_for('suggestions') }}" class="btn btn-submit" style="margin-right: 10px;">View Detailed Suggestions</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-submit" style="background-color: #6c757d;">Back to Dashboard</a>
+        </div>
     </div>
     {% else %}
     <div class="info-box">

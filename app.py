@@ -202,8 +202,21 @@ def quiz(topic, subtopic=None):
         mysql.connection.commit()
         cur.close()
 
+        # Generate suggestion for this quiz
+        percent = (score / len(topic_questions)) * 100
+        suggestion = ""
+        if percent < 40:
+            suggestion = f"Your score is {percent:.1f}%. You need significant practice in {subtopic if subtopic else topic}."
+        elif percent < 60:
+            suggestion = f"Your score is {percent:.1f}%. Keep practicing {subtopic if subtopic else topic} to improve."
+        elif percent < 80:
+            suggestion = f"Your score is {percent:.1f}%. Good work! A bit more practice on {subtopic if subtopic else topic} will help."
+        else:
+            suggestion = f"Your score is {percent:.1f}%. Excellent! You have strong knowledge in {subtopic if subtopic else topic}."
+
         return render_template('quiz.html', topic=topic, subtopic=subtopic,
-                               questions=topic_questions, submitted=True, score=score)
+                               questions=topic_questions, submitted=True, score=score,
+                               suggestion=suggestion)
 
     return render_template('quiz.html', topic=topic, subtopic=subtopic,
                            questions=topic_questions, submitted=False)
@@ -327,7 +340,7 @@ def grand_test():
             if user_answers.get(f'q{i}') == q['answer']:
                 score += 1
 
-    # Save Grand Test score to database
+        # Save Grand Test score to database
         cur = mysql.connection.cursor()
         cur.execute(
             "INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions) VALUES (%s,%s,%s,%s,%s)",
@@ -336,7 +349,19 @@ def grand_test():
         mysql.connection.commit()
         cur.close()
 
-        return render_template('grand_test.html', all_questions=all_questions, submitted=True, score=score)
+        # Generate suggestion for Grand Test
+        percent = (score / len(all_questions)) * 100
+        suggestion = ""
+        if percent < 40:
+            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas - Technical, Aptitude, and English."
+        elif percent < 60:
+            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track. Review weak areas and practice more."
+        elif percent < 80:
+            suggestion = f"Your overall score is {percent:.1f}%. Good performance! Focus on refining your skills."
+        else:
+            suggestion = f"Your overall score is {percent:.1f}%. Outstanding! You're well-prepared for placements."
+
+        return render_template('grand_test.html', all_questions=all_questions, submitted=True, score=score, suggestion=suggestion)
 
 
     return render_template('grand_test.html', all_questions=all_questions, submitted=False)
