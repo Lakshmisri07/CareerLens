@@ -132,26 +132,54 @@ Generate exactly {num_questions} questions now."""
         
         # Validate and format questions
         validated_questions = []
-        for q in questions:
+        for idx, q in enumerate(questions):
             # Check required fields
             if not all(key in q for key in ['q', 'options', 'answer']):
+                print(f"⚠️ Q{idx+1} missing required fields")
                 continue
-            
+
             # Check options count
             if len(q['options']) != 4:
+                print(f"⚠️ Q{idx+1} doesn't have exactly 4 options: {len(q['options'])}")
                 continue
-            
-            # Check answer is in options
-            if q['answer'] not in q['options']:
-                continue
-            
+
+            # Normalize answer and options (strip whitespace and standardize)
+            normalized_options = [str(opt).strip() for opt in q['options']]
+            normalized_answer = str(q['answer']).strip()
+
+            # Check if answer exists in options (case-insensitive)
+            answer_in_options = False
+            matched_option = normalized_answer
+
+            for opt in normalized_options:
+                if opt.lower() == normalized_answer.lower():
+                    answer_in_options = True
+                    matched_option = opt  # Use the exact option text as answer
+                    break
+
+            if not answer_in_options:
+                print(f"⚠️ Q{idx+1} answer '{normalized_answer}' not in options: {normalized_options}")
+                # Try to fix by finding closest match
+                for opt in normalized_options:
+                    if normalized_answer.lower() in opt.lower() or opt.lower() in normalized_answer.lower():
+                        matched_option = opt
+                        answer_in_options = True
+                        print(f"   ✓ Fixed: Using '{matched_option}' as answer")
+                        break
+
+                if not answer_in_options:
+                    print(f"   ✗ Skipping question - cannot match answer to any option")
+                    continue
+
             validated_questions.append({
                 'q': q['q'],
-                'options': q['options'],
-                'answer': q['answer'],
+                'options': normalized_options,
+                'answer': matched_option,  # Use the exact matching option
                 'difficulty': difficulty_level,
                 'ai_generated': True
             })
+
+            print(f"✓ Q{idx+1} validated: answer='{matched_option}' in {normalized_options}")
         
         # If we got at least 3 valid questions, return them
         if len(validated_questions) >= 3:

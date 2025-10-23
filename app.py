@@ -245,29 +245,48 @@ def quiz(topic, subtopic=None):
         user_answers = request.form
 
         print("\n" + "="*80)
-        print("📝 SCORING QUIZ")
+        print("📝 SCORING QUIZ - DETAILED DEBUG")
         print("="*80)
         print(f"Total questions: {len(topic_questions)}")
+
+        # First, let's see all form data
+        print("\n📋 ALL FORM DATA:")
+        for key, value in user_answers.items():
+            print(f"   {key}: '{value}'")
 
         # Calculate score with proper string comparison
         for i, q in enumerate(topic_questions):
             user_answer = user_answers.get(f'q{i}', '').strip()
             correct_answer = str(q['answer']).strip()
 
-            print(f"\nQ{i+1}: {q.get('q', '')[:50]}...")
-            print(f"   User answer: '{user_answer}'")
-            print(f"   Correct answer: '{correct_answer}'")
+            print(f"\n{'='*60}")
+            print(f"Q{i+1}: {q.get('q', '')[:60]}...")
+            print(f"Options: {q.get('options', [])}")
+            print(f"User answer: '{user_answer}' (length: {len(user_answer)})")
+            print(f"Correct answer: '{correct_answer}' (length: {len(correct_answer)})")
+            print(f"Answer in options? {correct_answer in q.get('options', [])}")
 
-            # Case-insensitive and whitespace-safe comparison
-            is_correct = user_answer.lower() == correct_answer.lower()
+            # Show byte representation for debugging hidden characters
+            print(f"User bytes: {user_answer.encode('utf-8')}")
+            print(f"Correct bytes: {correct_answer.encode('utf-8')}")
 
-            if is_correct:
+            # Try multiple comparison methods
+            exact_match = user_answer == correct_answer
+            case_insensitive = user_answer.lower() == correct_answer.lower()
+            stripped_match = user_answer.strip().lower() == correct_answer.strip().lower()
+
+            print(f"Exact match: {exact_match}")
+            print(f"Case-insensitive: {case_insensitive}")
+            print(f"Stripped match: {stripped_match}")
+
+            if case_insensitive:
                 score += 1
-                print(f"   ✅ CORRECT!")
+                print(f"✅ CORRECT!")
             else:
-                print(f"   ❌ WRONG")
+                print(f"❌ WRONG")
 
-        print(f"\n📊 FINAL SCORE: {score}/{len(topic_questions)} ({(score/len(topic_questions)*100):.1f}%)")
+        print(f"\n{'='*80}")
+        print(f"📊 FINAL SCORE: {score}/{len(topic_questions)} ({(score/len(topic_questions)*100):.1f}%)")
         print("="*80 + "\n")
 
         # Save score to database
