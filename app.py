@@ -398,83 +398,22 @@ def grand_test():
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    # Full questions dictionary (same as in your quiz route)
-    questions = {
-        # Technical
-        'C': {
-            'Arrays': [
-                {"q": "What is the index of the first element in an array?", "options": ["0","1","-1","Depends on compiler"], "answer": "0"},
-                {"q": "Which of these is a correct array declaration?", "options": ["int arr[];","arr int[];","array int arr;","int arr{};"], "answer": "int arr[];"}
-            ],
-            'Pointers': [
-                {"q": "Which operator gives the value at the address stored in a pointer?", "options": ["*","&","->","."], "answer": "*"},
-                {"q": "Which keyword is used to declare a pointer?", "options": ["ptr","*","pointer","&"], "answer": "*"}
-            ]
-        },
-        'Java': {
-            'OOPs': [
-                {"q": "Which keyword is used to inherit a class in Java?", "options": ["extends","implements","super","inherits"], "answer": "extends"},
-                {"q": "Java supports multiple inheritance via:", "options": ["Classes","Interfaces","Methods","None"], "answer": "Interfaces"}
-            ]
-        },
-        'Python': {
-            'Lists': [
-                {"q": "Which method adds an element at the end of a list?", "options": ["append()","add()","insert()","extend()"], "answer": "append()"}
-            ]
-        },
-        'DBMS': {
-            'SQL': [
-                {"q": "Which command is used to remove a table from database?", "options": ["DELETE TABLE","DROP TABLE","REMOVE TABLE","TRUNCATE TABLE"], "answer": "DROP TABLE"}
-            ]
-        },
-        'OS': {
-            'Processes': [
-                {"q": "Which of these is a state of a process?", "options": ["Running","Waiting","Terminated","All of the above"], "answer": "All of the above"}
-            ]
-        },
-        'Data Structures': {
-            'Stacks': [
-                {"q": "Stack follows which order?", "options": ["FIFO","LIFO","LILO","FILO"], "answer": "LIFO"}
-            ]
-        },
-        # Aptitude
-        'Quantitative Aptitude': [
-            {"q": "If 5x = 25, what is x?", "options": ["5","25","20","10"], "answer": "5"}
-        ],
-        'Logical Reasoning': [
-            {"q": "If all cats are animals, all animals are not cats. True or False?", "options": ["True","False"], "answer": "True"}
-        ],
-        'Data Interpretation': [
-            {"q": "A table shows sales of 5 products. Which product sold the most?", "options": ["A","B","C","D"], "answer": "C"}
-        ],
-        # English
-        'Grammar': [
-            {"q": "Choose the correct form: She ____ going to school.", "options": ["is","are","am","be"], "answer": "is"}
-        ],
-        'Reading Comprehension': [
-            {"q": "What is the main idea of a passage called?", "options": ["Theme","Topic","Summary","Moral"], "answer": "Theme"}
-        ],
-        'Synonyms & Antonyms': [
-            {"q": "Select the synonym of 'Happy'", "options": ["Sad","Joyful","Angry","Tired"], "answer": "Joyful"}
-        ]
-    }
-
-    # Flatten all questions into a single list for grand test
-    all_questions = []
-    for topic, value in questions.items():
-        if isinstance(value, dict):
-            # Technical subtopics
-            for subtopic, qlist in value.items():
-                all_questions.extend(qlist)
-        else:
-            # Aptitude and English
-            all_questions.extend(value)
-
     if request.method == 'POST':
+        # Get the questions from session
+        all_questions = session.get('grand_test_questions', [])
+        
+        if not all_questions:
+            flash("Grand Test session expired. Please start again.")
+            return redirect(url_for('grand_test'))
+
         score = 0
         user_answers = request.form
+        
+        # Calculate score with case-insensitive comparison
         for i, q in enumerate(all_questions):
-            if user_answers.get(f'q{i}') == q['answer']:
+            user_answer = user_answers.get(f'q{i}', '').strip()
+            correct_answer = str(q['answer']).strip()
+            if user_answer.lower() == correct_answer.lower():
                 score += 1
 
         # Save Grand Test score to database
@@ -485,6 +424,9 @@ def grand_test():
         )
         mysql.connection.commit()
         cur.close()
+
+        # Clear session
+        session.pop('grand_test_questions', None)
 
         # Generate suggestion for Grand Test
         percent = (score / len(all_questions)) * 100
@@ -498,11 +440,88 @@ def grand_test():
         else:
             suggestion = f"Your overall score is {percent:.1f}%. Outstanding! You're well-prepared for placements."
 
-        return render_template('grand_test.html', all_questions=all_questions, submitted=True, score=score, suggestion=suggestion)
+        return render_template('grand_test.html', 
+                             all_questions=all_questions, 
+                             submitted=True, 
+                             score=score, 
+                             suggestion=suggestion)
 
+    # GET request - Generate AI questions
+    try:
+        print("\n" + "="*80)
+        print("🎯 GENERATING GRAND TEST")
+        print("="*80)
 
-    return render_template('grand_test.html', all_questions=all_questions, submitted=False)
+        # Fetch user's past scores for adaptive difficulty
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT topic, subtopic, score, total_questions
+            FROM user_scores
+            WHERE user_email=%s
+        """, (session['user_email'],))
+        past_scores = cur.fetchall()
+        cur.close()
+        
+        # Convert to list of dicts
+        user_scores = []
+        for row in past_scores:
+            user_scores.append({
+                'topic': row[0],
+                'subtopic': row[1],
+                'score': row[2],
+                'total_questions': row[3]
+            })
 
+        all_questions = []
+
+        # Generate Technical questions (5 questions covering programming topics)
+        print("\n📚 Generating Technical Questions...")
+        technical_prompt = """Generate 5 challenging technical multiple-choice questions covering:
+        - Programming concepts (C, Java, Python)
+        - Data Structures (Arrays, Linked Lists, Trees, Stacks, Queues)
+        - Algorithms and complexity
+        - DBMS (SQL, Normalization, Transactions)
+        - Operating Systems (Processes, Threads, Memory Management)
+        
+        Make questions practical and suitable for placement exams."""
+        
+        from ai_question_generator import generate_quiz_questions, determine_difficulty_level
+        
+        tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
+        tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 5)
+        all_questions.extend(tech_questions)
+        print(f"✅ Generated {len(tech_questions)} Technical questions at {tech_difficulty} level")
+
+        # Generate Aptitude questions (5 questions)
+        print("\n🧮 Generating Aptitude Questions...")
+        apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
+        apt_questions = generate_quiz_questions('Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 5)
+        all_questions.extend(apt_questions)
+        print(f"✅ Generated {len(apt_questions)} Aptitude questions at {apt_difficulty} level")
+
+        # Generate English questions (5 questions)
+        print("\n📖 Generating English Questions...")
+        eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
+        eng_questions = generate_quiz_questions('English', 'Grammar & Communication', eng_difficulty, 5)
+        all_questions.extend(eng_questions)
+        print(f"✅ Generated {len(eng_questions)} English questions at {eng_difficulty} level")
+
+        print(f"\n✅ TOTAL: {len(all_questions)} questions generated for Grand Test")
+        print("="*80 + "\n")
+
+        # Store questions in session
+        session['grand_test_questions'] = all_questions
+
+        return render_template('grand_test.html', 
+                             all_questions=all_questions, 
+                             submitted=False)
+
+    except Exception as e:
+        print(f"❌ Error generating Grand Test: {e}")
+        import traceback
+        traceback.print_exc()
+        flash("Failed to generate Grand Test. Please try again.")
+        return redirect(url_for('dashboard'))
 
 @app.route('/resume_draft')
 def resume_draft():

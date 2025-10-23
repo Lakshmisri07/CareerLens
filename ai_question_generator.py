@@ -73,6 +73,9 @@ def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5):
     }
     
     # Topic-specific context
+    # Add/Update this section in the generate_quiz_questions function
+# Replace the topic_contexts dictionary with this updated version:
+
     topic_contexts = {
         'C': f'{subtopic} in C programming language',
         'Java': f'{subtopic} in Java programming language',
@@ -80,12 +83,15 @@ def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5):
         'DBMS': f'{subtopic} in Database Management Systems',
         'OS': f'{subtopic} in Operating Systems',
         'Data Structures': f'{subtopic} data structure',
-        'Quantitative Aptitude': 'Quantitative aptitude and numerical reasoning',
-        'Logical Reasoning': 'Logical reasoning and analytical thinking',
+        'Quantitative Aptitude': 'Quantitative aptitude and numerical reasoning for placement exams',
+        'Logical Reasoning': 'Logical reasoning and analytical thinking for competitive exams',
         'Data Interpretation': 'Data interpretation from tables, charts, and graphs',
-        'Grammar': 'English grammar rules and usage',
-        'Reading Comprehension': 'Reading comprehension and understanding',
-        'Synonyms & Antonyms': 'Synonyms and antonyms in English vocabulary'
+        'Grammar': 'English grammar rules, sentence correction, and usage',
+        'Reading Comprehension': 'Reading comprehension and understanding of passages',
+        'Synonyms & Antonyms': 'Synonyms and antonyms in English vocabulary',
+        'Technical': 'Programming, Data Structures, Algorithms, DBMS, and Operating Systems concepts for technical interviews',
+        'Aptitude': 'Quantitative aptitude, logical reasoning, and problem-solving for placement tests',
+        'English': 'English grammar, vocabulary, and communication skills for placement exams'
     }
     
     context = topic_contexts.get(topic, f'{topic} - {subtopic}')
