@@ -412,6 +412,57 @@
     </div>
     {% endif %}
 
+    <!-- Topic-Specific Recommendations -->
+    {% if recommendations %}
+    <div class="suggestion-box" style="background: #d1ecf1; border-left-color: #0c5460; margin-top: 20px;">
+      <h5 style="color: #0c5460;">💡 Personalized Recommendations for {{ recommendations.current_topic }}</h5>
+
+      {% if recommendations.performance_summary %}
+      <div style="margin: 15px 0;">
+        <p style="margin: 5px 0; color: #0c5460;">
+          <strong>Your Progress:</strong>
+          Attempt #{{ recommendations.performance_summary.attempts }} |
+          Current: {{ recommendations.performance_summary.current_score|round(1) }}% |
+          Average: {{ recommendations.performance_summary.average_score|round(1) }}%
+          {% if recommendations.performance_summary.trend == 'improving' %}
+          <span style="color: #28a745;">📈 Improving!</span>
+          {% elif recommendations.performance_summary.trend == 'needs_focus' %}
+          <span style="color: #dc3545;">📉 Needs Focus</span>
+          {% else %}
+          <span style="color: #17a2b8;">➡️ Stable</span>
+          {% endif %}
+        </p>
+      </div>
+      {% endif %}
+
+      {% if recommendations.next_steps %}
+      <div style="margin: 15px 0;">
+        <strong style="color: #0c5460;">Next Steps:</strong>
+        <ul style="margin: 8px 0; padding-left: 20px; color: #0c5460;">
+          {% for step in recommendations.next_steps %}
+          <li style="margin: 5px 0;">{{ step }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if recommendations.related_topics %}
+      <div style="margin: 15px 0;">
+        <strong style="color: #0c5460;">Try These Related Topics:</strong>
+        <div style="margin-top: 8px;">
+          {% for related in recommendations.related_topics %}
+          <a href="{{ url_for('quiz', topic=topic, subtopic=related) }}"
+             style="display: inline-block; padding: 8px 15px; margin: 5px; background: #0c5460; color: white;
+                    text-decoration: none; border-radius: 5px; font-size: 0.9rem; font-weight: 600;">
+            {{ related }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Action Buttons -->
     <div class="action-buttons">
       <a href="{{ url_for('quiz', topic=topic, subtopic=subtopic) }}" class="btn btn-primary-custom">

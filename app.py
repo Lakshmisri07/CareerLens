@@ -14,6 +14,79 @@ app.config['MYSQL_DB'] = 'placement_prep'
 
 mysql = MySQL(app)
 
+# ---------------- HELPER FUNCTIONS ----------------
+def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, mysql_conn):
+    """
+    Generate topic-specific recommendations after quiz completion
+    """
+    recommendations = {
+        'current_topic': subtopic if subtopic else topic,
+        'next_steps': [],
+        'related_topics': [],
+        'resources': []
+    }
+
+    # Get user's performance on this specific topic
+    cur = mysql_conn.connection.cursor()
+    cur.execute("""
+        SELECT AVG(score), AVG(total_questions), COUNT(*)
+        FROM user_scores
+        WHERE user_email=%s AND topic=%s AND subtopic=%s
+    """, (user_email, topic, subtopic or ''))
+    result = cur.fetchone()
+    cur.close()
+
+    avg_score = result[0] if result[0] else 0
+    avg_total = result[1] if result[1] else 1
+    attempt_count = result[2] if result[2] else 1
+    avg_percent = (avg_score / avg_total * 100) if avg_total > 0 else 0
+
+    # Generate next steps based on performance
+    if percent < 40:
+        recommendations['next_steps'].append(f"Review fundamental concepts of {subtopic if subtopic else topic}")
+        recommendations['next_steps'].append(f"Practice more beginner-level questions")
+        recommendations['next_steps'].append(f"Focus on understanding basic syntax and concepts")
+    elif percent < 60:
+        recommendations['next_steps'].append(f"Continue practicing {subtopic if subtopic else topic}")
+        recommendations['next_steps'].append(f"Review questions you got wrong")
+        recommendations['next_steps'].append(f"Try solving problems with different approaches")
+    elif percent < 80:
+        recommendations['next_steps'].append(f"You're doing well! Try more challenging questions")
+        recommendations['next_steps'].append(f"Explore advanced concepts in {subtopic if subtopic else topic}")
+    else:
+        recommendations['next_steps'].append(f"Excellent work! You've mastered {subtopic if subtopic else topic}")
+        recommendations['next_steps'].append(f"Challenge yourself with advanced problems")
+
+    # Suggest related topics based on the current topic
+    related_topics_map = {
+        'C': {'Arrays': ['Pointers', 'Loops'], 'Pointers': ['Arrays', 'Functions'],
+              'Loops': ['Functions', 'Arrays'], 'Functions': ['Pointers', 'Loops']},
+        'Java': {'OOPs': ['Inheritance', 'Exceptions'], 'Inheritance': ['OOPs', 'Exceptions'],
+                 'Exceptions': ['OOPs', 'Inheritance']},
+        'Python': {'Lists': ['Dictionaries', 'File Handling'], 'Dictionaries': ['Lists', 'File Handling'],
+                   'File Handling': ['Lists', 'Dictionaries']},
+        'DBMS': {'SQL': ['Normalization', 'Transactions'], 'Normalization': ['SQL', 'Transactions'],
+                 'Transactions': ['SQL', 'Normalization']},
+        'OS': {'Processes': ['Threads', 'Memory Management'], 'Threads': ['Processes', 'Memory Management'],
+               'Memory Management': ['Processes', 'Threads']},
+        'Data Structures': {'Linked List': ['Stacks', 'Queues'], 'Stacks': ['Queues', 'Trees'],
+                           'Queues': ['Stacks', 'Trees'], 'Trees': ['Linked List', 'Stacks']}
+    }
+
+    if topic in related_topics_map and subtopic in related_topics_map[topic]:
+        recommendations['related_topics'] = related_topics_map[topic][subtopic]
+
+    # Add performance summary
+    recommendations['performance_summary'] = {
+        'current_score': percent,
+        'average_score': avg_percent,
+        'attempts': attempt_count,
+        'difficulty_level': difficulty,
+        'trend': 'improving' if percent > avg_percent else 'needs_focus' if percent < avg_percent else 'stable'
+    }
+
+    return recommendations
+
 # ---------------- ROUTES ----------------
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -170,27 +243,30 @@ def quiz(topic, subtopic=None):
     if request.method == 'POST':
         score = 0
         user_answers = request.form
-        
+
         print("\n" + "="*80)
         print("📝 SCORING QUIZ")
         print("="*80)
-        
+        print(f"Total questions: {len(topic_questions)}")
+
         # Calculate score with proper string comparison
         for i, q in enumerate(topic_questions):
             user_answer = user_answers.get(f'q{i}', '').strip()
             correct_answer = str(q['answer']).strip()
-            
+
+            print(f"\nQ{i+1}: {q.get('q', '')[:50]}...")
+            print(f"   User answer: '{user_answer}'")
+            print(f"   Correct answer: '{correct_answer}'")
+
             # Case-insensitive and whitespace-safe comparison
             is_correct = user_answer.lower() == correct_answer.lower()
-            
+
             if is_correct:
                 score += 1
-                print(f"✅ Q{i+1}: CORRECT")
+                print(f"   ✅ CORRECT!")
             else:
-                print(f"❌ Q{i+1}: WRONG")
-                print(f"   User answered: '{user_answer}'")
-                print(f"   Correct answer: '{correct_answer}'")
-        
+                print(f"   ❌ WRONG")
+
         print(f"\n📊 FINAL SCORE: {score}/{len(topic_questions)} ({(score/len(topic_questions)*100):.1f}%)")
         print("="*80 + "\n")
 
@@ -205,7 +281,7 @@ def quiz(topic, subtopic=None):
 
         # Generate performance feedback
         percent = (score / len(topic_questions)) * 100
-        
+
         # Base suggestion based on score
         if percent < 40:
             suggestion = f"Your score is {percent:.1f}%. You need significant practice in {subtopic if subtopic else topic}."
@@ -237,16 +313,22 @@ def quiz(topic, subtopic=None):
             else:
                 suggestion += " Advanced questions are challenging. Review concepts and try again."
 
-        return render_template('quiz.html', 
-                             topic=topic, 
+        # Generate topic-specific recommendations
+        topic_recommendations = generate_topic_recommendations(
+            topic, subtopic, percent, difficulty, session['user_email'], mysql
+        )
+
+        return render_template('quiz.html',
+                             topic=topic,
                              subtopic=subtopic,
-                             questions=topic_questions, 
-                             submitted=True, 
+                             questions=topic_questions,
+                             submitted=True,
                              score=score,
-                             suggestion=suggestion, 
+                             suggestion=suggestion,
                              difficulty=difficulty,
                              ai_generated=ai_generated,
-                             performance=performance)
+                             performance=performance,
+                             recommendations=topic_recommendations)
 
     # Display quiz (GET request)
     return render_template('quiz.html', 
