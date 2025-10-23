@@ -24,7 +24,7 @@ BRANCH_TOPICS = {
     'MECH': ['C', 'Python', 'Thermodynamics', 'Mechanics', 'Manufacturing', 'CAD/CAM'],
     'CIVIL': ['C', 'AutoCAD', 'Structural Analysis', 'Surveying', 'Construction Management'],
     'AI/ML': ['Python', 'Machine Learning', 'Deep Learning', 'Data Structures', 'Statistics', 'Neural Networks'],
-    'DEFAULT': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']  # Fallback
+    'DEFAULT': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']
 }
 
 def get_user_branch():
@@ -39,14 +39,12 @@ def get_user_branch():
     
     if result:
         branch = result[0].upper()
-        # Match branch to our predefined topics
         for key in BRANCH_TOPICS.keys():
             if key in branch or branch in key:
                 return key
     
     return 'DEFAULT'
 
-# ---------------- HELPER FUNCTIONS ----------------
 def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, mysql_conn):
     """Generate topic-specific recommendations after quiz completion"""
     recommendations = {
@@ -56,7 +54,6 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
         'resources': []
     }
 
-    # Get user's performance on this specific topic
     cur = mysql_conn.connection.cursor()
     cur.execute("""
         SELECT AVG(score), AVG(total_questions), COUNT(*)
@@ -71,7 +68,6 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
     attempt_count = result[2] if result[2] else 1
     avg_percent = (avg_score / avg_total * 100) if avg_total > 0 else 0
 
-    # Generate next steps based on performance
     if percent < 40:
         recommendations['next_steps'].append(f"Review fundamental concepts of {subtopic if subtopic else topic}")
         recommendations['next_steps'].append(f"Practice more beginner-level questions")
@@ -87,7 +83,6 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
         recommendations['next_steps'].append(f"Excellent work! You've mastered {subtopic if subtopic else topic}")
         recommendations['next_steps'].append(f"Challenge yourself with advanced problems")
 
-    # Suggest related topics based on the current topic
     related_topics_map = {
         'C': {'Arrays': ['Pointers', 'Loops'], 'Pointers': ['Arrays', 'Functions'],
               'Loops': ['Functions', 'Arrays'], 'Functions': ['Pointers', 'Loops']},
@@ -106,7 +101,6 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
     if topic in related_topics_map and subtopic in related_topics_map[topic]:
         recommendations['related_topics'] = related_topics_map[topic][subtopic]
 
-    # Add performance summary
     recommendations['performance_summary'] = {
         'current_score': percent,
         'average_score': avg_percent,
@@ -152,9 +146,9 @@ def login():
     cur.close()
 
     if user:
-        session['user'] = user[1]        # name
-        session['user_email'] = user[2]  # email
-        session['user_branch'] = user[3] # branch
+        session['user'] = user[1]
+        session['user_email'] = user[2]
+        session['user_branch'] = user[3]
         return redirect(url_for('dashboard'))
     else:
         flash("Invalid email or password.")
@@ -187,7 +181,6 @@ def technical():
     if 'user' not in session:
         return redirect(url_for('index'))
     
-    # Get branch-specific topics
     user_branch = get_user_branch()
     topics = BRANCH_TOPICS.get(user_branch, BRANCH_TOPICS['DEFAULT'])
     
@@ -247,14 +240,12 @@ def english():
     return render_template('english.html', topics=topics)
 
 
-# ---------------- QUIZ ROUTE WITH FIXED SCORING ----------------
 @app.route('/quiz/<topic>', methods=['GET', 'POST'])
 @app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
 def quiz(topic, subtopic=None):
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    # Fetch user's past scores for adaptive difficulty
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT topic, subtopic, score, total_questions
@@ -264,7 +255,6 @@ def quiz(topic, subtopic=None):
     past_scores = cur.fetchall()
     cur.close()
     
-    # Convert to list of dicts for AI model
     user_scores = []
     for row in past_scores:
         user_scores.append({
@@ -274,7 +264,6 @@ def quiz(topic, subtopic=None):
             'total_questions': row[3]
         })
     
-    # Generate AI-powered adaptive questions
     try:
         ai_result = get_adaptive_questions(
             user_email=session['user_email'],
@@ -299,62 +288,37 @@ def quiz(topic, subtopic=None):
         flash("No quiz available for this topic yet.")
         return redirect(url_for('dashboard'))
 
-    # Handle quiz submission - FIXED SCORING LOGIC
     if request.method == 'POST':
         score = 0
         user_answers = request.form
 
         print("\n" + "="*80)
-        print("📝 SCORING QUIZ - FIXED VERSION")
+        print("📝 SCORING DEBUG")
         print("="*80)
-        print(f"Total questions: {len(topic_questions)}")
-
-        # Calculate score with improved validation
+        
+        # Print ALL form data to see what's actually being submitted
+        print("Form data received:")
+        for key, value in user_answers.items():
+            print(f"  {key} = '{value}'")
+        
+        print(f"\nQuestions and expected answers:")
         for i, q in enumerate(topic_questions):
-            user_answer = user_answers.get(f'q{i}', '').strip()
-            correct_answer = str(q['answer']).strip()
+            print(f"  Q{i}: answer='{q['answer']}' options={q['options']}")
 
-            print(f"\n{'='*60}")
-            print(f"Q{i+1}: {q.get('q', '')[:60]}...")
-            print(f"Options: {q.get('options', [])}")
-            print(f"User selected: '{user_answer}'")
-            print(f"Correct answer: '{correct_answer}'")
-
-            # FIXED: Robust comparison that handles all edge cases
-            # 1. Exact match (case-insensitive)
-            # 2. Strip all whitespace
-            # 3. Normalize unicode characters
-            user_normalized = user_answer.strip().lower()
-            correct_normalized = correct_answer.strip().lower()
+        for i, q in enumerate(topic_questions):
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
             
-            # Check if answer exists in options (for validation)
-            answer_in_options = any(opt.strip().lower() == correct_normalized for opt in q.get('options', []))
-            
-            if not answer_in_options:
-                print(f"⚠️ WARNING: Correct answer not found in options!")
-                # Try to find closest match
-                for opt in q.get('options', []):
-                    if correct_normalized in opt.strip().lower() or opt.strip().lower() in correct_normalized:
-                        correct_normalized = opt.strip().lower()
-                        print(f"   Fixed: Using '{opt}' as correct answer")
-                        break
-            
-            # Compare answers
-            is_correct = user_normalized == correct_normalized
+            # Simple comparison: strip and lowercase both
+            is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
             
             if is_correct:
                 score += 1
-                print(f"✅ CORRECT!")
-            else:
-                print(f"❌ WRONG")
-                print(f"   User gave: '{user_normalized}'")
-                print(f"   Expected: '{correct_normalized}'")
+            
+            print(f"Q{i+1}: User='{user_answer}' | Correct='{correct_answer}' | Match={is_correct}")
 
-        print(f"\n{'='*80}")
-        print(f"📊 FINAL SCORE: {score}/{len(topic_questions)} ({(score/len(topic_questions)*100):.1f}%)")
-        print("="*80 + "\n")
+        print(f"\n📊 FINAL: {score}/{len(topic_questions)}")
 
-        # Save score to database
         cur = mysql.connection.cursor()
         cur.execute("""
             INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions)
@@ -363,10 +327,8 @@ def quiz(topic, subtopic=None):
         mysql.connection.commit()
         cur.close()
 
-        # Generate performance feedback
         percent = (score / len(topic_questions)) * 100
 
-        # Base suggestion based on score
         if percent < 40:
             suggestion = f"Your score is {percent:.1f}%. You need significant practice in {subtopic if subtopic else topic}."
             performance = "needs_work"
@@ -380,7 +342,6 @@ def quiz(topic, subtopic=None):
             suggestion = f"Your score is {percent:.1f}%. Excellent! You have strong knowledge in {subtopic if subtopic else topic}."
             performance = "excellent"
 
-        # Add difficulty-specific feedback
         if difficulty == 'beginner':
             if percent >= 80:
                 suggestion += " 🎉 Great job on beginner questions! Next quiz will be at intermediate level."
@@ -391,13 +352,12 @@ def quiz(topic, subtopic=None):
                 suggestion += " 🔥 Impressive! Next quiz will challenge you with advanced questions."
             else:
                 suggestion += " You're making progress. Keep practicing at this level."
-        else:  # advanced
+        else:
             if percent >= 80:
                 suggestion += " 🏆 Outstanding! You've mastered this topic at expert level!"
             else:
                 suggestion += " Advanced questions are challenging. Review concepts and try again."
 
-        # Generate topic-specific recommendations
         topic_recommendations = generate_topic_recommendations(
             topic, subtopic, percent, difficulty, session['user_email'], mysql
         )
@@ -414,7 +374,6 @@ def quiz(topic, subtopic=None):
                              performance=performance,
                              recommendations=topic_recommendations)
 
-    # Display quiz (GET request)
     return render_template('quiz.html', 
                          topic=topic, 
                          subtopic=subtopic,
@@ -429,17 +388,15 @@ def suggestions():
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    # Fetch all user scores
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT topic, subtopic, score, total_questions
         FROM user_scores
-        WHERE user_email=%s
+        WHERE user_email=%s AND topic != 'Grand Test'
     """, (session['user_email'],))
     results = cur.fetchall()
     cur.close()
 
-    # Convert to list of dictionaries for ML model
     scores_data = []
     for row in results:
         scores_data.append({
@@ -449,10 +406,7 @@ def suggestions():
             'total_questions': row[3]
         })
 
-    # Use ML model to analyze performance
     ml_suggestions = analyze_user_performance(scores_data)
-
-    # Get overall readiness score
     readiness = get_overall_readiness(scores_data)
 
     return render_template('suggestions.html',
@@ -475,16 +429,13 @@ def grand_test():
         score = 0
         user_answers = request.form
         
-        # FIXED: Same robust scoring logic
         for i, q in enumerate(all_questions):
-            user_answer = user_answers.get(f'q{i}', '').strip()
-            correct_answer = str(q['answer']).strip()
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
             
-            # Normalize and compare
             if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
 
-        # Save Grand Test score
         cur = mysql.connection.cursor()
         cur.execute(
             "INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions) VALUES (%s,%s,%s,%s,%s)",
@@ -511,7 +462,6 @@ def grand_test():
                              score=score, 
                              suggestion=suggestion)
 
-    # Generate AI questions for Grand Test
     try:
         print("\n" + "="*80)
         print("🎯 GENERATING GRAND TEST")
@@ -539,17 +489,14 @@ def grand_test():
 
         from ai_question_generator import generate_quiz_questions, determine_difficulty_level
         
-        # Technical
         tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
         tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 5)
         all_questions.extend(tech_questions)
 
-        # Aptitude
         apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
         apt_questions = generate_quiz_questions('Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 5)
         all_questions.extend(apt_questions)
 
-        # English
         eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
         eng_questions = generate_quiz_questions('English', 'Grammar & Communication', eng_difficulty, 5)
         all_questions.extend(eng_questions)

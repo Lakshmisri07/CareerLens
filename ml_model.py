@@ -86,13 +86,25 @@ class SuggestionModel:
 def analyze_user_performance(scores_data):
     """
     Analyze user performance using ML and provide intelligent suggestions
+    FILTERS OUT: Grand Test entries (they shouldn't appear in suggestions)
     """
     if not scores_data:
         return []
 
+    # CRITICAL FIX: Filter out Grand Test entries
+    filtered_scores = [
+        score for score in scores_data 
+        if score.get('topic', '').lower() != 'grand test'
+    ]
+    
+    if not filtered_scores:
+        return []
+    
+    print(f"\n📊 Analyzing {len(filtered_scores)} quiz scores (filtered from {len(scores_data)} total)")
+
     # Group scores by topic
     topic_scores = {}
-    for score in scores_data:
+    for score in filtered_scores:
         key = score['topic'] if not score['subtopic'] else f"{score['topic']} - {score['subtopic']}"
 
         if key not in topic_scores:
@@ -112,8 +124,11 @@ def analyze_user_performance(scores_data):
     model = SuggestionModel()
 
     # Train if enough data
-    if len(scores_data) >= 5:
-        model.train(scores_data)
+    if len(filtered_scores) >= 5:
+        model.train(filtered_scores)
+        print(f"✅ ML model trained on {len(filtered_scores)} quiz attempts")
+    else:
+        print(f"⚠️  Using rule-based analysis ({len(filtered_scores)} attempts < 5 minimum)")
 
     # Analyze each topic
     suggestions = []
@@ -149,28 +164,47 @@ def analyze_user_performance(scores_data):
     # Sort by priority (highest first)
     suggestions.sort(key=lambda x: x['priority'], reverse=True)
 
+    print(f"✅ Generated {len(suggestions)} personalized suggestions")
+
     return suggestions
 
 
 def get_overall_readiness(scores_data):
     """
     Calculate overall placement readiness score
+    FILTERS OUT: Grand Test entries for accurate readiness calculation
     """
     if not scores_data:
         return {
             'score': 0,
             'status': 'Not Assessed',
-            'message': 'Take more quizzes to assess your readiness'
+            'message': 'Take more quizzes to assess your readiness',
+            'total_quizzes': 0
         }
 
-    total_score = sum(s['score'] for s in scores_data)
-    total_questions = sum(s['total_questions'] for s in scores_data)
+    # CRITICAL FIX: Filter out Grand Test entries
+    filtered_scores = [
+        score for score in scores_data 
+        if score.get('topic', '').lower() != 'grand test'
+    ]
+    
+    if not filtered_scores:
+        return {
+            'score': 0,
+            'status': 'Not Assessed',
+            'message': 'No quiz data available',
+            'total_quizzes': 0
+        }
+
+    total_score = sum(s['score'] for s in filtered_scores)
+    total_questions = sum(s['total_questions'] for s in filtered_scores)
 
     if total_questions == 0:
         return {
             'score': 0,
             'status': 'Not Assessed',
-            'message': 'No quiz data available'
+            'message': 'No quiz data available',
+            'total_quizzes': 0
         }
 
     overall_percent = (total_score / total_questions) * 100
@@ -188,9 +222,11 @@ def get_overall_readiness(scores_data):
         status = 'Needs Improvement'
         message = 'Significant practice required. Start with basics.'
 
+    print(f"\n📈 Overall Readiness: {overall_percent:.1f}% based on {len(filtered_scores)} topic quizzes")
+
     return {
         'score': round(overall_percent, 1),
         'status': status,
         'message': message,
-        'total_quizzes': len(scores_data)
+        'total_quizzes': len(filtered_scores)
     }
