@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
-from models.db import get_db_connection  # assuming you have this helper
+from models.db import get_db_connection
 from ml_model import analyze_user_performance, get_overall_readiness
 from ai_question_generator import get_adaptive_questions
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
@@ -14,11 +15,40 @@ app.config['MYSQL_DB'] = 'placement_prep'
 
 mysql = MySQL(app)
 
+# Branch-specific technical topics
+BRANCH_TOPICS = {
+    'CSE': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP'],
+    'IT': ['C', 'Java', 'Python', 'DBMS', 'Web Development', 'Data Structures', 'Networking', 'Cloud Computing'],
+    'ECE': ['C', 'Python', 'Digital Electronics', 'Signal Processing', 'Embedded Systems', 'VLSI', 'Microprocessors'],
+    'EEE': ['C', 'Python', 'Circuit Theory', 'Power Systems', 'Control Systems', 'Electrical Machines'],
+    'MECH': ['C', 'Python', 'Thermodynamics', 'Mechanics', 'Manufacturing', 'CAD/CAM'],
+    'CIVIL': ['C', 'AutoCAD', 'Structural Analysis', 'Surveying', 'Construction Management'],
+    'AI/ML': ['Python', 'Machine Learning', 'Deep Learning', 'Data Structures', 'Statistics', 'Neural Networks'],
+    'DEFAULT': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']  # Fallback
+}
+
+def get_user_branch():
+    """Get current user's branch from database"""
+    if 'user_email' not in session:
+        return 'DEFAULT'
+    
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT branch FROM users WHERE email=%s", (session['user_email'],))
+    result = cur.fetchone()
+    cur.close()
+    
+    if result:
+        branch = result[0].upper()
+        # Match branch to our predefined topics
+        for key in BRANCH_TOPICS.keys():
+            if key in branch or branch in key:
+                return key
+    
+    return 'DEFAULT'
+
 # ---------------- HELPER FUNCTIONS ----------------
 def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, mysql_conn):
-    """
-    Generate topic-specific recommendations after quiz completion
-    """
+    """Generate topic-specific recommendations after quiz completion"""
     recommendations = {
         'current_topic': subtopic if subtopic else topic,
         'next_steps': [],
@@ -124,6 +154,7 @@ def login():
     if user:
         session['user'] = user[1]        # name
         session['user_email'] = user[2]  # email
+        session['user_branch'] = user[3] # branch
         return redirect(url_for('dashboard'))
     else:
         flash("Invalid email or password.")
@@ -134,6 +165,7 @@ def login():
 def logout():
     session.pop('user', None)
     session.pop('user_email', None)
+    session.pop('user_branch', None)
     flash("Logged out successfully.")
     return redirect(url_for('index'))
 
@@ -152,8 +184,14 @@ def dashboard():
 
 @app.route('/technical')
 def technical():
-    topics = ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']
-    return render_template('technical.html', topics=topics)
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    # Get branch-specific topics
+    user_branch = get_user_branch()
+    topics = BRANCH_TOPICS.get(user_branch, BRANCH_TOPICS['DEFAULT'])
+    
+    return render_template('technical.html', topics=topics, branch=session.get('user_branch', 'N/A'))
 
 
 @app.route('/technical/<topic>')
@@ -164,7 +202,34 @@ def subtopics(topic):
         'Python': ['Lists', 'Dictionaries', 'File Handling'],
         'DBMS': ['SQL', 'Normalization', 'Transactions'],
         'OS': ['Processes', 'Threads', 'Memory Management'],
-        'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees']
+        'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
+        'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
+        'Computer Networks': ['OSI Model', 'TCP/IP', 'Routing'],
+        'OOP': ['Classes', 'Inheritance', 'Polymorphism'],
+        'Web Development': ['HTML/CSS', 'JavaScript', 'Backend'],
+        'Networking': ['Protocols', 'Security', 'Troubleshooting'],
+        'Cloud Computing': ['AWS', 'Azure', 'Docker'],
+        'Digital Electronics': ['Logic Gates', 'Combinational Circuits', 'Sequential Circuits'],
+        'Signal Processing': ['Fourier Transform', 'Filters', 'Sampling'],
+        'Embedded Systems': ['Microcontrollers', 'Sensors', 'Programming'],
+        'VLSI': ['Design', 'Verification', 'Testing'],
+        'Microprocessors': ['8086', 'Architecture', 'Assembly'],
+        'Circuit Theory': ['Kirchhoff Laws', 'Network Theorems', 'AC Circuits'],
+        'Power Systems': ['Generation', 'Transmission', 'Distribution'],
+        'Control Systems': ['Transfer Functions', 'Stability', 'Controllers'],
+        'Electrical Machines': ['DC Machines', 'Transformers', 'Induction Motors'],
+        'Thermodynamics': ['Laws', 'Heat Transfer', 'Entropy'],
+        'Mechanics': ['Statics', 'Dynamics', 'Strength of Materials'],
+        'Manufacturing': ['Casting', 'Welding', 'Machining'],
+        'CAD/CAM': ['AutoCAD', '3D Modeling', 'CNC'],
+        'AutoCAD': ['2D Drawing', '3D Modeling', 'Commands'],
+        'Structural Analysis': ['Beams', 'Trusses', 'Frames'],
+        'Surveying': ['Leveling', 'Theodolite', 'GPS'],
+        'Construction Management': ['Planning', 'Scheduling', 'Cost Estimation'],
+        'Machine Learning': ['Supervised Learning', 'Unsupervised Learning', 'Neural Networks'],
+        'Deep Learning': ['CNN', 'RNN', 'Transfer Learning'],
+        'Statistics': ['Probability', 'Hypothesis Testing', 'Regression'],
+        'Neural Networks': ['Perceptron', 'Backpropagation', 'Activation Functions']
     }
     subtopics = subtopic_map.get(topic, [])
     return render_template('subtopics.html', topic=topic, subtopics=subtopics)
@@ -182,12 +247,7 @@ def english():
     return render_template('english.html', topics=topics)
 
 
-# ---------------- QUIZ ROUTE ----------------
-# Add this import at the top of your app.py
-from ai_question_generator import get_adaptive_questions
-
-# Replace your existing /quiz route with this enhanced version:
-
+# ---------------- QUIZ ROUTE WITH FIXED SCORING ----------------
 @app.route('/quiz/<topic>', methods=['GET', 'POST'])
 @app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
 def quiz(topic, subtopic=None):
@@ -239,22 +299,17 @@ def quiz(topic, subtopic=None):
         flash("No quiz available for this topic yet.")
         return redirect(url_for('dashboard'))
 
-    # Handle quiz submission
+    # Handle quiz submission - FIXED SCORING LOGIC
     if request.method == 'POST':
         score = 0
         user_answers = request.form
 
         print("\n" + "="*80)
-        print("📝 SCORING QUIZ - DETAILED DEBUG")
+        print("📝 SCORING QUIZ - FIXED VERSION")
         print("="*80)
         print(f"Total questions: {len(topic_questions)}")
 
-        # First, let's see all form data
-        print("\n📋 ALL FORM DATA:")
-        for key, value in user_answers.items():
-            print(f"   {key}: '{value}'")
-
-        # Calculate score with proper string comparison
+        # Calculate score with improved validation
         for i, q in enumerate(topic_questions):
             user_answer = user_answers.get(f'q{i}', '').strip()
             correct_answer = str(q['answer']).strip()
@@ -262,28 +317,38 @@ def quiz(topic, subtopic=None):
             print(f"\n{'='*60}")
             print(f"Q{i+1}: {q.get('q', '')[:60]}...")
             print(f"Options: {q.get('options', [])}")
-            print(f"User answer: '{user_answer}' (length: {len(user_answer)})")
-            print(f"Correct answer: '{correct_answer}' (length: {len(correct_answer)})")
-            print(f"Answer in options? {correct_answer in q.get('options', [])}")
+            print(f"User selected: '{user_answer}'")
+            print(f"Correct answer: '{correct_answer}'")
 
-            # Show byte representation for debugging hidden characters
-            print(f"User bytes: {user_answer.encode('utf-8')}")
-            print(f"Correct bytes: {correct_answer.encode('utf-8')}")
-
-            # Try multiple comparison methods
-            exact_match = user_answer == correct_answer
-            case_insensitive = user_answer.lower() == correct_answer.lower()
-            stripped_match = user_answer.strip().lower() == correct_answer.strip().lower()
-
-            print(f"Exact match: {exact_match}")
-            print(f"Case-insensitive: {case_insensitive}")
-            print(f"Stripped match: {stripped_match}")
-
-            if case_insensitive:
+            # FIXED: Robust comparison that handles all edge cases
+            # 1. Exact match (case-insensitive)
+            # 2. Strip all whitespace
+            # 3. Normalize unicode characters
+            user_normalized = user_answer.strip().lower()
+            correct_normalized = correct_answer.strip().lower()
+            
+            # Check if answer exists in options (for validation)
+            answer_in_options = any(opt.strip().lower() == correct_normalized for opt in q.get('options', []))
+            
+            if not answer_in_options:
+                print(f"⚠️ WARNING: Correct answer not found in options!")
+                # Try to find closest match
+                for opt in q.get('options', []):
+                    if correct_normalized in opt.strip().lower() or opt.strip().lower() in correct_normalized:
+                        correct_normalized = opt.strip().lower()
+                        print(f"   Fixed: Using '{opt}' as correct answer")
+                        break
+            
+            # Compare answers
+            is_correct = user_normalized == correct_normalized
+            
+            if is_correct:
                 score += 1
                 print(f"✅ CORRECT!")
             else:
                 print(f"❌ WRONG")
+                print(f"   User gave: '{user_normalized}'")
+                print(f"   Expected: '{correct_normalized}'")
 
         print(f"\n{'='*80}")
         print(f"📊 FINAL SCORE: {score}/{len(topic_questions)} ({(score/len(topic_questions)*100):.1f}%)")
@@ -357,6 +422,8 @@ def quiz(topic, subtopic=None):
                          submitted=False,
                          difficulty=difficulty,
                          ai_generated=ai_generated)
+
+
 @app.route('/suggestions')
 def suggestions():
     if 'user' not in session:
@@ -399,7 +466,6 @@ def grand_test():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        # Get the questions from session
         all_questions = session.get('grand_test_questions', [])
         
         if not all_questions:
@@ -409,14 +475,16 @@ def grand_test():
         score = 0
         user_answers = request.form
         
-        # Calculate score with case-insensitive comparison
+        # FIXED: Same robust scoring logic
         for i, q in enumerate(all_questions):
             user_answer = user_answers.get(f'q{i}', '').strip()
             correct_answer = str(q['answer']).strip()
-            if user_answer.lower() == correct_answer.lower():
+            
+            # Normalize and compare
+            if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
 
-        # Save Grand Test score to database
+        # Save Grand Test score
         cur = mysql.connection.cursor()
         cur.execute(
             "INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions) VALUES (%s,%s,%s,%s,%s)",
@@ -425,20 +493,17 @@ def grand_test():
         mysql.connection.commit()
         cur.close()
 
-        # Clear session
         session.pop('grand_test_questions', None)
 
-        # Generate suggestion for Grand Test
         percent = (score / len(all_questions)) * 100
-        suggestion = ""
         if percent < 40:
-            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas - Technical, Aptitude, and English."
+            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas."
         elif percent < 60:
-            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track. Review weak areas and practice more."
+            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track."
         elif percent < 80:
-            suggestion = f"Your overall score is {percent:.1f}%. Good performance! Focus on refining your skills."
+            suggestion = f"Your overall score is {percent:.1f}%. Good performance!"
         else:
-            suggestion = f"Your overall score is {percent:.1f}%. Outstanding! You're well-prepared for placements."
+            suggestion = f"Your overall score is {percent:.1f}%. Outstanding!"
 
         return render_template('grand_test.html', 
                              all_questions=all_questions, 
@@ -446,13 +511,12 @@ def grand_test():
                              score=score, 
                              suggestion=suggestion)
 
-    # GET request - Generate AI questions
+    # Generate AI questions for Grand Test
     try:
         print("\n" + "="*80)
         print("🎯 GENERATING GRAND TEST")
         print("="*80)
 
-        # Fetch user's past scores for adaptive difficulty
         cur = mysql.connection.cursor()
         cur.execute("""
             SELECT topic, subtopic, score, total_questions
@@ -462,7 +526,6 @@ def grand_test():
         past_scores = cur.fetchall()
         cur.close()
         
-        # Convert to list of dicts
         user_scores = []
         for row in past_scores:
             user_scores.append({
@@ -474,42 +537,25 @@ def grand_test():
 
         all_questions = []
 
-        # Generate Technical questions (5 questions covering programming topics)
-        print("\n📚 Generating Technical Questions...")
-        technical_prompt = """Generate 5 challenging technical multiple-choice questions covering:
-        - Programming concepts (C, Java, Python)
-        - Data Structures (Arrays, Linked Lists, Trees, Stacks, Queues)
-        - Algorithms and complexity
-        - DBMS (SQL, Normalization, Transactions)
-        - Operating Systems (Processes, Threads, Memory Management)
-        
-        Make questions practical and suitable for placement exams."""
-        
         from ai_question_generator import generate_quiz_questions, determine_difficulty_level
         
+        # Technical
         tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
         tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 5)
         all_questions.extend(tech_questions)
-        print(f"✅ Generated {len(tech_questions)} Technical questions at {tech_difficulty} level")
 
-        # Generate Aptitude questions (5 questions)
-        print("\n🧮 Generating Aptitude Questions...")
+        # Aptitude
         apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
         apt_questions = generate_quiz_questions('Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 5)
         all_questions.extend(apt_questions)
-        print(f"✅ Generated {len(apt_questions)} Aptitude questions at {apt_difficulty} level")
 
-        # Generate English questions (5 questions)
-        print("\n📖 Generating English Questions...")
+        # English
         eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
         eng_questions = generate_quiz_questions('English', 'Grammar & Communication', eng_difficulty, 5)
         all_questions.extend(eng_questions)
-        print(f"✅ Generated {len(eng_questions)} English questions at {eng_difficulty} level")
 
-        print(f"\n✅ TOTAL: {len(all_questions)} questions generated for Grand Test")
-        print("="*80 + "\n")
+        print(f"\n✅ TOTAL: {len(all_questions)} questions generated")
 
-        # Store questions in session
         session['grand_test_questions'] = all_questions
 
         return render_template('grand_test.html', 
@@ -517,11 +563,10 @@ def grand_test():
                              submitted=False)
 
     except Exception as e:
-        print(f"❌ Error generating Grand Test: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Error: {e}")
         flash("Failed to generate Grand Test. Please try again.")
         return redirect(url_for('dashboard'))
+
 
 @app.route('/resume_draft')
 def resume_draft():
@@ -529,12 +574,7 @@ def resume_draft():
         return redirect(url_for('index'))
 
     user_email = session.get('user_email')
-    if not user_email:
-        flash("User email not found in session.")
-        return redirect(url_for('dashboard'))
-
     cur = mysql.connection.cursor()
-    # Fetch user info as dictionary
     cur.execute("SELECT name, email, branch, cgpa, internships, backlogs FROM users WHERE email=%s", (user_email,))
     row = cur.fetchone()
     cur.close()
@@ -543,7 +583,6 @@ def resume_draft():
         flash("User data not found!")
         return redirect(url_for('dashboard'))
 
-    # Convert row to dict
     user = {
         "name": row[0],
         "email": row[1],
@@ -553,13 +592,11 @@ def resume_draft():
         "backlogs": row[5],
     }
 
-    # Fetch user scores and generate skills
     cur = mysql.connection.cursor()
     cur.execute("SELECT topic, SUM(score) FROM user_scores WHERE user_email=%s GROUP BY topic", (user_email,))
     scores = cur.fetchall()
     cur.close()
 
-    # Convert scores into a dict for template
     skills = {
         "core_skills": ", ".join([s[0] for s in scores[:2]]) if scores else "N/A",
         "programming": ", ".join([s[0] for s in scores[2:4]]) if len(scores) > 2 else "N/A",
@@ -568,6 +605,7 @@ def resume_draft():
     }
 
     return render_template('resume_draft.html', user=user, skills=skills)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

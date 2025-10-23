@@ -15,12 +15,38 @@
 
     .header {
         position: relative;
-        margin-bottom: 50px;
+        margin-bottom: 30px;
     }
 
     .header h2 {
         font-weight: bold;
         text-align: center;
+    }
+
+    .branch-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 15px 30px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .branch-badge h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+
+    .branch-badge h3 {
+        margin: 5px 0 0 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .btn-back {
@@ -52,6 +78,24 @@
         color: white;
         text-decoration: none !important;
         background: #4D96FF;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .card:hover::before {
+        opacity: 1;
     }
 
     .card:hover {
@@ -62,6 +106,16 @@
     .container {
         max-width: 1200px;
     }
+
+    .info-message {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
@@ -70,6 +124,15 @@
     <div class="header">
         <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back</a>
         <h2>Technical Topics</h2>
+    </div>
+
+    <div class="branch-badge">
+        <h5>📚 Customized Topics for</h5>
+        <h3>{{ branch }} Branch</h3>
+    </div>
+
+    <div class="info-message">
+        <p style="margin: 0;">These topics are specifically curated for your branch. Practice to strengthen your technical skills!</p>
     </div>
 
     <div class="row g-4 justify-content-center">
