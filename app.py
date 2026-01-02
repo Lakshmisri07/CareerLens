@@ -1,11 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
+import mysql.connector
 from models.db import get_db_connection
 from ml_model import analyze_user_performance, get_overall_readiness
 from ai_question_generator import get_adaptive_questions
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
+
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",      # change if needed
+        database="careerlens"
+    )
 
 # MySQL Configuration
 app.config['MYSQL_HOST'] = 'localhost'
