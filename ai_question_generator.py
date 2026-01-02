@@ -1,4 +1,4 @@
-import google.genai as genai
+import google.generativeai as genai
 import json
 import os
 from dotenv import load_dotenv
@@ -8,7 +8,7 @@ load_dotenv()
 # Configure Gemini API with the latest model
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
-# Using Gemini 2.5 Flash (fast and efficient)
+# Using Gemini 1.5 Flash (fast and efficient)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 

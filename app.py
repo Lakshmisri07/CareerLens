@@ -1,27 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import mysql.connector
-from models.db import get_db_connection
+from supabase import create_client, Client
+import os
+from dotenv import load_dotenv
 from ml_model import analyze_user_performance, get_overall_readiness
 from ai_question_generator import get_adaptive_questions
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",      # change if needed
-        database="careerlens"
-    )
-
-# MySQL Configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'placement_prep'
-
-mysql = MySQL(app)
+SUPABASE_URL = os.getenv('VITE_SUPABASE_URL')
+SUPABASE_KEY = os.getenv('VITE_SUPABASE_SUPABASE_ANON_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Branch-specific technical topics
 BRANCH_TOPICS = {
@@ -36,25 +27,20 @@ BRANCH_TOPICS = {
 }
 
 def get_user_branch():
-    """Get current user's branch from database"""
     if 'user_email' not in session:
         return 'DEFAULT'
-    
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT branch FROM users WHERE email=%s", (session['user_email'],))
-    result = cur.fetchone()
-    cur.close()
-    
-    if result:
-        branch = result[0].upper()
+
+    result = supabase.table('users').select('branch').eq('email', session['user_email']).execute()
+
+    if result.data:
+        branch = result.data[0]['branch'].upper()
         for key in BRANCH_TOPICS.keys():
             if key in branch or branch in key:
                 return key
-    
+
     return 'DEFAULT'
 
-def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, mysql_conn):
-    """Generate topic-specific recommendations after quiz completion"""
+def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, supabase_client):
     recommendations = {
         'current_topic': subtopic if subtopic else topic,
         'next_steps': [],
@@ -62,19 +48,16 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
         'resources': []
     }
 
-    cur = mysql_conn.connection.cursor()
-    cur.execute("""
-        SELECT AVG(score), AVG(total_questions), COUNT(*)
-        FROM user_scores
-        WHERE user_email=%s AND topic=%s AND subtopic=%s
-    """, (user_email, topic, subtopic or ''))
-    result = cur.fetchone()
-    cur.close()
+    result = supabase_client.table('user_scores').select('score, total_questions').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
 
-    avg_score = result[0] if result[0] else 0
-    avg_total = result[1] if result[1] else 1
-    attempt_count = result[2] if result[2] else 1
-    avg_percent = (avg_score / avg_total * 100) if avg_total > 0 else 0
+    if result.data:
+        total_score = sum(row['score'] for row in result.data)
+        total_questions = sum(row['total_questions'] for row in result.data)
+        attempt_count = len(result.data)
+        avg_percent = (total_score / total_questions * 100) if total_questions > 0 else 0
+    else:
+        avg_percent = 0
+        attempt_count = 1
 
     if percent < 40:
         recommendations['next_steps'].append(f"Review fundamental concepts of {subtopic if subtopic else topic}")
@@ -131,15 +114,21 @@ def register():
         internships = request.form['internships']
         password = request.form['password']
 
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            INSERT INTO users (name, email, branch, cgpa, backlogs, internships, password)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, email, branch, cgpa, backlogs, internships, password))
-        mysql.connection.commit()
-        cur.close()
-        flash("Registration successful! Please login.")
-        return redirect(url_for('index'))
+        try:
+            supabase.table('users').insert({
+                'name': name,
+                'email': email,
+                'branch': branch,
+                'cgpa': float(cgpa),
+                'backlogs': int(backlogs),
+                'internships': internships,
+                'password': password
+            }).execute()
+            flash("Registration successful! Please login.")
+            return redirect(url_for('index'))
+        except Exception as e:
+            flash(f"Registration failed: {str(e)}")
+            return redirect(url_for('register'))
     return render_template('register.html')
 
 
@@ -148,15 +137,13 @@ def login():
     email = request.form['email']
     password = request.form['password']
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
-    user = cur.fetchone()
-    cur.close()
+    result = supabase.table('users').select('*').eq('email', email).eq('password', password).execute()
 
-    if user:
-        session['user'] = user[1]
-        session['user_email'] = user[2]
-        session['user_branch'] = user[3]
+    if result.data:
+        user = result.data[0]
+        session['user'] = user['name']
+        session['user_email'] = user['email']
+        session['user_branch'] = user['branch']
         return redirect(url_for('dashboard'))
     else:
         flash("Invalid email or password.")
@@ -254,22 +241,15 @@ def quiz(topic, subtopic=None):
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT topic, subtopic, score, total_questions
-        FROM user_scores
-        WHERE user_email=%s
-    """, (session['user_email'],))
-    past_scores = cur.fetchall()
-    cur.close()
-    
+    result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
+
     user_scores = []
-    for row in past_scores:
+    for row in result.data:
         user_scores.append({
-            'topic': row[0],
-            'subtopic': row[1],
-            'score': row[2],
-            'total_questions': row[3]
+            'topic': row['topic'],
+            'subtopic': row['subtopic'],
+            'score': row['score'],
+            'total_questions': row['total_questions']
         })
     
     try:
@@ -327,13 +307,13 @@ def quiz(topic, subtopic=None):
 
         print(f"\n📊 FINAL: {score}/{len(topic_questions)}")
 
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (session['user_email'], topic, subtopic or '', score, len(topic_questions)))
-        mysql.connection.commit()
-        cur.close()
+        supabase.table('user_scores').insert({
+            'user_email': session['user_email'],
+            'topic': topic,
+            'subtopic': subtopic or '',
+            'score': score,
+            'total_questions': len(topic_questions)
+        }).execute()
 
         percent = (score / len(topic_questions)) * 100
 
@@ -367,7 +347,7 @@ def quiz(topic, subtopic=None):
                 suggestion += " Advanced questions are challenging. Review concepts and try again."
 
         topic_recommendations = generate_topic_recommendations(
-            topic, subtopic, percent, difficulty, session['user_email'], mysql
+            topic, subtopic, percent, difficulty, session['user_email'], supabase
         )
 
         return render_template('quiz.html',
@@ -396,22 +376,15 @@ def suggestions():
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT topic, subtopic, score, total_questions
-        FROM user_scores
-        WHERE user_email=%s AND topic != 'Grand Test'
-    """, (session['user_email'],))
-    results = cur.fetchall()
-    cur.close()
+    result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).neq('topic', 'Grand Test').execute()
 
     scores_data = []
-    for row in results:
+    for row in result.data:
         scores_data.append({
-            'topic': row[0],
-            'subtopic': row[1],
-            'score': row[2],
-            'total_questions': row[3]
+            'topic': row['topic'],
+            'subtopic': row['subtopic'],
+            'score': row['score'],
+            'total_questions': row['total_questions']
         })
 
     ml_suggestions = analyze_user_performance(scores_data)
@@ -444,13 +417,13 @@ def grand_test():
             if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
 
-        cur = mysql.connection.cursor()
-        cur.execute(
-            "INSERT INTO user_scores (user_email, topic, subtopic, score, total_questions) VALUES (%s,%s,%s,%s,%s)",
-            (session['user_email'], 'Grand Test', '', score, len(all_questions))
-        )
-        mysql.connection.commit()
-        cur.close()
+        supabase.table('user_scores').insert({
+            'user_email': session['user_email'],
+            'topic': 'Grand Test',
+            'subtopic': '',
+            'score': score,
+            'total_questions': len(all_questions)
+        }).execute()
 
         session.pop('grand_test_questions', None)
 
@@ -475,22 +448,15 @@ def grand_test():
         print("🎯 GENERATING GRAND TEST")
         print("="*80)
 
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            SELECT topic, subtopic, score, total_questions
-            FROM user_scores
-            WHERE user_email=%s
-        """, (session['user_email'],))
-        past_scores = cur.fetchall()
-        cur.close()
-        
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
+
         user_scores = []
-        for row in past_scores:
+        for row in result.data:
             user_scores.append({
-                'topic': row[0],
-                'subtopic': row[1],
-                'score': row[2],
-                'total_questions': row[3]
+                'topic': row['topic'],
+                'subtopic': row['subtopic'],
+                'score': row['score'],
+                'total_questions': row['total_questions']
             })
 
         all_questions = []
@@ -529,28 +495,34 @@ def resume_draft():
         return redirect(url_for('index'))
 
     user_email = session.get('user_email')
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT name, email, branch, cgpa, internships, backlogs FROM users WHERE email=%s", (user_email,))
-    row = cur.fetchone()
-    cur.close()
+    result = supabase.table('users').select('name, email, branch, cgpa, internships, backlogs').eq('email', user_email).execute()
 
-    if not row:
+    if not result.data:
         flash("User data not found!")
         return redirect(url_for('dashboard'))
 
+    row = result.data[0]
     user = {
-        "name": row[0],
-        "email": row[1],
-        "branch": row[2],
-        "cgpa": row[3],
-        "internships": row[4],
-        "backlogs": row[5],
+        "name": row['name'],
+        "email": row['email'],
+        "branch": row['branch'],
+        "cgpa": row['cgpa'],
+        "internships": row['internships'],
+        "backlogs": row['backlogs'],
     }
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT topic, SUM(score) FROM user_scores WHERE user_email=%s GROUP BY topic", (user_email,))
-    scores = cur.fetchall()
-    cur.close()
+    scores_result = supabase.table('user_scores').select('topic, score').eq('user_email', user_email).execute()
+
+    topic_scores = {}
+    for row in scores_result.data:
+        topic = row['topic']
+        score = row['score']
+        if topic in topic_scores:
+            topic_scores[topic] += score
+        else:
+            topic_scores[topic] = score
+
+    scores = list(topic_scores.items())
 
     skills = {
         "core_skills": ", ".join([s[0] for s in scores[:2]]) if scores else "N/A",
