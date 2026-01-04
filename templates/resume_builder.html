@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Resume Builder - CareerLens</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 0;
+        }
+        .builder-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .builder-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .builder-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .editor-panel, .preview-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .section-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .section-title {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ai-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .resume-preview {
+            background: white;
+            padding: 40px;
+            border: 1px solid #dee2e6;
+            min-height: 800px;
+            font-family: 'Times New Roman', serif;
+        }
+        .preview-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .preview-contact {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        .preview-section {
+            margin-bottom: 25px;
+        }
+        .preview-section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .skill-tag {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 5px;
+            margin: 3px;
+            font-size: 0.85rem;
+        }
+        .project-item, .achievement-item {
+            margin-bottom: 15px;
+        }
+        .project-title {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .btn-download {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-left: 10px;
+        }
+        .btn-download:hover {
+            background: #218838;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="builder-container">
+    <div class="builder-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>🤖 AI-Powered Resume Builder</h2>
+                <p class="text-muted mb-0">Create your professional resume in minutes</p>
+            </div>
+            <a href="/dashboard" class="btn btn-outline-secondary">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="builder-row">
+        <!-- Editor Panel -->
+        <div class="editor-panel">
+            <h4 class="mb-4">Edit Your Information</h4>
+            
+            <form id="resumeForm">
+                <!-- Personal Info -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Personal Information
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="name" value="{{ resume_data.personal_info.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" value="{{ resume_data.personal_info.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+91-XXXXXXXXXX">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">LinkedIn</label>
+                            <input type="url" class="form-control" id="linkedin" placeholder="linkedin.com/in/yourname">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">GitHub</label>
+                            <input type="url" class="form-control" id="github" placeholder="github.com/yourname">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Summary -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Professional Summary
+                        <span class="ai-badge">AI Generated</span>
+                    </div>
+                    <textarea class="form-control" id="summary" rows="4">{{ resume_data.summary }}</textarea>
+                    <small class="text-muted">Edit the AI-generated summary or write your own</small>
+                </div>
+
+                <!-- Education -->
+                <div class="section-card">
+                    <div class="section-title">Education</div>
+                    <div class="mb-3">
+                        <label class="form-label">Degree</label>
+                        <input type="text" class="form-control" id="degree" value="{{ resume_data.education.degree }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CGPA</label>
+                            <input type="number" step="0.01" class="form-control" id="cgpa" value="{{ resume_data.education.cgpa }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expected Year</label>
+                            <input type="number" class="form-control" id="grad_year" value="{{ resume_data.education.year }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Skills
+                        <span class="ai-badge">From Your Performance</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Programming Languages</label>
+                        <input type="text" class="form-control" id="skills_programming" 
+                               value="{{ ', '.join(resume_data.skills.programming) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Technologies & Concepts</label>
+                        <input type="text" class="form-control" id="skills_concepts" 
+                               value="{{ ', '.join(resume_data.skills.concepts) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tools & Platforms</label>
+                        <input type="text" class="form-control" id="skills_tools" 
+                               value="{{ ', '.join(resume_data.skills.tools) }}" 
+                               placeholder="Git, Docker, AWS, etc.">
+                    </div>
+                </div>
+
+                <!-- Projects -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Projects
+                        <span class="ai-badge">AI Suggested</span>
+                    </div>
+                    <div id="projectsList">
+                        {% for project in resume_data.projects %}
+                        <div class="project-entry mb-4 p-3 bg-white rounded">
+                            <div class="mb-2">
+                                <label class="form-label fw-bold">Project {{ loop.index }}</label>
+                                <input type="text" class="form-control project-name mb-2" 
+                                       value="{{ project.name }}" placeholder="Project Name">
+                                <textarea class="form-control project-desc mb-2" rows="2" 
+                                          placeholder="Description">{{ project.description }}</textarea>
+                                <input type="text" class="form-control project-tech" 
+                                       value="{{ ', '.join(project.technologies) }}" 
+                                       placeholder="Technologies used">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProject()">+ Add Project</button>
+                </div>
+
+                <!-- Achievements -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Achievements & Certifications
+                        <span class="ai-badge">Performance Based</span>
+                    </div>
+                    <div id="achievementsList">
+                        {% for achievement in resume_data.achievements %}
+                        <div class="mb-2">
+                            <input type="text" class="form-control achievement-item" 
+                                   value="{{ achievement }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addAchievement()">+ Add Achievement</button>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-generate" onclick="updatePreview()">
+                        🔄 Update Preview
+                    </button>
+                    <button type="button" class="btn btn-download" onclick="downloadPDF()">
+                        📥 Download PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <h4 class="mb-4">Live Preview</h4>
+            <div class="resume-preview" id="resumePreview">
+                <!-- Preview will be generated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 mb-0">Generating your resume...</p>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+// Initialize preview on load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+});
+
+function addProject() {
+    const projectsList = document.getElementById('projectsList');
+    const count = projectsList.children.length + 1;
+    const html = `
+        <div class="project-entry mb-4 p-3 bg-white rounded">
+            <div class="mb-2">
+                <label class="form-label fw-bold">Project ${count}</label>
+                <input type="text" class="form-control project-name mb-2" placeholder="Project Name">
+                <textarea class="form-control project-desc mb-2" rows="2" placeholder="Description"></textarea>
+                <input type="text" class="form-control project-tech" placeholder="Technologies used">
+            </div>
+        </div>
+    `;
+    projectsList.insertAdjacentHTML('beforeend', html);
+}
+
+function addAchievement() {
+    const achievementsList = document.getElementById('achievementsList');
+    const html = `
+        <div class="mb-2">
+            <input type="text" class="form-control achievement-item" placeholder="New achievement">
+        </div>
+    `;
+    achievementsList.insertAdjacentHTML('beforeend', html);
+}
+
+function updatePreview() {
+    const preview = document.getElementById('resumePreview');
+    
+    // Collect data
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const linkedin = document.getElementById('linkedin').value;
+    const github = document.getElementById('github').value;
+    const summary = document.getElementById('summary').value;
+    const degree = document.getElementById('degree').value;
+    const cgpa = document.getElementById('cgpa').value;
+    const gradYear = document.getElementById('grad_year').value;
+    
+    // Skills
+    const skillsProg = document.getElementById('skills_programming').value.split(',').filter(s => s.trim());
+    const skillsConcepts = document.getElementById('skills_concepts').value.split(',').filter(s => s.trim());
+    const skillsTools = document.getElementById('skills_tools').value.split(',').filter(s => s.trim());
+    
+    // Projects
+    const projects = [];
+    document.querySelectorAll('.project-entry').forEach(entry => {
+        const name = entry.querySelector('.project-name').value;
+        const desc = entry.querySelector('.project-desc').value;
+        const tech = entry.querySelector('.project-tech').value;
+        if (name) projects.push({name, desc, tech});
+    });
+    
+    // Achievements
+    const achievements = [];
+    document.querySelectorAll('.achievement-item').forEach(input => {
+        if (input.value.trim()) achievements.push(input.value.trim());
+    });
+    
+    // Build contact line
+    let contact = email;
+    if (phone) contact += ' • ' + phone;
+    if (linkedin) contact += ' • ' + linkedin.replace('https://','');
+    if (github) contact += ' • ' + github.replace('https://','');
+    
+    // Generate HTML
+    let html = `
+        <div class="preview-name">${name}</div>
+        <div class="preview-contact">${contact}</div>
+    `;
+    
+    if (summary) {
+        html += `
+        <div class="preview-section">
+            <div class="preview-section-title">Professional Summary</div>
+            <p>${summary}</p>
+        </div>
+        `;
+    }
+    
+    html += `
+    <div class="preview-section">
+        <div class="preview-section-title">Education</div>
+        <strong>${degree}</strong><br>
+        CGPA: ${cgpa} | Expected Graduation: ${gradYear}
+    </div>
+    `;
+    
+    if (skillsProg.length || skillsConcepts.length || skillsTools.length) {
+        html += '<div class="preview-section"><div class="preview-section-title">Technical Skills</div>';
+        if (skillsProg.length) {
+            html += '<div class="mb-2"><strong>Programming:</strong> ';
+            skillsProg.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        if (skillsConcepts.length) {
+            html += '<div class="mb-2"><strong>Technologies:</strong> ';
+            skillsConcepts.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        if (skillsTools.length) {
+            html += '<div class="mb-2"><strong>Tools:</strong> ';
+            skillsTools.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+    
+    if (projects.length) {
+        html += '<div class="preview-section"><div class="preview-section-title">Projects</div>';
+        projects.forEach(p => {
+            html += `
+            <div class="project-item">
+                <div class="project-title">${p.name}</div>
+                <div>${p.desc}</div>
+                ${p.tech ? `<div class="text-muted" style="font-size: 0.85rem;"><em>Technologies: ${p.tech}</em></div>` : ''}
+            </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (achievements.length) {
+        html += '<div class="preview-section"><div class="preview-section-title">Achievements</div>';
+        achievements.forEach(a => {
+            html += `<div class="achievement-item">• ${a}</div>`;
+        });
+        html += '</div>';
+    }
+    
+    preview.innerHTML = html;
+}
+
+function downloadPDF() {
+    const element = document.getElementById('resumePreview');
+    const name = document.getElementById('name').value.replace(/\s+/g, '_');
+    
+    const opt = {
+        margin: 0.5,
+        filename: `${name}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    });
+}
+</script>
+</body>
+</html>
