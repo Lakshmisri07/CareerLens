@@ -495,43 +495,30 @@ def resume_draft():
         return redirect(url_for('index'))
 
     user_email = session.get('user_email')
-    result = supabase.table('users').select('name, email, branch, cgpa, internships, backlogs').eq('email', user_email).execute()
-
+    
+    # Get user data
+    result = supabase.table('users').select('*').eq('email', user_email).execute()
     if not result.data:
         flash("User data not found!")
         return redirect(url_for('dashboard'))
-
-    row = result.data[0]
-    user = {
-        "name": row['name'],
-        "email": row['email'],
-        "branch": row['branch'],
-        "cgpa": row['cgpa'],
-        "internships": row['internships'],
-        "backlogs": row['backlogs'],
-    }
-
-    scores_result = supabase.table('user_scores').select('topic, score').eq('user_email', user_email).execute()
-
-    topic_scores = {}
-    for row in scores_result.data:
-        topic = row['topic']
-        score = row['score']
-        if topic in topic_scores:
-            topic_scores[topic] += score
-        else:
-            topic_scores[topic] = score
-
-    scores = list(topic_scores.items())
-
-    skills = {
-        "core_skills": ", ".join([s[0] for s in scores[:2]]) if scores else "N/A",
-        "programming": ", ".join([s[0] for s in scores[2:4]]) if len(scores) > 2 else "N/A",
-        "aptitude": ", ".join([s[0] for s in scores[4:5]]) if len(scores) > 4 else "N/A",
-        "soft_skills": ", ".join([s[0] for s in scores[5:]]) if len(scores) > 5 else "N/A"
-    }
-
-    return render_template('resume_draft.html', user=user, skills=skills)
+    
+    user_data = result.data[0]
+    
+    # Get quiz scores (filter out Grand Test)
+    scores_result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
+    scores_data = [s for s in scores_result.data if s.get('topic', '').lower() != 'grand test'] if scores_result.data else []
+    
+    # Get certificates if table exists (optional)
+    try:
+        certs_result = supabase.table('user_certificates').select('*').eq('user_email', user_email).execute()
+        certificates = certs_result.data if certs_result.data else []
+    except:
+        certificates = []
+    
+    # Generate resume data
+    resume_data = generate_complete_resume(user_data, scores_data, certificates)
+    
+    return render_template('resume_builder.html', resume_data=resume_data)
 @app.route('/resume_builder')
 def resume_builder():
     if 'user' not in session:

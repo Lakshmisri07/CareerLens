@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI Resume Builder - CareerLens</title>
+    <title>Resume Builder - CareerLens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -10,10 +10,7 @@
             min-height: 100vh;
             padding: 30px 0;
         }
-        .builder-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .builder-container { max-width: 1400px; margin: 0 auto; }
         .builder-header {
             background: white;
             border-radius: 15px;
@@ -31,6 +28,8 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .section-card {
             background: #f8f9fa;
@@ -47,8 +46,8 @@
             justify-content: space-between;
             align-items: center;
         }
-        .ai-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .recommended-badge {
+            background: #28a745;
             color: white;
             padding: 4px 12px;
             border-radius: 20px;
@@ -111,6 +110,11 @@
             margin: 3px;
             font-size: 0.85rem;
         }
+        .skill-tag.recommended {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            color: #155724;
+        }
         .project-item, .achievement-item {
             margin-bottom: 15px;
         }
@@ -127,8 +131,20 @@
             border-radius: 8px;
             margin-left: 10px;
         }
-        .btn-download:hover {
-            background: #218838;
+        .btn-download:hover { background: #218838; }
+        .certificate-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .skill-recommendation {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
         }
         .loading-overlay {
             position: fixed;
@@ -155,8 +171,8 @@
     <div class="builder-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2>🤖 AI-Powered Resume Builder</h2>
-                <p class="text-muted mb-0">Create your professional resume in minutes</p>
+                <h2>📝 Professional Resume Builder</h2>
+                <p class="text-muted mb-0">Create your job-ready resume</p>
             </div>
             <a href="/dashboard" class="btn btn-outline-secondary">← Back to Dashboard</a>
         </div>
@@ -165,14 +181,12 @@
     <div class="builder-row">
         <!-- Editor Panel -->
         <div class="editor-panel">
-            <h4 class="mb-4">Edit Your Information</h4>
+            <h4 class="mb-4">Build Your Resume</h4>
             
             <form id="resumeForm">
                 <!-- Personal Info -->
                 <div class="section-card">
-                    <div class="section-title">
-                        Personal Information
-                    </div>
+                    <div class="section-title">Personal Information</div>
                     <div class="mb-3">
                         <label class="form-label">Full Name *</label>
                         <input type="text" class="form-control" id="name" value="{{ resume_data.personal_info.name }}" required>
@@ -199,12 +213,9 @@
 
                 <!-- Professional Summary -->
                 <div class="section-card">
-                    <div class="section-title">
-                        Professional Summary
-                        <span class="ai-badge">AI Generated</span>
-                    </div>
+                    <div class="section-title">Professional Summary</div>
                     <textarea class="form-control" id="summary" rows="4">{{ resume_data.summary }}</textarea>
-                    <small class="text-muted">Edit the AI-generated summary or write your own</small>
+                    <small class="text-muted">Customize your professional summary</small>
                 </div>
 
                 <!-- Education -->
@@ -215,47 +226,101 @@
                         <input type="text" class="form-control" id="degree" value="{{ resume_data.education.degree }}">
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">CGPA</label>
                             <input type="number" step="0.01" class="form-control" id="cgpa" value="{{ resume_data.education.cgpa }}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Expected Year</label>
                             <input type="number" class="form-control" id="grad_year" value="{{ resume_data.education.year }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">University</label>
+                            <input type="text" class="form-control" id="university" placeholder="University Name">
                         </div>
                     </div>
                 </div>
 
-                <!-- Skills -->
+                <!-- Certificates -->
                 <div class="section-card">
                     <div class="section-title">
-                        Skills
-                        <span class="ai-badge">From Your Performance</span>
+                        Certifications
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addCertificate()">+ Add</button>
                     </div>
+                    <div id="certificatesList">
+                        {% for cert in resume_data.certificates %}
+                        <div class="certificate-item">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control cert-name" value="{{ cert.name }}" placeholder="Certificate Name">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control cert-issuer" value="{{ cert.issuer }}" placeholder="Issuing Organization">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control cert-date" value="{{ cert.date }}" placeholder="Month Year">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control cert-id" value="{{ cert.credential_id }}" placeholder="Credential ID (optional)">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if not resume_data.certificates %}
+                        <p class="text-muted">No certificates added yet. Click "+ Add" to include your certifications.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Skills with Recommendations -->
+                <div class="section-card">
+                    <div class="section-title">
+                        Technical Skills
+                        <span class="recommended-badge">✓ Skill Recommendations Included</span>
+                    </div>
+                    
+                    <div class="skill-recommendation mb-3">
+                        <strong>💡 Recommended Skills:</strong>
+                        <p class="mb-2 small">Based on your performance and certificates, we recommend mentioning these skills:</p>
+                        <div id="recommendedSkills">
+                            {% for skill in resume_data.skills.programming[:4] %}
+                            <span class="skill-tag recommended">{{ skill }}</span>
+                            {% endfor %}
+                            {% for skill in resume_data.skills.technologies[:4] %}
+                            <span class="skill-tag recommended">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Programming Languages</label>
                         <input type="text" class="form-control" id="skills_programming" 
-                               value="{{ ', '.join(resume_data.skills.programming) }}">
+                               value="{{ ', '.join(resume_data.skills.programming) }}"
+                               placeholder="Python, Java, C++, JavaScript">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Technologies & Concepts</label>
-                        <input type="text" class="form-control" id="skills_concepts" 
-                               value="{{ ', '.join(resume_data.skills.concepts) }}">
+                        <label class="form-label">Technologies & Frameworks</label>
+                        <input type="text" class="form-control" id="skills_technologies" 
+                               value="{{ ', '.join(resume_data.skills.technologies) }}"
+                               placeholder="React, Django, MySQL, MongoDB">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tools & Platforms</label>
                         <input type="text" class="form-control" id="skills_tools" 
                                value="{{ ', '.join(resume_data.skills.tools) }}" 
-                               placeholder="Git, Docker, AWS, etc.">
+                               placeholder="Git, Docker, AWS, Linux">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Soft Skills</label>
+                        <input type="text" class="form-control" id="skills_soft" 
+                               value="{{ ', '.join(resume_data.skills.soft_skills) }}" 
+                               placeholder="Problem Solving, Team Collaboration">
                     </div>
                 </div>
 
                 <!-- Projects -->
                 <div class="section-card">
-                    <div class="section-title">
-                        Projects
-                        <span class="ai-badge">AI Suggested</span>
-                    </div>
+                    <div class="section-title">Projects</div>
                     <div id="projectsList">
                         {% for project in resume_data.projects %}
                         <div class="project-entry mb-4 p-3 bg-white rounded">
@@ -264,7 +329,7 @@
                                 <input type="text" class="form-control project-name mb-2" 
                                        value="{{ project.name }}" placeholder="Project Name">
                                 <textarea class="form-control project-desc mb-2" rows="2" 
-                                          placeholder="Description">{{ project.description }}</textarea>
+                                          placeholder="Project description">{{ project.description }}</textarea>
                                 <input type="text" class="form-control project-tech" 
                                        value="{{ ', '.join(project.technologies) }}" 
                                        placeholder="Technologies used">
@@ -275,12 +340,15 @@
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProject()">+ Add Project</button>
                 </div>
 
+                <!-- Internships -->
+                <div class="section-card">
+                    <div class="section-title">Internships & Experience</div>
+                    <textarea class="form-control" id="internships" rows="3" placeholder="Describe your internship experience">{{ resume_data.internships }}</textarea>
+                </div>
+
                 <!-- Achievements -->
                 <div class="section-card">
-                    <div class="section-title">
-                        Achievements & Certifications
-                        <span class="ai-badge">Performance Based</span>
-                    </div>
+                    <div class="section-title">Achievements</div>
                     <div id="achievementsList">
                         {% for achievement in resume_data.achievements %}
                         <div class="mb-2">
@@ -307,7 +375,7 @@
         <div class="preview-panel">
             <h4 class="mb-4">Live Preview</h4>
             <div class="resume-preview" id="resumePreview">
-                <!-- Preview will be generated here -->
+                <!-- Preview generated here -->
             </div>
         </div>
     </div>
@@ -324,10 +392,32 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-// Initialize preview on load
 document.addEventListener('DOMContentLoaded', function() {
     updatePreview();
 });
+
+function addCertificate() {
+    const certificatesList = document.getElementById('certificatesList');
+    const html = `
+        <div class="certificate-item">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <input type="text" class="form-control cert-name" placeholder="Certificate Name">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <input type="text" class="form-control cert-issuer" placeholder="Issuing Organization">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <input type="text" class="form-control cert-date" placeholder="Month Year">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <input type="text" class="form-control cert-id" placeholder="Credential ID (optional)">
+                </div>
+            </div>
+        </div>
+    `;
+    certificatesList.insertAdjacentHTML('beforeend', html);
+}
 
 function addProject() {
     const projectsList = document.getElementById('projectsList');
@@ -337,7 +427,7 @@ function addProject() {
             <div class="mb-2">
                 <label class="form-label fw-bold">Project ${count}</label>
                 <input type="text" class="form-control project-name mb-2" placeholder="Project Name">
-                <textarea class="form-control project-desc mb-2" rows="2" placeholder="Description"></textarea>
+                <textarea class="form-control project-desc mb-2" rows="2" placeholder="Project description"></textarea>
                 <input type="text" class="form-control project-tech" placeholder="Technologies used">
             </div>
         </div>
@@ -368,11 +458,24 @@ function updatePreview() {
     const degree = document.getElementById('degree').value;
     const cgpa = document.getElementById('cgpa').value;
     const gradYear = document.getElementById('grad_year').value;
+    const university = document.getElementById('university').value;
+    const internships = document.getElementById('internships').value;
     
     // Skills
     const skillsProg = document.getElementById('skills_programming').value.split(',').filter(s => s.trim());
-    const skillsConcepts = document.getElementById('skills_concepts').value.split(',').filter(s => s.trim());
+    const skillsTech = document.getElementById('skills_technologies').value.split(',').filter(s => s.trim());
     const skillsTools = document.getElementById('skills_tools').value.split(',').filter(s => s.trim());
+    const skillsSoft = document.getElementById('skills_soft').value.split(',').filter(s => s.trim());
+    
+    // Certificates
+    const certificates = [];
+    document.querySelectorAll('.certificate-item').forEach(entry => {
+        const name = entry.querySelector('.cert-name').value;
+        const issuer = entry.querySelector('.cert-issuer').value;
+        const date = entry.querySelector('.cert-date').value;
+        const id = entry.querySelector('.cert-id').value;
+        if (name && issuer) certificates.push({name, issuer, date, id});
+    });
     
     // Projects
     const projects = [];
@@ -389,7 +492,7 @@ function updatePreview() {
         if (input.value.trim()) achievements.push(input.value.trim());
     });
     
-    // Build contact line
+    // Build contact
     let contact = email;
     if (phone) contact += ' • ' + phone;
     if (linkedin) contact += ' • ' + linkedin.replace('https://','');
@@ -414,27 +517,47 @@ function updatePreview() {
     <div class="preview-section">
         <div class="preview-section-title">Education</div>
         <strong>${degree}</strong><br>
+        ${university ? university + '<br>' : ''}
         CGPA: ${cgpa} | Expected Graduation: ${gradYear}
     </div>
     `;
     
-    if (skillsProg.length || skillsConcepts.length || skillsTools.length) {
+    if (skillsProg.length || skillsTech.length || skillsTools.length || skillsSoft.length) {
         html += '<div class="preview-section"><div class="preview-section-title">Technical Skills</div>';
         if (skillsProg.length) {
-            html += '<div class="mb-2"><strong>Programming:</strong> ';
+            html += '<div class="mb-2"><strong>Programming Languages:</strong> ';
             skillsProg.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
             html += '</div>';
         }
-        if (skillsConcepts.length) {
-            html += '<div class="mb-2"><strong>Technologies:</strong> ';
-            skillsConcepts.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+        if (skillsTech.length) {
+            html += '<div class="mb-2"><strong>Technologies & Frameworks:</strong> ';
+            skillsTech.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
             html += '</div>';
         }
         if (skillsTools.length) {
-            html += '<div class="mb-2"><strong>Tools:</strong> ';
+            html += '<div class="mb-2"><strong>Tools & Platforms:</strong> ';
             skillsTools.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
             html += '</div>';
         }
+        if (skillsSoft.length) {
+            html += '<div class="mb-2"><strong>Soft Skills:</strong> ';
+            skillsSoft.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+    
+    if (certificates.length) {
+        html += '<div class="preview-section"><div class="preview-section-title">Certifications</div>';
+        certificates.forEach(c => {
+            html += `
+            <div class="mb-2">
+                <strong>${c.name}</strong> - ${c.issuer}<br>
+                ${c.date ? '<span class="text-muted">' + c.date + '</span>' : ''}
+                ${c.id ? ' | <span class="text-muted">ID: ' + c.id + '</span>' : ''}
+            </div>
+            `;
+        });
         html += '</div>';
     }
     
@@ -450,6 +573,15 @@ function updatePreview() {
             `;
         });
         html += '</div>';
+    }
+    
+    if (internships) {
+        html += `
+        <div class="preview-section">
+            <div class="preview-section-title">Internships & Experience</div>
+            <p>${internships}</p>
+        </div>
+        `;
     }
     
     if (achievements.length) {
