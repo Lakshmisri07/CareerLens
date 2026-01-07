@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Resume Builder - CareerLens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -46,18 +47,78 @@
             justify-content: space-between;
             align-items: center;
         }
-        .recommended-badge {
-            background: #28a745;
+        .certificate-upload-card {
+            background: white;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        .certificate-upload-card:hover {
+            border-color: #764ba2;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .certificate-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .certificate-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .pdf-icon {
+            width: 80px;
+            height: 80px;
+            background: #dc3545;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 2rem;
         }
-        .form-control:focus, .form-select:focus {
+        .delete-cert-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-cert-btn:hover { background: #c82333; }
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .upload-zone:hover {
             border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: #f8f9ff;
         }
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: #e8ebff;
+        }
+        .file-input { display: none; }
         .btn-generate {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -110,42 +171,6 @@
             margin: 3px;
             font-size: 0.85rem;
         }
-        .skill-tag.recommended {
-            background: #d4edda;
-            border: 1px solid #28a745;
-            color: #155724;
-        }
-        .project-item, .achievement-item {
-            margin-bottom: 15px;
-        }
-        .project-title {
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        .btn-download {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-weight: 600;
-            border-radius: 8px;
-            margin-left: 10px;
-        }
-        .btn-download:hover { background: #218838; }
-        .certificate-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #dee2e6;
-        }
-        .skill-recommendation {
-            background: #d4edda;
-            border-left: 4px solid #28a745;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -164,6 +189,7 @@
             border-radius: 15px;
             text-align: center;
         }
+        .alert { margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -172,11 +198,14 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h2>📝 Professional Resume Builder</h2>
-                <p class="text-muted mb-0">Create your job-ready resume</p>
+                <p class="text-muted mb-0">Create your job-ready resume with certificate uploads</p>
             </div>
             <a href="/dashboard" class="btn btn-outline-secondary">← Back to Dashboard</a>
         </div>
     </div>
+
+    <!-- Alert area for messages -->
+    <div id="alertArea"></div>
 
     <div class="builder-row">
         <!-- Editor Panel -->
@@ -241,57 +270,57 @@
                     </div>
                 </div>
 
-                <!-- Certificates -->
+                <!-- Certificates with Upload -->
                 <div class="section-card">
                     <div class="section-title">
                         Certifications
-                        <button type="button" class="btn btn-sm btn-primary" onclick="addCertificate()">+ Add</button>
+                        <span class="badge bg-primary">Upload PDFs or Images</span>
                     </div>
-                    <div id="certificatesList">
-                        {% for cert in resume_data.certificates %}
-                        <div class="certificate-item">
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <input type="text" class="form-control cert-name" value="{{ cert.name }}" placeholder="Certificate Name">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <input type="text" class="form-control cert-issuer" value="{{ cert.issuer }}" placeholder="Issuing Organization">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <input type="text" class="form-control cert-date" value="{{ cert.date }}" placeholder="Month Year">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <input type="text" class="form-control cert-id" value="{{ cert.credential_id }}" placeholder="Credential ID (optional)">
-                                </div>
+                    
+                    <!-- Upload Zone -->
+                    <div class="certificate-upload-card">
+                        <h6 class="mb-3">Add New Certificate</h6>
+                        
+                        <div class="upload-zone" id="uploadZone">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-2"><strong>Drag & drop certificate file here</strong></p>
+                            <p class="text-muted mb-3">or click to browse</p>
+                            <p class="text-muted small">Supported: PDF, PNG, JPG (Max 5MB)</p>
+                            <input type="file" id="certificateFile" class="file-input" accept=".pdf,.png,.jpg,.jpeg">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control" id="newCertName" placeholder="Certificate Name *">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control" id="newCertIssuer" placeholder="Issuing Organization *">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control" id="newCertDate" placeholder="Month Year">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control" id="newCertId" placeholder="Credential ID (optional)">
                             </div>
                         </div>
-                        {% endfor %}
-                        {% if not resume_data.certificates %}
-                        <p class="text-muted">No certificates added yet. Click "+ Add" to include your certifications.</p>
-                        {% endif %}
+                        
+                        <button type="button" class="btn btn-primary w-100 mt-2" onclick="uploadCertificate()">
+                            <i class="fas fa-upload"></i> Upload Certificate
+                        </button>
+                    </div>
+                    
+                    <!-- Existing Certificates List -->
+                    <div id="certificatesList">
+                        <h6 class="mt-4 mb-3">Your Certificates</h6>
+                        <div id="certificatesContainer">
+                            <!-- Certificates loaded via JavaScript -->
+                        </div>
                     </div>
                 </div>
 
-                <!-- Skills with Recommendations -->
+                <!-- Skills -->
                 <div class="section-card">
-                    <div class="section-title">
-                        Technical Skills
-                        <span class="recommended-badge">✓ Skill Recommendations Included</span>
-                    </div>
-                    
-                    <div class="skill-recommendation mb-3">
-                        <strong>💡 Recommended Skills:</strong>
-                        <p class="mb-2 small">Based on your performance and certificates, we recommend mentioning these skills:</p>
-                        <div id="recommendedSkills">
-                            {% for skill in resume_data.skills.programming[:4] %}
-                            <span class="skill-tag recommended">{{ skill }}</span>
-                            {% endfor %}
-                            {% for skill in resume_data.skills.technologies[:4] %}
-                            <span class="skill-tag recommended">{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-
+                    <div class="section-title">Technical Skills</div>
                     <div class="mb-3">
                         <label class="form-label">Programming Languages</label>
                         <input type="text" class="form-control" id="skills_programming" 
@@ -310,12 +339,6 @@
                                value="{{ ', '.join(resume_data.skills.tools) }}" 
                                placeholder="Git, Docker, AWS, Linux">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Soft Skills</label>
-                        <input type="text" class="form-control" id="skills_soft" 
-                               value="{{ ', '.join(resume_data.skills.soft_skills) }}" 
-                               placeholder="Problem Solving, Team Collaboration">
-                    </div>
                 </div>
 
                 <!-- Projects -->
@@ -323,48 +346,25 @@
                     <div class="section-title">Projects</div>
                     <div id="projectsList">
                         {% for project in resume_data.projects %}
-                        <div class="project-entry mb-4 p-3 bg-white rounded">
-                            <div class="mb-2">
-                                <label class="form-label fw-bold">Project {{ loop.index }}</label>
-                                <input type="text" class="form-control project-name mb-2" 
-                                       value="{{ project.name }}" placeholder="Project Name">
-                                <textarea class="form-control project-desc mb-2" rows="2" 
-                                          placeholder="Project description">{{ project.description }}</textarea>
-                                <input type="text" class="form-control project-tech" 
-                                       value="{{ ', '.join(project.technologies) }}" 
-                                       placeholder="Technologies used">
-                            </div>
+                        <div class="project-entry mb-3 p-3 bg-white rounded">
+                            <input type="text" class="form-control project-name mb-2" 
+                                   value="{{ project.name }}" placeholder="Project Name">
+                            <textarea class="form-control project-desc mb-2" rows="2" 
+                                      placeholder="Project description">{{ project.description }}</textarea>
+                            <input type="text" class="form-control project-tech" 
+                                   value="{{ ', '.join(project.technologies) }}" 
+                                   placeholder="Technologies used">
                         </div>
                         {% endfor %}
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProject()">+ Add Project</button>
                 </div>
 
-                <!-- Internships -->
-                <div class="section-card">
-                    <div class="section-title">Internships & Experience</div>
-                    <textarea class="form-control" id="internships" rows="3" placeholder="Describe your internship experience">{{ resume_data.internships }}</textarea>
-                </div>
-
-                <!-- Achievements -->
-                <div class="section-card">
-                    <div class="section-title">Achievements</div>
-                    <div id="achievementsList">
-                        {% for achievement in resume_data.achievements %}
-                        <div class="mb-2">
-                            <input type="text" class="form-control achievement-item" 
-                                   value="{{ achievement }}">
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addAchievement()">+ Add Achievement</button>
-                </div>
-
                 <div class="text-center mt-4">
                     <button type="button" class="btn btn-generate" onclick="updatePreview()">
                         🔄 Update Preview
                     </button>
-                    <button type="button" class="btn btn-download" onclick="downloadPDF()">
+                    <button type="button" class="btn btn-generate" style="background: #28a745;" onclick="downloadPDF()">
                         📥 Download PDF
                     </button>
                 </div>
@@ -386,63 +386,201 @@
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-3 mb-0">Generating your resume...</p>
+        <p class="mt-3 mb-0">Processing...</p>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+let userCertificates = [];
+
 document.addEventListener('DOMContentLoaded', function() {
+    setupUploadZone();
+    loadCertificates();
     updatePreview();
 });
 
-function addCertificate() {
-    const certificatesList = document.getElementById('certificatesList');
-    const html = `
-        <div class="certificate-item">
-            <div class="row">
-                <div class="col-md-6 mb-2">
-                    <input type="text" class="form-control cert-name" placeholder="Certificate Name">
+function showAlert(message, type = 'info') {
+    const alertArea = document.getElementById('alertArea');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    alertArea.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function setupUploadZone() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('certificateFile');
+    
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+        }
+    });
+}
+
+async function loadCertificates() {
+    try {
+        const response = await fetch('/certificates/list');
+        const data = await response.json();
+        
+        if (data.certificates) {
+            userCertificates = data.certificates;
+            displayCertificates();
+        }
+    } catch (error) {
+        console.error('Error loading certificates:', error);
+    }
+}
+
+function displayCertificates() {
+    const container = document.getElementById('certificatesContainer');
+    
+    if (userCertificates.length === 0) {
+        container.innerHTML = '<p class="text-muted">No certificates uploaded yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = userCertificates.map(cert => `
+        <div class="certificate-item" id="cert-${cert.id}">
+            <button class="delete-cert-btn" onclick="deleteCertificate(${cert.id})">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    ${cert.file_type === 'pdf' 
+                        ? '<div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>'
+                        : `<img src="${cert.file_url}" class="certificate-preview" alt="Certificate">`
+                    }
                 </div>
-                <div class="col-md-6 mb-2">
-                    <input type="text" class="form-control cert-issuer" placeholder="Issuing Organization">
-                </div>
-                <div class="col-md-6 mb-2">
-                    <input type="text" class="form-control cert-date" placeholder="Month Year">
-                </div>
-                <div class="col-md-6 mb-2">
-                    <input type="text" class="form-control cert-id" placeholder="Credential ID (optional)">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${cert.name}</h6>
+                    <p class="text-muted mb-1 small">${cert.issuer}</p>
+                    ${cert.date ? `<p class="text-muted mb-1 small">${cert.date}</p>` : ''}
+                    ${cert.credential_id ? `<p class="text-muted mb-0 small">ID: ${cert.credential_id}</p>` : ''}
+                    <a href="${cert.file_url}" target="_blank" class="small">
+                        <i class="fas fa-external-link-alt"></i> View File
+                    </a>
                 </div>
             </div>
         </div>
-    `;
-    certificatesList.insertAdjacentHTML('beforeend', html);
+    `).join('');
+}
+
+async function uploadCertificate() {
+    const fileInput = document.getElementById('certificateFile');
+    const name = document.getElementById('newCertName').value.trim();
+    const issuer = document.getElementById('newCertIssuer').value.trim();
+    const date = document.getElementById('newCertDate').value.trim();
+    const credId = document.getElementById('newCertId').value.trim();
+    
+    if (!fileInput.files[0]) {
+        showAlert('Please select a file to upload', 'warning');
+        return;
+    }
+    
+    if (!name || !issuer) {
+        showAlert('Please provide certificate name and issuer', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('certificate_file', fileInput.files[0]);
+    formData.append('cert_name', name);
+    formData.append('cert_issuer', issuer);
+    formData.append('cert_date', date);
+    formData.append('cert_id', credId);
+    
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    try {
+        const response = await fetch('/certificates/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (data.success) {
+            showAlert('Certificate uploaded successfully!', 'success');
+            
+            // Clear form
+            fileInput.value = '';
+            document.getElementById('newCertName').value = '';
+            document.getElementById('newCertIssuer').value = '';
+            document.getElementById('newCertDate').value = '';
+            document.getElementById('newCertId').value = '';
+            
+            // Reload certificates
+            await loadCertificates();
+            updatePreview();
+        } else {
+            showAlert(data.error || 'Upload failed', 'danger');
+        }
+    } catch (error) {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        showAlert('Error uploading certificate: ' + error.message, 'danger');
+    }
+}
+
+async function deleteCertificate(certId) {
+    if (!confirm('Are you sure you want to delete this certificate?')) return;
+    
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    try {
+        const response = await fetch(`/certificates/delete/${certId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (data.success) {
+            showAlert('Certificate deleted successfully', 'success');
+            await loadCertificates();
+            updatePreview();
+        } else {
+            showAlert(data.error || 'Delete failed', 'danger');
+        }
+    } catch (error) {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        showAlert('Error deleting certificate: ' + error.message, 'danger');
+    }
 }
 
 function addProject() {
     const projectsList = document.getElementById('projectsList');
     const count = projectsList.children.length + 1;
     const html = `
-        <div class="project-entry mb-4 p-3 bg-white rounded">
-            <div class="mb-2">
-                <label class="form-label fw-bold">Project ${count}</label>
-                <input type="text" class="form-control project-name mb-2" placeholder="Project Name">
-                <textarea class="form-control project-desc mb-2" rows="2" placeholder="Project description"></textarea>
-                <input type="text" class="form-control project-tech" placeholder="Technologies used">
-            </div>
+        <div class="project-entry mb-3 p-3 bg-white rounded">
+            <input type="text" class="form-control project-name mb-2" placeholder="Project Name">
+            <textarea class="form-control project-desc mb-2" rows="2" placeholder="Project description"></textarea>
+            <input type="text" class="form-control project-tech" placeholder="Technologies used">
         </div>
     `;
     projectsList.insertAdjacentHTML('beforeend', html);
-}
-
-function addAchievement() {
-    const achievementsList = document.getElementById('achievementsList');
-    const html = `
-        <div class="mb-2">
-            <input type="text" class="form-control achievement-item" placeholder="New achievement">
-        </div>
-    `;
-    achievementsList.insertAdjacentHTML('beforeend', html);
 }
 
 function updatePreview() {
@@ -459,23 +597,11 @@ function updatePreview() {
     const cgpa = document.getElementById('cgpa').value;
     const gradYear = document.getElementById('grad_year').value;
     const university = document.getElementById('university').value;
-    const internships = document.getElementById('internships').value;
     
     // Skills
     const skillsProg = document.getElementById('skills_programming').value.split(',').filter(s => s.trim());
     const skillsTech = document.getElementById('skills_technologies').value.split(',').filter(s => s.trim());
     const skillsTools = document.getElementById('skills_tools').value.split(',').filter(s => s.trim());
-    const skillsSoft = document.getElementById('skills_soft').value.split(',').filter(s => s.trim());
-    
-    // Certificates
-    const certificates = [];
-    document.querySelectorAll('.certificate-item').forEach(entry => {
-        const name = entry.querySelector('.cert-name').value;
-        const issuer = entry.querySelector('.cert-issuer').value;
-        const date = entry.querySelector('.cert-date').value;
-        const id = entry.querySelector('.cert-id').value;
-        if (name && issuer) certificates.push({name, issuer, date, id});
-    });
     
     // Projects
     const projects = [];
@@ -484,12 +610,6 @@ function updatePreview() {
         const desc = entry.querySelector('.project-desc').value;
         const tech = entry.querySelector('.project-tech').value;
         if (name) projects.push({name, desc, tech});
-    });
-    
-    // Achievements
-    const achievements = [];
-    document.querySelectorAll('.achievement-item').forEach(input => {
-        if (input.value.trim()) achievements.push(input.value.trim());
     });
     
     // Build contact
@@ -522,42 +642,37 @@ function updatePreview() {
     </div>
     `;
     
-    if (skillsProg.length || skillsTech.length || skillsTools.length || skillsSoft.length) {
-        html += '<div class="preview-section"><div class="preview-section-title">Technical Skills</div>';
-        if (skillsProg.length) {
-            html += '<div class="mb-2"><strong>Programming Languages:</strong> ';
-            skillsProg.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
-            html += '</div>';
-        }
-        if (skillsTech.length) {
-            html += '<div class="mb-2"><strong>Technologies & Frameworks:</strong> ';
-            skillsTech.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
-            html += '</div>';
-        }
-        if (skillsTools.length) {
-            html += '<div class="mb-2"><strong>Tools & Platforms:</strong> ';
-            skillsTools.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
-            html += '</div>';
-        }
-        if (skillsSoft.length) {
-            html += '<div class="mb-2"><strong>Soft Skills:</strong> ';
-            skillsSoft.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
-            html += '</div>';
-        }
-        html += '</div>';
-    }
-    
-    if (certificates.length) {
+    if (userCertificates.length > 0) {
         html += '<div class="preview-section"><div class="preview-section-title">Certifications</div>';
-        certificates.forEach(c => {
+        userCertificates.forEach(c => {
             html += `
             <div class="mb-2">
                 <strong>${c.name}</strong> - ${c.issuer}<br>
                 ${c.date ? '<span class="text-muted">' + c.date + '</span>' : ''}
-                ${c.id ? ' | <span class="text-muted">ID: ' + c.id + '</span>' : ''}
+                ${c.credential_id ? ' | <span class="text-muted">ID: ' + c.credential_id + '</span>' : ''}
             </div>
             `;
         });
+        html += '</div>';
+    }
+    
+    if (skillsProg.length || skillsTech.length || skillsTools.length) {
+        html += '<div class="preview-section"><div class="preview-section-title">Technical Skills</div>';
+        if (skillsProg.length) {
+            html += '<div class="mb-2"><strong>Programming:</strong> ';
+            skillsProg.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        if (skillsTech.length) {
+            html += '<div class="mb-2"><strong>Technologies:</strong> ';
+            skillsTech.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
+        if (skillsTools.length) {
+            html += '<div class="mb-2"><strong>Tools:</strong> ';
+            skillsTools.forEach(s => html += `<span class="skill-tag">${s.trim()}</span>`);
+            html += '</div>';
+        }
         html += '</div>';
     }
     
@@ -565,29 +680,12 @@ function updatePreview() {
         html += '<div class="preview-section"><div class="preview-section-title">Projects</div>';
         projects.forEach(p => {
             html += `
-            <div class="project-item">
-                <div class="project-title">${p.name}</div>
+            <div class="mb-3">
+                <strong>${p.name}</strong><br>
                 <div>${p.desc}</div>
-                ${p.tech ? `<div class="text-muted" style="font-size: 0.85rem;"><em>Technologies: ${p.tech}</em></div>` : ''}
+                ${p.tech ? `<div class="text-muted small"><em>Technologies: ${p.tech}</em></div>` : ''}
             </div>
             `;
-        });
-        html += '</div>';
-    }
-    
-    if (internships) {
-        html += `
-        <div class="preview-section">
-            <div class="preview-section-title">Internships & Experience</div>
-            <p>${internships}</p>
-        </div>
-        `;
-    }
-    
-    if (achievements.length) {
-        html += '<div class="preview-section"><div class="preview-section-title">Achievements</div>';
-        achievements.forEach(a => {
-            html += `<div class="achievement-item">• ${a}</div>`;
         });
         html += '</div>';
     }
@@ -611,8 +709,10 @@ function downloadPDF() {
     
     html2pdf().set(opt).from(element).save().then(() => {
         document.getElementById('loadingOverlay').style.display = 'none';
+        showAlert('Resume downloaded successfully!', 'success');
     });
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

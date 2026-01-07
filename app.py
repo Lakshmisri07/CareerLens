@@ -4,9 +4,11 @@ import os
 from dotenv import load_dotenv
 from ml_model import analyze_user_performance, get_overall_readiness
 from ai_question_generator import get_adaptive_questions
-from resume_generator import generate_complete_resume
+from resume_generator import generate_complete_resume 
 load_dotenv()
-
+from werkzeug.utils import secure_filename
+from certificate_manager import CertificateManager
+import json
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
@@ -14,6 +16,14 @@ SUPABASE_URL = os.getenv('VITE_SUPABASE_URL')
 SUPABASE_KEY = os.getenv('VITE_SUPABASE_SUPABASE_ANON_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Initialize certificate manager
+cert_manager = CertificateManager()
+
+# Configure upload settings
+UPLOAD_FOLDER = 'static/certificates'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 # Branch-specific technical topics
 BRANCH_TOPICS = {
     'CSE': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP'],
@@ -508,22 +518,23 @@ def resume_draft():
     scores_result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
     scores_data = [s for s in scores_result.data if s.get('topic', '').lower() != 'grand test'] if scores_result.data else []
     
-    # Get certificates if table exists (optional)
+    # Get certificates with files (NEW)
     try:
         certs_result = supabase.table('user_certificates').select('*').eq('user_email', user_email).execute()
         certificates = certs_result.data if certs_result.data else []
-    except:
+    except Exception as e:
+        print(f"Error fetching certificates: {e}")
         certificates = []
     
     # Generate resume data
     resume_data = generate_complete_resume(user_data, scores_data, certificates)
     
-    return render_template('resume_builder.html', resume_data=resume_data)
-@app.route('/resume_builder')
+    return render_template('resume_builder.html', resume_data=resume_data)@app.route('/resume_builder')
+
 def resume_builder():
     if 'user' not in session:
         return redirect(url_for('index'))
-    
+     
     user_email = session.get('user_email')
     
     # Get user data
@@ -544,5 +555,102 @@ def resume_builder():
     
     return render_template('resume_builder.html', resume_data=resume_data)
 
+@app.route('/certificates/upload', methods=['POST'])
+def upload_certificate():
+    """Handle certificate file upload"""
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    if 'certificate_file' not in request.files:
+        return {'error': 'No file uploaded'}, 400
+    
+    file = request.files['certificate_file']
+    cert_name = request.form.get('cert_name', '')
+    cert_issuer = request.form.get('cert_issuer', '')
+    cert_date = request.form.get('cert_date', '')
+    cert_id = request.form.get('cert_id', '')
+    
+    if not cert_name or not cert_issuer:
+        return {'error': 'Certificate name and issuer are required'}, 400
+    
+    # Save file
+    file_info = cert_manager.save_certificate(file, session['user_email'])
+    
+    if not file_info or 'error' in file_info:
+        return {'error': file_info.get('error', 'Upload failed')}, 400
+    
+    # Save to database
+    try:
+        cert_data = {
+            'user_email': session['user_email'],
+            'name': cert_name,
+            'issuer': cert_issuer,
+            'date': cert_date,
+            'credential_id': cert_id,
+            'file_url': file_info['url'],
+            'file_type': file_info['file_type'],
+            'file_size': file_info['file_size'],
+            'uploaded_at': file_info['uploaded_at']
+        }
+        
+        result = supabase.table('user_certificates').insert(cert_data).execute()
+        
+        if result.data:
+            return {
+                'success': True,
+                'certificate': result.data[0],
+                'message': 'Certificate uploaded successfully'
+            }, 200
+        else:
+            return {'error': 'Failed to save certificate to database'}, 500
+            
+    except Exception as e:
+        # Clean up uploaded file if database save fails
+        cert_manager.delete_certificate(file_info['filename'])
+        return {'error': f'Database error: {str(e)}'}, 500
+    
+@app.route('/certificates/delete/<int:cert_id>', methods=['DELETE'])
+def delete_certificate(cert_id):
+    """Delete a certificate"""
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    try:
+        # Get certificate info
+        result = supabase.table('user_certificates').select('*').eq('id', cert_id).eq('user_email', session['user_email']).execute()
+        
+        if not result.data:
+            return {'error': 'Certificate not found'}, 404
+        
+        cert = result.data[0]
+        
+        # Delete file
+        filename = cert['file_url'].split('/')[-1]
+        cert_manager.delete_certificate(filename)
+        
+        # Delete from database
+        supabase.table('user_certificates').delete().eq('id', cert_id).execute()
+        
+        return {'success': True, 'message': 'Certificate deleted successfully'}, 200
+        
+    except Exception as e:
+        return {'error': f'Error deleting certificate: {str(e)}'}, 500
+    
+@app.route('/certificates/list', methods=['GET'])
+def list_certificates():
+    """Get all certificates for current user"""
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    try:
+        result = supabase.table('user_certificates').select('*').eq('user_email', session['user_email']).order('uploaded_at', desc=True).execute()
+        
+        certificates = result.data if result.data else []
+        
+        return {'certificates': certificates}, 200
+        
+    except Exception as e:
+        return {'error': f'Error fetching certificates: {str(e)}'}, 500
+       
 if __name__ == '__main__':
     app.run(debug=True)
