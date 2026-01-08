@@ -1,4 +1,4 @@
-# ai_question_generator.py - FIXED VERSION
+# ai_question_generator.py - MULTI-KEY VERSION
 
 import os
 import json
@@ -8,12 +8,50 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Get API key from environment
-API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GENAI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+# Get multiple API keys from environment
+API_KEYS = [
+    os.getenv("GEMINI_API_KEY_1") or os.getenv("GEMINI_API_KEY"),
+    os.getenv("GEMINI_API_KEY_2"),
+    os.getenv("GEMINI_API_KEY_3"),
+    os.getenv("GEMINI_API_KEY_4"),
+]
+# Remove None values
+API_KEYS = [k for k in API_KEYS if k]
 
-# Create client (NEW API)
+if not API_KEYS:
+    print("WARNING: No API keys found in .env file!")
+
+current_key_index = 0
+
+def get_client():
+    """Get a working GenAI client, rotating through available keys"""
+    global current_key_index
+    
+    if not API_KEYS:
+        return None
+    
+    # Try each key once
+    for attempt in range(len(API_KEYS)):
+        try:
+            key = API_KEYS[current_key_index]
+            client = genai.Client(api_key=key)
+            print(f"✓ Using API key #{current_key_index + 1}")
+            return client
+        except Exception as e:
+            print(f"✗ Key #{current_key_index + 1} failed: {str(e)[:50]}")
+            current_key_index = (current_key_index + 1) % len(API_KEYS)
+    
+    return None
+
+def rotate_key():
+    """Move to next API key"""
+    global current_key_index
+    current_key_index = (current_key_index + 1) % len(API_KEYS)
+    print(f"🔄 Rotating to API key #{current_key_index + 1}")
+
+# Initialize client
 try:
-    client = genai.Client(api_key=API_KEY)
+    client = get_client()
 except Exception as e:
     print(f"Warning: Could not initialize GenAI client: {e}")
     client = None
@@ -21,6 +59,7 @@ except Exception as e:
 def generate_questions(user_email, topic, subtopic, user_scores, num_questions=5):
     """
     Generate adaptive quiz questions for ANY topic or subtopic using NEW Google GenAI SDK.
+    Auto-rotates API keys if quota exceeded.
     Returns:
         questions (list), difficulty (str)
     """
@@ -63,45 +102,65 @@ CRITICAL RULES:
 3. Questions must be relevant to {topic} {subtopic}
 4. Return ONLY the JSON array, nothing else"""
 
-    try:
-        if not client:
-            raise Exception("GenAI client not initialized")
-        
-        # Use NEW API syntax
-        response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
-            contents=prompt_text,
-            config=types.GenerateContentConfig(
-                max_output_tokens=2048,
-                temperature=0.7
-            )
-        )
-
-        raw = response.text.strip()
-        
-        # Clean response
-        if '```json' in raw:
-            raw = raw.split('```json')[1].split('```')[0].strip()
-        elif '```' in raw:
-            raw = raw.split('```')[1].split('```')[0].strip()
-        
-        data = json.loads(raw)
-        
-        if isinstance(data, list) and len(data) > 0:
-            # Validate structure
-            for item in data:
-                if 'q' not in item or 'options' not in item or 'answer' not in item:
-                    raise ValueError("Invalid question structure")
-                if len(item['options']) != 4:
-                    raise ValueError("Each question must have 4 options")
+    # Try with current key, rotate if needed
+    max_retries = len(API_KEYS)
+    
+    for retry in range(max_retries):
+        try:
+            current_client = get_client() if not client else client
             
-            print(f"✅ Generated {len(data)} {difficulty} questions for {topic} {subtopic}")
-            return data, difficulty
+            if not current_client:
+                raise Exception("No working API keys available")
+            
+            # Use NEW API syntax
+            response = current_client.models.generate_content(
+                model='gemini-1.5-flash',  # Using stable model
+                contents=prompt_text,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=2048,
+                    temperature=0.7
+                )
+            )
 
-    except Exception as e:
-        print(f"[AI ERROR] Generation failed: {e}")
-        import traceback
-        traceback.print_exc()
+            raw = response.text.strip()
+            
+            # Clean response
+            if '```json' in raw:
+                raw = raw.split('```json')[1].split('```')[0].strip()
+            elif '```' in raw:
+                raw = raw.split('```')[1].split('```')[0].strip()
+            
+            data = json.loads(raw)
+            
+            if isinstance(data, list) and len(data) > 0:
+                # Validate structure
+                for item in data:
+                    if 'q' not in item or 'options' not in item or 'answer' not in item:
+                        raise ValueError("Invalid question structure")
+                    if len(item['options']) != 4:
+                        raise ValueError("Each question must have 4 options")
+                
+                print(f"✅ Generated {len(data)} {difficulty} questions for {topic} {subtopic}")
+                return data, difficulty
+
+        except Exception as e:
+            error_str = str(e)
+            
+            # Check if quota exceeded
+            if '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str or 'quota' in error_str.lower():
+                print(f"⚠️ Quota exceeded on key #{current_key_index + 1}")
+                rotate_key()
+                
+                # If this was last retry, fall through to fallback
+                if retry < max_retries - 1:
+                    continue
+            else:
+                print(f"[AI ERROR] Generation failed: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            # If not quota error or last retry, break
+            break
 
     # Fallback questions
     print(f"⚠️ Using fallback questions for {topic} {subtopic}")
@@ -148,33 +207,48 @@ Return ONLY valid JSON (no markdown) in this format:
 
 Make questions relevant to {topic} and {context}."""
 
-    try:
-        if not client:
-            raise Exception("GenAI client not initialized")
-        
-        response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
-            contents=prompt_text,
-            config=types.GenerateContentConfig(
-                max_output_tokens=2048,
-                temperature=0.7
+    max_retries = len(API_KEYS)
+    
+    for retry in range(max_retries):
+        try:
+            current_client = get_client() if not client else client
+            
+            if not current_client:
+                raise Exception("No working API keys")
+            
+            response = current_client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=prompt_text,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=2048,
+                    temperature=0.7
+                )
             )
-        )
 
-        raw = response.text.strip()
-        
-        if '```json' in raw:
-            raw = raw.split('```json')[1].split('```')[0].strip()
-        elif '```' in raw:
-            raw = raw.split('```')[1].split('```')[0].strip()
-        
-        data = json.loads(raw)
-        
-        if isinstance(data, list):
-            return data
+            raw = response.text.strip()
+            
+            if '```json' in raw:
+                raw = raw.split('```json')[1].split('```')[0].strip()
+            elif '```' in raw:
+                raw = raw.split('```')[1].split('```')[0].strip()
+            
+            data = json.loads(raw)
+            
+            if isinstance(data, list):
+                return data
 
-    except Exception as e:
-        print(f"[ERROR] Grand Test generation failed: {e}")
+        except Exception as e:
+            error_str = str(e)
+            
+            if '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str or 'quota' in error_str.lower():
+                print(f"⚠️ Quota exceeded on key #{current_key_index + 1}")
+                rotate_key()
+                if retry < max_retries - 1:
+                    continue
+            else:
+                print(f"[ERROR] Grand Test generation failed: {e}")
+            
+            break
 
     # Fallback
     return [{
