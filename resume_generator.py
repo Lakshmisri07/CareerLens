@@ -3,19 +3,27 @@ Resume Generator for CareerLens
 Generates professional resumes based on user profile, quiz performance, and certificates
 """
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
 from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+
+# Initialize GenAI client
+API_KEY = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+try:
+    client = genai.Client(api_key=API_KEY)
+except Exception as e:
+    print(f"Warning: GenAI client initialization failed: {e}")
+    client = None
 
 class ResumeGenerator:
     """Generate professional resume content"""
     
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.client = client
     
     def generate_summary(self, user_data, strengths, certificates):
         """Generate professional summary based on profile"""
@@ -27,7 +35,7 @@ Profile:
 - CGPA: {user_data['cgpa']}
 - Branch: {user_data['branch']}
 - Internships: {user_data['internships']}
-- Strong skills: {', '.join(strengths[:3])}
+- Strong skills: {', '.join(strengths[:3]) if strengths else 'Programming, Problem Solving'}
 - {cert_context}
 
 IMPORTANT: Write ONLY the professional summary text. Do NOT mention:
@@ -38,18 +46,31 @@ IMPORTANT: Write ONLY the professional summary text. Do NOT mention:
 Write in first person, be professional and achievement-focused."""
 
         try:
-            response = self.model.generate_content(prompt)
+            if not self.client:
+                raise Exception("GenAI client not initialized")
+            
+            response = self.client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=500,
+                    temperature=0.7
+                )
+            )
+            
             summary = response.text.strip()
             # Remove any AI/assessment mentions if they slip through
             summary = summary.replace('AI-powered', '').replace('AI-generated', '')
             summary = summary.replace('quiz', '').replace('assessment', 'evaluation')
             return summary
-        except:
-            return f"Dedicated {user_data['branch']} student with {user_data['cgpa']} CGPA and strong technical foundation in {', '.join(strengths[:2])}. Experienced through {user_data['internships']} with proven ability to apply theoretical knowledge to practical solutions. Passionate about leveraging technology to solve real-world problems."
+            
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            return f"Dedicated {user_data['branch']} student with {user_data['cgpa']} CGPA and strong technical foundation in {', '.join(strengths[:2]) if len(strengths) >= 2 else 'programming'}. Experienced through {user_data['internships']} with proven ability to apply theoretical knowledge to practical solutions. Passionate about leveraging technology to solve real-world problems."
     
     def generate_project_ideas(self, branch, strengths, count=3):
         """Generate relevant project ideas"""
-        prompt = f"""Suggest {count} realistic technical projects for a {branch} student skilled in: {', '.join(strengths[:3])}.
+        prompt = f"""Suggest {count} realistic technical projects for a {branch} student skilled in: {', '.join(strengths[:3]) if strengths else 'programming'}.
 
 For each project provide:
 - Project name (professional, no "AI-powered" prefix)
@@ -62,7 +83,18 @@ Format as JSON:
 {{"projects": [{{"name": "...", "description": "...", "technologies": ["...", "..."]}}]}}"""
 
         try:
-            response = self.model.generate_content(prompt)
+            if not self.client:
+                raise Exception("GenAI client not initialized")
+            
+            response = self.client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=1024,
+                    temperature=0.8
+                )
+            )
+            
             text = response.text.strip()
             
             if '```json' in text:
@@ -73,7 +105,9 @@ Format as JSON:
             import json
             data = json.loads(text)
             return data.get('projects', [])
-        except:
+            
+        except Exception as e:
+            print(f"Error generating projects: {e}")
             return [
                 {
                     "name": f"{branch} Management System",
@@ -146,6 +180,15 @@ Format as JSON:
         """Organize skills into professional categories"""
         all_skills = self.recommend_skills(strengths, certificates, all_topics)
         
+        # Safety check
+        if not all_skills:
+            return {
+                'programming': ['Python', 'C', 'Java'],
+                'technologies': ['SQL', 'Git'],
+                'tools': ['GitHub', 'Linux'],
+                'soft_skills': ['Problem Solving', 'Team Collaboration']
+            }
+        
         programming = []
         technologies = []
         tools = []
@@ -181,11 +224,19 @@ Format as JSON:
         achievements = []
         
         total_quizzes = len(scores_data)
-        avg_score = sum(s['score'] for s in scores_data) / sum(s['total_questions'] for s in scores_data) * 100 if scores_data else 0
         
-        # Certificates as achievements
-        for cert in certificates[:2]:  # Top 2 certificates
-            achievements.append(f"Earned {cert['name']} certification from {cert['issuer']}")
+        # Safe calculation of avg_score
+        if scores_data:
+            total_score = sum(s['score'] for s in scores_data)
+            total_questions = sum(s['total_questions'] for s in scores_data)
+            avg_score = (total_score / total_questions * 100) if total_questions > 0 else 0
+        else:
+            avg_score = 0
+        
+        # Certificates as achievements (SAFE - handles empty list)
+        if certificates:
+            for cert in certificates[:2]:  # Top 2 certificates
+                achievements.append(f"Earned {cert['name']} certification from {cert['issuer']}")
         
         # Find top performing areas (but don't mention "quiz")
         topic_performance = {}
@@ -224,7 +275,7 @@ def analyze_user_for_resume(user_data, scores_data, certificates):
     topic_performance = {}
     for score in scores_data:
         key = score['topic']
-        if score['subtopic']:
+        if score.get('subtopic'):
             key = f"{score['topic']} - {score['subtopic']}"
         
         if key not in topic_performance:
@@ -296,12 +347,12 @@ def generate_complete_resume(user_data, scores_data, certificates=[]):
         'education': {
             'degree': f"Bachelor of Technology in {user_data['branch']}",
             'cgpa': user_data['cgpa'],
-            'backlogs': user_data['backlogs'],
+            'backlogs': user_data.get('backlogs', 0),
             'year': datetime.now().year
         },
         'skills': skills,
         'projects': projects,
-        'internships': user_data['internships'],
+        'internships': user_data.get('internships', ''),
         'certificates': certificates,
         'achievements': achievements,
         'readiness': analysis['readiness']
