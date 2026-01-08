@@ -531,30 +531,6 @@ def resume_draft():
     
     return render_template('resume_builder.html', resume_data=resume_data)@app.route('/resume_builder')
 
-def resume_builder():
-    if 'user' not in session:
-        return redirect(url_for('index'))
-     
-    user_email = session.get('user_email')
-    
-    # Get user data
-    result = supabase.table('users').select('*').eq('email', user_email).execute()
-    if not result.data:
-        flash("User data not found!")
-        return redirect(url_for('dashboard'))
-    
-    user_data = result.data[0]
-    
-    # Get quiz scores
-    scores_result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
-    scores_data = scores_result.data if scores_result.data else []
-    
-    # Generate resume data using AI
-    from resume_generator import generate_complete_resume
-    resume_data = generate_complete_resume(user_data, scores_data)
-    
-    return render_template('resume_builder.html', resume_data=resume_data)
-
 @app.route('/certificates/upload', methods=['POST'])
 def upload_certificate():
     """Handle certificate file upload"""
