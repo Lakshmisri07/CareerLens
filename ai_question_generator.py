@@ -5,11 +5,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure Gemini API with the latest model
+# Configure Gemini API with the UPDATED model
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
-# Using Gemini 1.5 Flash (fast and efficient)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# CRITICAL FIX: Use the latest stable model instead of deprecated 1.5 Flash
+# Options: 'gemini-2.5-flash' or 'gemini-2.0-flash-exp'
+model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
+# Configure generation settings for better JSON output
+generation_config = {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 8192,
+}
 
 
 def determine_difficulty_level(user_scores, topic, subtopic=None):
@@ -67,15 +76,12 @@ def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5):
     
     # Create difficulty-specific prompts
     difficulty_descriptions = {
-        'beginner': 'Focus on basic concepts, simple syntax, and fundamental understanding. Questions should test foundational knowledge.',
+        'beginner': 'Focus on basic concepts, simple syntax, and fundamental understanding. Questions should test foundational knowledge with clear, straightforward options.',
         'intermediate': 'Include practical applications, problem-solving scenarios, and deeper conceptual understanding. Mix theory with application.',
-        'advanced': 'Challenge with complex scenarios, optimization problems, edge cases, and expert-level knowledge. Include tricky situations.'
+        'advanced': 'Challenge with complex scenarios, optimization problems, edge cases, and expert-level knowledge. Include tricky situations and require deep understanding.'
     }
     
     # Topic-specific context
-    # Add/Update this section in the generate_quiz_questions function
-# Replace the topic_contexts dictionary with this updated version:
-
     topic_contexts = {
         'C': f'{subtopic} in C programming language',
         'Java': f'{subtopic} in Java programming language',
@@ -96,19 +102,22 @@ def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5):
     
     context = topic_contexts.get(topic, f'{topic} - {subtopic}')
     
-    prompt = f"""You are an expert quiz creator for placement preparation. Generate {num_questions} multiple-choice questions about: {context}
+    # IMPROVED PROMPT - More explicit and structured
+    prompt = f"""You are an expert quiz creator for placement exams. Generate {num_questions} multiple-choice questions.
 
-Difficulty Level: {difficulty_level.upper()}
-Instructions: {difficulty_descriptions[difficulty_level]}
+TOPIC: {context}
+DIFFICULTY: {difficulty_level.upper()}
+INSTRUCTIONS: {difficulty_descriptions[difficulty_level]}
 
-CRITICAL REQUIREMENTS:
-1. Each question MUST have EXACTLY 4 options
-2. Questions must be at {difficulty_level} difficulty level
-3. The answer must be one of the 4 options (exact match)
-4. Make questions practical and relevant to placement exams
-5. Return ONLY valid JSON - no markdown, no code blocks, no extra text
+CRITICAL REQUIREMENTS (FOLLOW EXACTLY):
+1. Generate EXACTLY {num_questions} questions
+2. Each question MUST have EXACTLY 4 options (A, B, C, D)
+3. Answer MUST be one of the 4 options (word-for-word match)
+4. Questions must be at {difficulty_level} level
+5. Make questions practical and relevant to placement exams
+6. Output ONLY valid JSON - no explanations, no markdown, no code blocks
 
-JSON Format (return ONLY this):
+STRICT JSON FORMAT (output this exact structure):
 {{
     "questions": [
         {{
@@ -119,12 +128,26 @@ JSON Format (return ONLY this):
     ]
 }}
 
-Generate exactly {num_questions} questions now."""
+IMPORTANT: The "answer" field must EXACTLY match one of the strings in "options" array.
+
+Generate {num_questions} questions NOW in this exact JSON format:"""
 
     try:
-        # Generate content with Gemini
-        response = model.generate_content(prompt)
+        print(f"\n🤖 Generating {num_questions} AI questions...")
+        print(f"   Topic: {context}")
+        print(f"   Difficulty: {difficulty_level}")
+        
+        # Generate content with improved configuration
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config
+        )
+        
         response_text = response.text.strip()
+        
+        # Debug: Print raw response
+        print(f"\n📥 Raw Response (first 500 chars):")
+        print(response_text[:500])
         
         # Clean response - remove markdown formatting
         if '```json' in response_text:
@@ -132,40 +155,57 @@ Generate exactly {num_questions} questions now."""
         elif '```' in response_text:
             response_text = response_text.split('```')[1].split('```')[0].strip()
         
+        # Remove any leading/trailing whitespace and non-JSON content
+        response_text = response_text.strip()
+        
+        # Find JSON object boundaries
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}') + 1
+        
+        if start_idx != -1 and end_idx > start_idx:
+            response_text = response_text[start_idx:end_idx]
+        
+        print(f"\n🧹 Cleaned Response (first 500 chars):")
+        print(response_text[:500])
+        
         # Parse JSON
         data = json.loads(response_text)
         questions = data.get('questions', [])
         
+        print(f"\n✅ Parsed {len(questions)} questions from JSON")
+        
         # Validate and format questions
         validated_questions = []
         for idx, q in enumerate(questions):
+            print(f"\n🔍 Validating Q{idx+1}...")
+            
             # Check required fields
             if not all(key in q for key in ['q', 'options', 'answer']):
-                print(f"⚠️ Q{idx+1} missing required fields")
+                print(f"   ❌ Missing required fields: {list(q.keys())}")
                 continue
 
             # Check options count
             if len(q['options']) != 4:
-                print(f"⚠️ Q{idx+1} doesn't have exactly 4 options: {len(q['options'])}")
+                print(f"   ❌ Wrong option count: {len(q['options'])} (need 4)")
                 continue
 
-            # Normalize answer and options (strip whitespace and standardize)
+            # Normalize answer and options
             normalized_options = [str(opt).strip() for opt in q['options']]
             normalized_answer = str(q['answer']).strip()
 
-            # Check if answer exists in options (case-insensitive)
+            # Check if answer exists in options (exact match, case-insensitive)
             answer_in_options = False
             matched_option = normalized_answer
 
             for opt in normalized_options:
                 if opt.lower() == normalized_answer.lower():
                     answer_in_options = True
-                    matched_option = opt  # Use the exact option text as answer
+                    matched_option = opt  # Use the exact option text
                     break
 
             if not answer_in_options:
-                print(f"⚠️ Q{idx+1} answer '{normalized_answer}' not in options: {normalized_options}")
-                # Try to fix by finding closest match
+                print(f"   ❌ Answer '{normalized_answer}' not in options: {normalized_options}")
+                # Try partial match
                 for opt in normalized_options:
                     if normalized_answer.lower() in opt.lower() or opt.lower() in normalized_answer.lower():
                         matched_option = opt
@@ -174,29 +214,35 @@ Generate exactly {num_questions} questions now."""
                         break
 
                 if not answer_in_options:
-                    print(f"   ✗ Skipping question - cannot match answer to any option")
+                    print(f"   ✗ Skipping question - cannot match answer")
                     continue
 
             validated_questions.append({
                 'q': q['q'],
                 'options': normalized_options,
-                'answer': matched_option,  # Use the exact matching option
+                'answer': matched_option,
                 'difficulty': difficulty_level,
                 'ai_generated': True
             })
 
-            print(f"✓ Q{idx+1} validated: answer='{matched_option}' in {normalized_options}")
+            print(f"   ✅ Valid: answer='{matched_option}' in {normalized_options}")
         
         # If we got at least 3 valid questions, return them
         if len(validated_questions) >= 3:
-            print(f"✅ Generated {len(validated_questions)} AI questions at {difficulty_level} level")
+            print(f"\n🎉 SUCCESS: Generated {len(validated_questions)} valid AI questions")
             return validated_questions[:num_questions]
         else:
-            print(f"⚠️ Not enough valid AI questions. Using fallback.")
+            print(f"\n⚠️  Not enough valid questions ({len(validated_questions)}). Using fallback.")
             return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
     
+    except json.JSONDecodeError as e:
+        print(f"\n❌ JSON Parse Error: {e}")
+        print(f"   Response text: {response_text[:200]}")
+        return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
     except Exception as e:
-        print(f"❌ Error generating AI questions: {e}")
+        print(f"\n❌ Error generating AI questions: {e}")
+        import traceback
+        traceback.print_exc()
         return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
 
 
@@ -251,68 +297,27 @@ def get_fallback_questions(topic, subtopic, difficulty_level='beginner', num_que
                     {"q": "What is const pointer?", "options": ["Pointer address can't change","Pointed value can't change","Both","None"], "answer": "Pointer address can't change"},
                     {"q": "What is pointer to const?", "options": ["Can't modify pointed value","Can't change pointer","Both","None"], "answer": "Can't modify pointed value"}
                 ]
-            },
-            'Loops': {
-                'beginner': [
-                    {"q": "Which loop executes at least once?", "options": ["do-while","while","for","None"], "answer": "do-while"},
-                    {"q": "What does break do?", "options": ["Exits loop","Skips iteration","Pauses","Restarts"], "answer": "Exits loop"},
-                    {"q": "What does continue do?", "options": ["Skips to next iteration","Exits loop","Pauses","Restarts"], "answer": "Skips to next iteration"},
-                    {"q": "Which loop is best for unknown iterations?", "options": ["while","for","do-while","All same"], "answer": "while"},
-                    {"q": "What is infinite loop?", "options": ["Loop that never ends","Very long loop","Nested loop","Error"], "answer": "Loop that never ends"}
-                ],
-                'intermediate': [
-                    {"q": "Can you use break in nested loops?", "options": ["Exits innermost loop","Exits all loops","Error","Exits outer loop"], "answer": "Exits innermost loop"},
-                    {"q": "What happens if for loop condition is empty?", "options": ["Infinite loop","Error","Executes once","Never executes"], "answer": "Infinite loop"},
-                    {"q": "Can you modify loop variable inside loop?", "options": ["Yes","No","Only in while","Only in for"], "answer": "Yes"},
-                    {"q": "What is loop unrolling?", "options": ["Optimization technique","Nested loops","Breaking loops","Error handling"], "answer": "Optimization technique"},
-                    {"q": "Can loops be labeled in C?", "options": ["No","Yes","Only switch","Only goto"], "answer": "No"}
-                ],
-                'advanced': [
-                    {"q": "What is the time complexity of nested loop n*m?", "options": ["O(n*m)","O(n+m)","O(n^2)","O(log n)"], "answer": "O(n*m)"},
-                    {"q": "What is loop invariant?", "options": ["Condition true each iteration","Loop variable","Loop counter","None"], "answer": "Condition true each iteration"},
-                    {"q": "Can you use goto to exit nested loops?", "options": ["Yes","No","Only inner","Only outer"], "answer": "Yes"},
-                    {"q": "What is loop fusion?", "options": ["Combining loops","Breaking loops","Nested loops","Error"], "answer": "Combining loops"},
-                    {"q": "What optimization does compiler do for loops?", "options": ["All of below","Loop unrolling","Invariant hoisting","Strength reduction"], "answer": "All of below"}
-                ]
-            },
-            'Functions': {
-                'beginner': [
-                    {"q": "What is return type for no return value?", "options": ["void","null","int","None"], "answer": "void"},
-                    {"q": "How are arguments passed by default?", "options": ["By value","By reference","By pointer","By address"], "answer": "By value"},
-                    {"q": "What is function prototype?", "options": ["Function declaration","Function definition","Function call","Function pointer"], "answer": "Function declaration"},
-                    {"q": "Can function return multiple values?", "options": ["No directly","Yes always","Sometimes","Only arrays"], "answer": "No directly"},
-                    {"q": "What is main() return type?", "options": ["int","void","char","float"], "answer": "int"}
-                ],
-                'intermediate': [
-                    {"q": "What is recursion?", "options": ["Function calls itself","Nested functions","Function pointer","Loop"], "answer": "Function calls itself"},
-                    {"q": "What is call by reference?", "options": ["Pass address","Pass value","Pass copy","Pass pointer"], "answer": "Pass address"},
-                    {"q": "Can functions have default arguments?", "options": ["No in C","Yes always","Only main()","Only void"], "answer": "No in C"},
-                    {"q": "What is function overloading?", "options": ["Not in C","Yes in C","Only in C++","Sometimes"], "answer": "Not in C"},
-                    {"q": "What is inline function?", "options": ["Suggestion to compiler","Macro","Normal function","Error"], "answer": "Suggestion to compiler"}
-                ],
-                'advanced': [
-                    {"q": "What is tail recursion?", "options": ["Recursive call is last","First call","Middle call","No recursion"], "answer": "Recursive call is last"},
-                    {"q": "What is function pointer syntax?", "options": ["returnType (*name)(params)","returnType *name(params)","returnType name(*params)","None"], "answer": "returnType (*name)(params)"},
-                    {"q": "What is variadic function?", "options": ["Variable arguments","Variable return","Variable name","None"], "answer": "Variable arguments"},
-                    {"q": "What is stack frame?", "options": ["Function call memory","Stack data structure","Error","Heap memory"], "answer": "Function call memory"},
-                    {"q": "What is trampolining?", "options": ["Recursion optimization","Function call","Loop technique","Error"], "answer": "Recursion optimization"}
-                ]
             }
         }
     }
     
     # Get questions for topic/subtopic/difficulty
     try:
-        questions = fallback_db[topic][subtopic][difficulty_level]
-        return questions[:num_questions]
+        questions = fallback_db.get(topic, {}).get(subtopic, {}).get(difficulty_level, [])
+        if questions:
+            return questions[:num_questions]
     except:
-        # Ultimate fallback
-        return [
-            {"q": f"Sample {difficulty_level} question for {topic} - {subtopic}", 
-             "options": ["Option A", "Option B", "Option C", "Option D"], 
-             "answer": "Option A",
-             "difficulty": difficulty_level}
-        ] * num_questions
+        pass
+    
+    # Ultimate fallback - generic questions
+    return [
+        {
+            "q": f"Which of the following is a key concept in {topic} - {subtopic}?",
+            "options": ["Concept A", "Concept B", "Concept C", "All of the above"],
+            "answer": "All of the above",
+            "difficulty": difficulty_level
+        }
+    ] * min(num_questions, 3)
 
 
 def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questions=5):
@@ -324,11 +329,14 @@ def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questio
     # Determine difficulty based on past performance
     difficulty_level = determine_difficulty_level(user_scores, topic, subtopic)
     
-    print(f"\n🎯 AI Quiz Generator")
+    print(f"\n{'='*80}")
+    print(f"🎯 AI QUIZ GENERATOR")
+    print(f"{'='*80}")
     print(f"👤 User: {user_email}")
     print(f"📚 Topic: {topic} - {subtopic}")
     print(f"📊 Difficulty: {difficulty_level.upper()}")
     print(f"🔢 Questions: {num_questions}")
+    print(f"{'='*80}")
     
     # Generate AI questions
     questions = generate_quiz_questions(topic, subtopic, difficulty_level, num_questions)
