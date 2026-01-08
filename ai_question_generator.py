@@ -2,34 +2,31 @@ import google.generativeai as genai
 import json
 import os
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
-# Configure Gemini API with the UPDATED model
+# Configure Gemini API
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
-# CRITICAL FIX: Use the latest stable model instead of deprecated 1.5 Flash
-# Options: 'gemini-2.5-flash' or 'gemini-2.0-flash-exp'
-model = genai.GenerativeModel('gemini-2.0-flash-exp')
+# CRITICAL FIX: Use FREE TIER models only
+# gemini-2.0-flash-exp has limit:0 (not available on free tier)
+# Use gemini-1.5-flash which is FREE and STABLE
+MODEL_NAME = 'gemini-1.5-flash'  # FREE TIER MODEL
 
-# Configure generation settings for better JSON output
 generation_config = {
     "temperature": 0.7,
     "top_p": 0.95,
     "top_k": 40,
-    "max_output_tokens": 8192,
+    "max_output_tokens": 2048,  # Reduced to stay within limits
 }
 
 
 def determine_difficulty_level(user_scores, topic, subtopic=None):
-    """
-    Determine difficulty level based on user's past performance
-    Returns: 'beginner', 'intermediate', or 'advanced'
-    """
+    """Determine difficulty level based on user's past performance"""
     if not user_scores:
         return 'beginner'
     
-    # Filter scores for the specific topic/subtopic
     relevant_scores = []
     for score in user_scores:
         if subtopic:
@@ -42,7 +39,6 @@ def determine_difficulty_level(user_scores, topic, subtopic=None):
     if not relevant_scores:
         return 'beginner'
     
-    # Calculate average performance
     total_score = sum(s['score'] for s in relevant_scores)
     total_questions = sum(s['total_questions'] for s in relevant_scores)
     
@@ -51,7 +47,6 @@ def determine_difficulty_level(user_scores, topic, subtopic=None):
     
     avg_percentage = (total_score / total_questions) * 100
     
-    # Determine level based on performance
     if avg_percentage < 50:
         return 'beginner'
     elif avg_percentage < 75:
@@ -60,84 +55,125 @@ def determine_difficulty_level(user_scores, topic, subtopic=None):
         return 'advanced'
 
 
-def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5):
+def generate_quiz_questions(topic, subtopic, difficulty_level, num_questions=5, retry_count=0):
     """
-    Generate quiz questions using Gemini AI based on difficulty level
-    
-    Args:
-        topic: Main topic (e.g., 'C', 'Java', 'Python')
-        subtopic: Subtopic (e.g., 'Arrays', 'Loops')
-        difficulty_level: 'beginner', 'intermediate', or 'advanced'
-        num_questions: Number of questions to generate
-    
-    Returns:
-        List of question dictionaries
+    Generate quiz questions using Gemini AI FREE TIER
     """
     
-    # Create difficulty-specific prompts
+    # Max 2 retries to avoid hitting quota limits
+    if retry_count > 1:
+        print(f"❌ Max retries reached. Using fallback questions.")
+        return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
+    
+    # Difficulty descriptions
     difficulty_descriptions = {
-        'beginner': 'Focus on basic concepts, simple syntax, and fundamental understanding. Questions should test foundational knowledge with clear, straightforward options.',
-        'intermediate': 'Include practical applications, problem-solving scenarios, and deeper conceptual understanding. Mix theory with application.',
-        'advanced': 'Challenge with complex scenarios, optimization problems, edge cases, and expert-level knowledge. Include tricky situations and require deep understanding.'
+        'beginner': 'Basic concepts and fundamental understanding',
+        'intermediate': 'Practical applications and problem-solving',
+        'advanced': 'Complex scenarios and expert-level knowledge'
     }
     
-    # Topic-specific context
+    # Comprehensive topic contexts
     topic_contexts = {
-        'C': f'{subtopic} in C programming language',
-        'Java': f'{subtopic} in Java programming language',
-        'Python': f'{subtopic} in Python programming language',
-        'DBMS': f'{subtopic} in Database Management Systems',
-        'OS': f'{subtopic} in Operating Systems',
-        'Data Structures': f'{subtopic} data structure',
-        'Quantitative Aptitude': 'Quantitative aptitude and numerical reasoning for placement exams',
-        'Logical Reasoning': 'Logical reasoning and analytical thinking for competitive exams',
-        'Data Interpretation': 'Data interpretation from tables, charts, and graphs',
-        'Grammar': 'English grammar rules, sentence correction, and usage',
-        'Reading Comprehension': 'Reading comprehension and understanding of passages',
-        'Synonyms & Antonyms': 'Synonyms and antonyms in English vocabulary',
-        'Technical': 'Programming, Data Structures, Algorithms, DBMS, and Operating Systems concepts for technical interviews',
-        'Aptitude': 'Quantitative aptitude, logical reasoning, and problem-solving for placement tests',
-        'English': 'English grammar, vocabulary, and communication skills for placement exams'
+        'C': {
+            'Arrays': 'Arrays in C programming',
+            'Pointers': 'Pointers in C',
+            'Loops': 'Loops in C',
+            'Functions': 'Functions in C'
+        },
+        'Java': {
+            'OOPs': 'Object-Oriented Programming in Java',
+            'Inheritance': 'Inheritance in Java',
+            'Exceptions': 'Exception Handling in Java'
+        },
+        'Python': {
+            'Lists': 'Python Lists',
+            'Dictionaries': 'Python Dictionaries',
+            'File Handling': 'File Handling in Python'
+        },
+        'DBMS': {
+            'SQL': 'SQL queries and database operations',
+            'Normalization': 'Database Normalization',
+            'Transactions': 'Database Transactions'
+        },
+        'OS': {
+            'Processes': 'Operating System Processes',
+            'Threads': 'Threads in OS',
+            'Memory Management': 'Memory Management in OS'
+        },
+        'Data Structures': {
+            'Linked List': 'Linked Lists',
+            'Stacks': 'Stack Data Structure',
+            'Queues': 'Queue Data Structure',
+            'Trees': 'Tree Data Structures'
+        },
+        'Algorithms': {
+            'Sorting': 'Sorting Algorithms',
+            'Searching': 'Searching Algorithms',
+            'Dynamic Programming': 'Dynamic Programming'
+        },
+        'Computer Networks': {
+            'OSI Model': 'OSI Reference Model',
+            'TCP/IP': 'TCP/IP Protocol Suite',
+            'Routing': 'Network Routing'
+        },
+        'OOP': {
+            'Classes': 'Classes and Objects',
+            'Inheritance': 'Inheritance concepts',
+            'Polymorphism': 'Polymorphism'
+        },
+        'Quantitative Aptitude': 'Quantitative aptitude problems',
+        'Logical Reasoning': 'Logical reasoning puzzles',
+        'Data Interpretation': 'Data interpretation from charts',
+        'Grammar': 'English grammar rules',
+        'Reading Comprehension': 'Reading comprehension',
+        'Synonyms & Antonyms': 'English vocabulary'
     }
     
-    context = topic_contexts.get(topic, f'{topic} - {subtopic}')
+    # Get context
+    if topic in topic_contexts:
+        if isinstance(topic_contexts[topic], dict) and subtopic in topic_contexts[topic]:
+            context = topic_contexts[topic][subtopic]
+        elif isinstance(topic_contexts[topic], str):
+            context = topic_contexts[topic]
+        else:
+            context = f'{topic} - {subtopic}'
+    else:
+        context = f'{topic} - {subtopic}'
     
-    # IMPROVED PROMPT - More explicit and structured
-    prompt = f"""You are an expert quiz creator for placement exams. Generate {num_questions} multiple-choice questions.
+    # Shorter, more efficient prompt to reduce token usage
+    prompt = f"""Create {num_questions} MCQ questions for {context} at {difficulty_level} level.
 
-TOPIC: {context}
-DIFFICULTY: {difficulty_level.upper()}
-INSTRUCTIONS: {difficulty_descriptions[difficulty_level]}
+Rules:
+- Exactly {num_questions} questions
+- Each has 4 options
+- Answer must match one option exactly
+- JSON format only
 
-CRITICAL REQUIREMENTS (FOLLOW EXACTLY):
-1. Generate EXACTLY {num_questions} questions
-2. Each question MUST have EXACTLY 4 options (A, B, C, D)
-3. Answer MUST be one of the 4 options (word-for-word match)
-4. Questions must be at {difficulty_level} level
-5. Make questions practical and relevant to placement exams
-6. Output ONLY valid JSON - no explanations, no markdown, no code blocks
-
-STRICT JSON FORMAT (output this exact structure):
 {{
-    "questions": [
-        {{
-            "q": "What is the time complexity of binary search?",
-            "options": ["O(n)", "O(log n)", "O(n^2)", "O(1)"],
-            "answer": "O(log n)"
-        }}
-    ]
+  "questions": [
+    {{
+      "q": "Question?",
+      "options": ["A", "B", "C", "D"],
+      "answer": "B"
+    }}
+  ]
 }}
 
-IMPORTANT: The "answer" field must EXACTLY match one of the strings in "options" array.
-
-Generate {num_questions} questions NOW in this exact JSON format:"""
+Generate now:"""
 
     try:
-        print(f"\n🤖 Generating {num_questions} AI questions...")
+        print(f"\n🤖 Generating questions (attempt {retry_count + 1})...")
         print(f"   Topic: {context}")
-        print(f"   Difficulty: {difficulty_level}")
+        print(f"   Model: {MODEL_NAME}")
         
-        # Generate content with improved configuration
+        # Create model
+        model = genai.GenerativeModel(MODEL_NAME)
+        
+        # Generate with rate limiting
+        if retry_count > 0:
+            print(f"   ⏳ Waiting 2 seconds before retry...")
+            time.sleep(2)
+        
         response = model.generate_content(
             prompt,
             generation_config=generation_config
@@ -145,200 +181,204 @@ Generate {num_questions} questions NOW in this exact JSON format:"""
         
         response_text = response.text.strip()
         
-        # Debug: Print raw response
-        print(f"\n📥 Raw Response (first 500 chars):")
-        print(response_text[:500])
-        
-        # Clean response - remove markdown formatting
+        # Clean response
         if '```json' in response_text:
             response_text = response_text.split('```json')[1].split('```')[0].strip()
         elif '```' in response_text:
             response_text = response_text.split('```')[1].split('```')[0].strip()
         
-        # Remove any leading/trailing whitespace and non-JSON content
-        response_text = response_text.strip()
-        
-        # Find JSON object boundaries
+        # Extract JSON
         start_idx = response_text.find('{')
         end_idx = response_text.rfind('}') + 1
         
         if start_idx != -1 and end_idx > start_idx:
             response_text = response_text[start_idx:end_idx]
         
-        print(f"\n🧹 Cleaned Response (first 500 chars):")
-        print(response_text[:500])
-        
         # Parse JSON
         data = json.loads(response_text)
         questions = data.get('questions', [])
         
-        print(f"\n✅ Parsed {len(questions)} questions from JSON")
+        print(f"   ✅ Parsed {len(questions)} questions")
         
-        # Validate and format questions
+        # Validate questions
         validated_questions = []
         for idx, q in enumerate(questions):
-            print(f"\n🔍 Validating Q{idx+1}...")
-            
-            # Check required fields
             if not all(key in q for key in ['q', 'options', 'answer']):
-                print(f"   ❌ Missing required fields: {list(q.keys())}")
                 continue
 
-            # Check options count
             if len(q['options']) != 4:
-                print(f"   ❌ Wrong option count: {len(q['options'])} (need 4)")
                 continue
 
-            # Normalize answer and options
             normalized_options = [str(opt).strip() for opt in q['options']]
             normalized_answer = str(q['answer']).strip()
 
-            # Check if answer exists in options (exact match, case-insensitive)
-            answer_in_options = False
-            matched_option = normalized_answer
-
+            # Find matching answer
+            matched_option = None
             for opt in normalized_options:
                 if opt.lower() == normalized_answer.lower():
-                    answer_in_options = True
-                    matched_option = opt  # Use the exact option text
+                    matched_option = opt
                     break
 
-            if not answer_in_options:
-                print(f"   ❌ Answer '{normalized_answer}' not in options: {normalized_options}")
-                # Try partial match
+            if not matched_option:
                 for opt in normalized_options:
                     if normalized_answer.lower() in opt.lower() or opt.lower() in normalized_answer.lower():
                         matched_option = opt
-                        answer_in_options = True
-                        print(f"   ✓ Fixed: Using '{matched_option}' as answer")
                         break
 
-                if not answer_in_options:
-                    print(f"   ✗ Skipping question - cannot match answer")
-                    continue
+            if matched_option:
+                validated_questions.append({
+                    'q': q['q'],
+                    'options': normalized_options,
+                    'answer': matched_option,
+                    'difficulty': difficulty_level,
+                    'ai_generated': True
+                })
 
-            validated_questions.append({
-                'q': q['q'],
-                'options': normalized_options,
-                'answer': matched_option,
-                'difficulty': difficulty_level,
-                'ai_generated': True
-            })
-
-            print(f"   ✅ Valid: answer='{matched_option}' in {normalized_options}")
-        
-        # If we got at least 3 valid questions, return them
         if len(validated_questions) >= 3:
-            print(f"\n🎉 SUCCESS: Generated {len(validated_questions)} valid AI questions")
+            print(f"   🎉 SUCCESS: {len(validated_questions)} valid questions")
             return validated_questions[:num_questions]
         else:
-            print(f"\n⚠️  Not enough valid questions ({len(validated_questions)}). Using fallback.")
-            return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
+            print(f"   ⚠️  Only {len(validated_questions)} valid. Retrying...")
+            return generate_quiz_questions(topic, subtopic, difficulty_level, num_questions, retry_count + 1)
     
-    except json.JSONDecodeError as e:
-        print(f"\n❌ JSON Parse Error: {e}")
-        print(f"   Response text: {response_text[:200]}")
-        return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
     except Exception as e:
-        print(f"\n❌ Error generating AI questions: {e}")
-        import traceback
-        traceback.print_exc()
-        return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
+        error_msg = str(e)
+        print(f"   ❌ Error: {error_msg[:150]}")
+        
+        # Check if quota exceeded
+        if '429' in error_msg or 'quota' in error_msg.lower():
+            print(f"   ⏳ Quota exceeded. Using fallback questions.")
+            return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
+        
+        # Other errors - retry once
+        if retry_count < 1:
+            return generate_quiz_questions(topic, subtopic, difficulty_level, num_questions, retry_count + 1)
+        else:
+            return get_fallback_questions(topic, subtopic, difficulty_level, num_questions)
 
 
-def get_fallback_questions(topic, subtopic, difficulty_level='beginner', num_questions=5):
-    """
-    Fallback questions if AI generation fails
-    """
+def get_fallback_questions(topic, subtopic, difficulty_level, num_questions):
+    """High-quality fallback questions organized by topic"""
+    
     fallback_db = {
         'C': {
-            'Arrays': {
-                'beginner': [
-                    {"q": "What is the index of the first element in an array?", "options": ["0","1","-1","Depends"], "answer": "0"},
-                    {"q": "How do you declare an integer array of size 10?", "options": ["int arr[10];","array int[10];","int[10] arr;","arr int[10];"], "answer": "int arr[10];"},
-                    {"q": "Which operator accesses array elements?", "options": ["[]","()","{}","<>"], "answer": "[]"},
-                    {"q": "What is the size of int array[5]?", "options": ["20 bytes","5 bytes","Depends on system","10 bytes"], "answer": "Depends on system"},
-                    {"q": "Can array size be changed after declaration?", "options": ["No","Yes","Sometimes","Depends"], "answer": "No"}
-                ],
-                'intermediate': [
-                    {"q": "What happens when you access array[10] in int array[10]?", "options": ["Undefined behavior","Compiler error","Returns 0","Returns NULL"], "answer": "Undefined behavior"},
-                    {"q": "What is array decay?", "options": ["Array converts to pointer","Array loses data","Array becomes NULL","None"], "answer": "Array converts to pointer"},
-                    {"q": "How to find array length in C?", "options": ["sizeof(arr)/sizeof(arr[0])","length(arr)","arr.length","size(arr)"], "answer": "sizeof(arr)/sizeof(arr[0])"},
-                    {"q": "What is returned by sizeof(array)?", "options": ["Total bytes","Number of elements","Address","Type"], "answer": "Total bytes"},
-                    {"q": "Can you return an array from a function?", "options": ["Only pointer to array","Yes directly","No","Sometimes"], "answer": "Only pointer to array"}
-                ],
-                'advanced': [
-                    {"q": "What is the time complexity of accessing array element?", "options": ["O(1)","O(n)","O(log n)","O(n^2)"], "answer": "O(1)"},
-                    {"q": "What happens in int arr[] = {1,2,3};?", "options": ["Compiler determines size","Error","Size must be specified","Creates pointer"], "answer": "Compiler determines size"},
-                    {"q": "Which is true about multidimensional arrays?", "options": ["Stored in row-major order","Stored in column-major","Random storage","Stack storage only"], "answer": "Stored in row-major order"},
-                    {"q": "What is VLA in C?", "options": ["Variable Length Array","Virtual Linear Array","Vector Length Array","None"], "answer": "Variable Length Array"},
-                    {"q": "Can array elements be const?", "options": ["Yes","No","Only first element","Only static arrays"], "answer": "Yes"}
-                ]
-            },
-            'Pointers': {
-                'beginner': [
-                    {"q": "What does * operator do with pointers?", "options": ["Dereferences pointer","Gets address","Multiplies","Divides"], "answer": "Dereferences pointer"},
-                    {"q": "What does & operator do?", "options": ["Gets address","Dereferences","Adds","Compares"], "answer": "Gets address"},
-                    {"q": "What is NULL pointer?", "options": ["Pointer with address 0","Invalid pointer","Uninitialized","All of above"], "answer": "Pointer with address 0"},
-                    {"q": "How to declare integer pointer?", "options": ["int *ptr;","int ptr*;","*int ptr;","pointer int ptr;"], "answer": "int *ptr;"},
-                    {"q": "What is wild pointer?", "options": ["Uninitialized pointer","NULL pointer","Valid pointer","Freed pointer"], "answer": "Uninitialized pointer"}
-                ],
-                'intermediate': [
-                    {"q": "What is dangling pointer?", "options": ["Points to freed memory","NULL pointer","Uninitialized","Valid pointer"], "answer": "Points to freed memory"},
-                    {"q": "What is pointer arithmetic?", "options": ["Math with addresses","Adding pointers","Subtracting values","None"], "answer": "Math with addresses"},
-                    {"q": "What does ptr++ do?", "options": ["Moves to next element","Increments value","Adds 1 byte","Error"], "answer": "Moves to next element"},
-                    {"q": "Can you compare pointers?", "options": ["Yes if same array","Always yes","Never","Only NULL"], "answer": "Yes if same array"},
-                    {"q": "What is void pointer?", "options": ["Generic pointer","Empty pointer","NULL pointer","Invalid"], "answer": "Generic pointer"}
-                ],
-                'advanced': [
-                    {"q": "What is double pointer used for?", "options": ["Pointer to pointer","Two pointers","Double precision","2D arrays"], "answer": "Pointer to pointer"},
-                    {"q": "What is function pointer?", "options": ["Points to function","Points to code","Special pointer","All of above"], "answer": "All of above"},
-                    {"q": "Can you have array of pointers?", "options": ["Yes","No","Only in structures","Only global"], "answer": "Yes"},
-                    {"q": "What is const pointer?", "options": ["Pointer address can't change","Pointed value can't change","Both","None"], "answer": "Pointer address can't change"},
-                    {"q": "What is pointer to const?", "options": ["Can't modify pointed value","Can't change pointer","Both","None"], "answer": "Can't modify pointed value"}
-                ]
-            }
+            'Arrays': [
+                {"q": "What is the index of the first element in a C array?", "options": ["0", "1", "-1", "Depends on compiler"], "answer": "0"},
+                {"q": "How do you declare an integer array of size 10 in C?", "options": ["int arr[10];", "array int[10];", "int[10] arr;", "arr int[10];"], "answer": "int arr[10];"},
+                {"q": "Which operator is used to access array elements in C?", "options": ["[]", "()", "{}", "->"], "answer": "[]"},
+                {"q": "Can the size of a C array be changed after declaration?", "options": ["No", "Yes", "Sometimes", "Only in C99"], "answer": "No"},
+                {"q": "What does sizeof(array) return for an array in C?", "options": ["Total bytes", "Number of elements", "Address", "Element size"], "answer": "Total bytes"}
+            ],
+            'Pointers': [
+                {"q": "What operator is used to get the address of a variable?", "options": ["&", "*", "->", "@"], "answer": "&"},
+                {"q": "What operator is used to dereference a pointer?", "options": ["*", "&", "->", "."], "answer": "*"},
+                {"q": "What is a NULL pointer in C?", "options": ["Pointer with value 0", "Uninitialized pointer", "Void pointer", "Pointer to void"], "answer": "Pointer with value 0"},
+                {"q": "How do you declare a pointer to an integer in C?", "options": ["int *ptr;", "int ptr*;", "*int ptr;", "pointer int ptr;"], "answer": "int *ptr;"},
+                {"q": "What is a dangling pointer?", "options": ["Points to freed memory", "NULL pointer", "Uninitialized pointer", "Void pointer"], "answer": "Points to freed memory"}
+            ],
+            'Loops': [
+                {"q": "Which loop in C always executes at least once?", "options": ["do-while", "while", "for", "foreach"], "answer": "do-while"},
+                {"q": "What does the 'break' statement do in a loop?", "options": ["Exits the loop", "Skips iteration", "Continues loop", "Pauses loop"], "answer": "Exits the loop"},
+                {"q": "What does 'continue' do in a loop?", "options": ["Skips to next iteration", "Exits loop", "Restarts loop", "Pauses loop"], "answer": "Skips to next iteration"},
+                {"q": "Which loop is best for known number of iterations?", "options": ["for", "while", "do-while", "goto"], "answer": "for"},
+                {"q": "What is an infinite loop in C?", "options": ["Loop that never terminates", "Loop with error", "Nested loop", "Loop without condition"], "answer": "Loop that never terminates"}
+            ],
+            'Functions': [
+                {"q": "What is the return type of main() function in C?", "options": ["int", "void", "float", "char"], "answer": "int"},
+                {"q": "What are parameters passed to a function called?", "options": ["Arguments", "Variables", "Constants", "Operators"], "answer": "Arguments"},
+                {"q": "What is recursion in C?", "options": ["Function calling itself", "Nested functions", "Loop in function", "Function pointer"], "answer": "Function calling itself"},
+                {"q": "What keyword is used to return a value from a function?", "options": ["return", "exit", "break", "continue"], "answer": "return"},
+                {"q": "Can a function return multiple values in C?", "options": ["No, directly", "Yes, always", "Yes, using comma", "Yes, using semicolon"], "answer": "No, directly"}
+            ]
+        },
+        'Python': {
+            'Lists': [
+                {"q": "Which method adds an element to end of Python list?", "options": ["append()", "add()", "insert()", "push()"], "answer": "append()"},
+                {"q": "What does list[1:3] return?", "options": ["Elements at index 1,2", "Elements at 1,2,3", "Element at 1", "Error"], "answer": "Elements at index 1,2"},
+                {"q": "How do you remove last element from a list?", "options": ["pop()", "remove()", "delete()", "clear()"], "answer": "pop()"},
+                {"q": "What is len([1,2,3])?", "options": ["3", "2", "1", "4"], "answer": "3"},
+                {"q": "Are Python lists mutable?", "options": ["Yes", "No", "Sometimes", "Depends"], "answer": "Yes"}
+            ],
+            'Dictionaries': [
+                {"q": "How do you access value in dictionary?", "options": ["dict[key]", "dict.key", "dict(key)", "dict->key"], "answer": "dict[key]"},
+                {"q": "What method returns all keys in dictionary?", "options": ["keys()", "values()", "items()", "get()"], "answer": "keys()"},
+                {"q": "How to add new key-value pair?", "options": ["dict[key]=value", "dict.add(key,value)", "dict.insert(key,value)", "dict.append(key,value)"], "answer": "dict[key]=value"},
+                {"q": "What does dict.get(key) return if key not found?", "options": ["None", "Error", "False", "Empty string"], "answer": "None"},
+                {"q": "Are dictionary keys ordered in Python 3.7+?", "options": ["Yes", "No", "Sometimes", "Depends"], "answer": "Yes"}
+            ],
+            'File Handling': [
+                {"q": "Which mode opens file for reading?", "options": ["'r'", "'w'", "'a'", "'x'"], "answer": "'r'"},
+                {"q": "Which mode creates new file for writing?", "options": ["'w'", "'r'", "'a'", "'x'"], "answer": "'w'"},
+                {"q": "What does 'with' statement do?", "options": ["Auto closes file", "Opens file", "Reads file", "Writes file"], "answer": "Auto closes file"},
+                {"q": "Which method reads entire file content?", "options": ["read()", "readline()", "readlines()", "scan()"], "answer": "read()"},
+                {"q": "What mode appends to existing file?", "options": ["'a'", "'w'", "'r'", "'x'"], "answer": "'a'"}
+            ]
+        },
+        'Java': {
+            'OOPs': [
+                {"q": "What is encapsulation in Java?", "options": ["Data hiding", "Inheritance", "Polymorphism", "Abstraction"], "answer": "Data hiding"},
+                {"q": "What keyword creates an object?", "options": ["new", "create", "object", "make"], "answer": "new"},
+                {"q": "What is a constructor?", "options": ["Special method for initialization", "Destructor", "Member function", "Static method"], "answer": "Special method for initialization"},
+                {"q": "What is 'this' keyword used for?", "options": ["Current object reference", "Parent class", "Static member", "Package"], "answer": "Current object reference"},
+                {"q": "Can a class have multiple constructors?", "options": ["Yes", "No", "Sometimes", "Only with inheritance"], "answer": "Yes"}
+            ]
+        },
+        'DBMS': {
+            'SQL': [
+                {"q": "Which SQL statement retrieves data?", "options": ["SELECT", "INSERT", "UPDATE", "DELETE"], "answer": "SELECT"},
+                {"q": "Which clause filters rows in SQL?", "options": ["WHERE", "HAVING", "GROUP BY", "ORDER BY"], "answer": "WHERE"},
+                {"q": "Which JOIN returns matching rows from both tables?", "options": ["INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN"], "answer": "INNER JOIN"},
+                {"q": "What does COUNT() function do?", "options": ["Counts rows", "Sums values", "Finds average", "Gets maximum"], "answer": "Counts rows"},
+                {"q": "Which statement adds new row to table?", "options": ["INSERT", "UPDATE", "SELECT", "CREATE"], "answer": "INSERT"}
+            ]
+        },
+        'OS': {
+            'Processes': [
+                {"q": "What is a process in OS?", "options": ["Program in execution", "Compiled code", "Source file", "Binary file"], "answer": "Program in execution"},
+                {"q": "What is process scheduling?", "options": ["Allocating CPU time", "Memory allocation", "Disk management", "File handling"], "answer": "Allocating CPU time"},
+                {"q": "What is PCB?", "options": ["Process Control Block", "Program Control Block", "Process Code Block", "Processor Control Base"], "answer": "Process Control Block"},
+                {"q": "What is context switching?", "options": ["Switching between processes", "Memory allocation", "CPU upgrade", "Disk operation"], "answer": "Switching between processes"},
+                {"q": "What state follows the ready state?", "options": ["Running", "Waiting", "Terminated", "New"], "answer": "Running"}
+            ]
         }
     }
     
-    # Get questions for topic/subtopic/difficulty
-    try:
-        questions = fallback_db.get(topic, {}).get(subtopic, {}).get(difficulty_level, [])
-        if questions:
-            return questions[:num_questions]
-    except:
-        pass
+    # Try to get from database
+    if topic in fallback_db:
+        if isinstance(fallback_db[topic], dict) and subtopic in fallback_db[topic]:
+            questions = fallback_db[topic][subtopic][:num_questions]
+            for q in questions:
+                q['difficulty'] = difficulty_level
+                q['ai_generated'] = False
+            return questions
     
-    # Ultimate fallback - generic questions
+    # Ultimate fallback
     return [
         {
-            "q": f"Which of the following is a key concept in {topic} - {subtopic}?",
-            "options": ["Concept A", "Concept B", "Concept C", "All of the above"],
+            "q": f"Which is a key concept in {topic} - {subtopic}?",
+            "options": ["Fundamental principles", "Advanced techniques", "Basic operations", "All of the above"],
             "answer": "All of the above",
-            "difficulty": difficulty_level
+            "difficulty": difficulty_level,
+            "ai_generated": False
         }
     ] * min(num_questions, 3)
 
 
 def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questions=5):
-    """
-    Main function to get adaptive AI-generated questions
+    """Main function to get adaptive questions"""
     
-    Returns: Dictionary with questions and metadata
-    """
-    # Determine difficulty based on past performance
     difficulty_level = determine_difficulty_level(user_scores, topic, subtopic)
     
     print(f"\n{'='*80}")
-    print(f"🎯 AI QUIZ GENERATOR")
+    print(f"🎯 AI QUIZ GENERATOR (Free Tier)")
     print(f"{'='*80}")
     print(f"👤 User: {user_email}")
     print(f"📚 Topic: {topic} - {subtopic}")
     print(f"📊 Difficulty: {difficulty_level.upper()}")
     print(f"🔢 Questions: {num_questions}")
+    print(f"🤖 Model: {MODEL_NAME}")
     print(f"{'='*80}")
     
-    # Generate AI questions
     questions = generate_quiz_questions(topic, subtopic, difficulty_level, num_questions)
     
     return {
@@ -346,5 +386,5 @@ def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questio
         'difficulty': difficulty_level,
         'topic': topic,
         'subtopic': subtopic,
-        'ai_generated': True
+        'ai_generated': any(q.get('ai_generated', False) for q in questions)
     }

@@ -245,12 +245,16 @@ def english():
     return render_template('english.html', topics=topics)
 
 
+# Key changes needed in app.py
+
+# 1. Update the quiz route to use AI for ALL topics (around line 300)
 @app.route('/quiz/<topic>', methods=['GET', 'POST'])
 @app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
 def quiz(topic, subtopic=None):
     if 'user' not in session:
         return redirect(url_for('index'))
 
+    # Get user scores for adaptive difficulty
     result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
 
     user_scores = []
@@ -263,6 +267,7 @@ def quiz(topic, subtopic=None):
         })
     
     try:
+        # Use AI for ALL topics and subtopics
         ai_result = get_adaptive_questions(
             user_email=session['user_email'],
             topic=topic,
@@ -275,7 +280,7 @@ def quiz(topic, subtopic=None):
         difficulty = ai_result['difficulty']
         ai_generated = True
         
-        print(f"✅ Loaded {len(topic_questions)} questions at {difficulty} level")
+        print(f"✅ Loaded {len(topic_questions)} AI-generated questions at {difficulty} level")
         
     except Exception as e:
         print(f"❌ Error loading AI questions: {e}")
@@ -294,20 +299,10 @@ def quiz(topic, subtopic=None):
         print("📝 SCORING DEBUG")
         print("="*80)
         
-        # Print ALL form data to see what's actually being submitted
-        print("Form data received:")
-        for key, value in user_answers.items():
-            print(f"  {key} = '{value}'")
-        
-        print(f"\nQuestions and expected answers:")
-        for i, q in enumerate(topic_questions):
-            print(f"  Q{i}: answer='{q['answer']}' options={q['options']}")
-
         for i, q in enumerate(topic_questions):
             user_answer = user_answers.get(f'q{i}', '')
             correct_answer = str(q['answer'])
             
-            # Simple comparison: strip and lowercase both
             is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
             
             if is_correct:
@@ -317,6 +312,7 @@ def quiz(topic, subtopic=None):
 
         print(f"\n📊 FINAL: {score}/{len(topic_questions)}")
 
+        # Save score to database
         supabase.table('user_scores').insert({
             'user_email': session['user_email'],
             'topic': topic,
@@ -327,6 +323,7 @@ def quiz(topic, subtopic=None):
 
         percent = (score / len(topic_questions)) * 100
 
+        # Generate feedback
         if percent < 40:
             suggestion = f"Your score is {percent:.1f}%. You need significant practice in {subtopic if subtopic else topic}."
             performance = "needs_work"
@@ -340,6 +337,7 @@ def quiz(topic, subtopic=None):
             suggestion = f"Your score is {percent:.1f}%. Excellent! You have strong knowledge in {subtopic if subtopic else topic}."
             performance = "excellent"
 
+        # Adaptive feedback
         if difficulty == 'beginner':
             if percent >= 80:
                 suggestion += " 🎉 Great job on beginner questions! Next quiz will be at intermediate level."
@@ -356,6 +354,7 @@ def quiz(topic, subtopic=None):
             else:
                 suggestion += " Advanced questions are challenging. Review concepts and try again."
 
+        # Generate topic recommendations
         topic_recommendations = generate_topic_recommendations(
             topic, subtopic, percent, difficulty, session['user_email'], supabase
         )
@@ -381,6 +380,131 @@ def quiz(topic, subtopic=None):
                          ai_generated=ai_generated)
 
 
+# 2. Update Grand Test to use AI questions (around line 500)
+@app.route('/grand_test', methods=['GET', 'POST'])
+def grand_test():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        all_questions = session.get('grand_test_questions', [])
+        
+        if not all_questions:
+            flash("Grand Test session expired. Please start again.")
+            return redirect(url_for('grand_test'))
+
+        score = 0
+        user_answers = request.form
+        
+        for i, q in enumerate(all_questions):
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
+            
+            if user_answer.strip().lower() == correct_answer.strip().lower():
+                score += 1
+
+        # Save to database
+        supabase.table('user_scores').insert({
+            'user_email': session['user_email'],
+            'topic': 'Grand Test',
+            'subtopic': '',
+            'score': score,
+            'total_questions': len(all_questions)
+        }).execute()
+
+        session.pop('grand_test_questions', None)
+
+        percent = (score / len(all_questions)) * 100
+        
+        if percent < 40:
+            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas."
+        elif percent < 60:
+            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track."
+        elif percent < 80:
+            suggestion = f"Your overall score is {percent:.1f}%. Good performance!"
+        else:
+            suggestion = f"Your overall score is {percent:.1f}%. Outstanding!"
+
+        return render_template('grand_test.html', 
+                             all_questions=all_questions, 
+                             submitted=True, 
+                             score=score, 
+                             suggestion=suggestion)
+
+    try:
+        print("\n" + "="*80)
+        print("🎯 GENERATING GRAND TEST - ALL AI QUESTIONS")
+        print("="*80)
+
+        # Get user scores for adaptive difficulty
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
+
+        user_scores = []
+        for row in result.data:
+            user_scores.append({
+                'topic': row['topic'],
+                'subtopic': row['subtopic'],
+                'score': row['score'],
+                'total_questions': row['total_questions']
+            })
+
+        all_questions = []
+
+        from ai_question_generator import generate_quiz_questions, determine_difficulty_level
+        
+        # Technical Questions (5 questions)
+        print("\n[1/3] Generating Technical Questions...")
+        tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
+        tech_questions = generate_quiz_questions(
+            'Technical', 
+            'Programming & CS Fundamentals', 
+            tech_difficulty, 
+            5
+        )
+        all_questions.extend(tech_questions)
+        print(f"✅ Added {len(tech_questions)} technical questions")
+
+        # Aptitude Questions (5 questions)
+        print("\n[2/3] Generating Aptitude Questions...")
+        apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
+        apt_questions = generate_quiz_questions(
+            'Quantitative Aptitude', 
+            'Quantitative & Logical Reasoning', 
+            apt_difficulty, 
+            5
+        )
+        all_questions.extend(apt_questions)
+        print(f"✅ Added {len(apt_questions)} aptitude questions")
+
+        # English Questions (5 questions)
+        print("\n[3/3] Generating English Questions...")
+        eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
+        eng_questions = generate_quiz_questions(
+            'Grammar', 
+            'Grammar & Communication', 
+            eng_difficulty, 
+            5
+        )
+        all_questions.extend(eng_questions)
+        print(f"✅ Added {len(eng_questions)} English questions")
+
+        print(f"\n✅ TOTAL: {len(all_questions)} AI-generated questions")
+        print("="*80)
+
+        # Store in session
+        session['grand_test_questions'] = all_questions
+
+        return render_template('grand_test.html', 
+                             all_questions=all_questions, 
+                             submitted=False)
+
+    except Exception as e:
+        print(f"❌ Error generating Grand Test: {e}")
+        import traceback
+        traceback.print_exc()
+        flash("Failed to generate Grand Test. Please try again.")
+        return redirect(url_for('dashboard'))
+
 @app.route('/suggestions')
 def suggestions():
     if 'user' not in session:
@@ -404,99 +528,6 @@ def suggestions():
                          suggestions=ml_suggestions,
                          readiness=readiness)
 
-
-@app.route('/grand_test', methods=['GET', 'POST'])
-def grand_test():
-    if 'user' not in session:
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        all_questions = session.get('grand_test_questions', [])
-        
-        if not all_questions:
-            flash("Grand Test session expired. Please start again.")
-            return redirect(url_for('grand_test'))
-
-        score = 0
-        user_answers = request.form
-        
-        for i, q in enumerate(all_questions):
-            user_answer = user_answers.get(f'q{i}', '')
-            correct_answer = str(q['answer'])
-            
-            if user_answer.strip().lower() == correct_answer.strip().lower():
-                score += 1
-
-        supabase.table('user_scores').insert({
-            'user_email': session['user_email'],
-            'topic': 'Grand Test',
-            'subtopic': '',
-            'score': score,
-            'total_questions': len(all_questions)
-        }).execute()
-
-        session.pop('grand_test_questions', None)
-
-        percent = (score / len(all_questions)) * 100
-        if percent < 40:
-            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas."
-        elif percent < 60:
-            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track."
-        elif percent < 80:
-            suggestion = f"Your overall score is {percent:.1f}%. Good performance!"
-        else:
-            suggestion = f"Your overall score is {percent:.1f}%. Outstanding!"
-
-        return render_template('grand_test.html', 
-                             all_questions=all_questions, 
-                             submitted=True, 
-                             score=score, 
-                             suggestion=suggestion)
-
-    try:
-        print("\n" + "="*80)
-        print("🎯 GENERATING GRAND TEST")
-        print("="*80)
-
-        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
-
-        user_scores = []
-        for row in result.data:
-            user_scores.append({
-                'topic': row['topic'],
-                'subtopic': row['subtopic'],
-                'score': row['score'],
-                'total_questions': row['total_questions']
-            })
-
-        all_questions = []
-
-        from ai_question_generator import generate_quiz_questions, determine_difficulty_level
-        
-        tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
-        tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 5)
-        all_questions.extend(tech_questions)
-
-        apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
-        apt_questions = generate_quiz_questions('Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 5)
-        all_questions.extend(apt_questions)
-
-        eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
-        eng_questions = generate_quiz_questions('English', 'Grammar & Communication', eng_difficulty, 5)
-        all_questions.extend(eng_questions)
-
-        print(f"\n✅ TOTAL: {len(all_questions)} questions generated")
-
-        session['grand_test_questions'] = all_questions
-
-        return render_template('grand_test.html', 
-                             all_questions=all_questions, 
-                             submitted=False)
-
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        flash("Failed to generate Grand Test. Please try again.")
-        return redirect(url_for('dashboard'))
 
 
 @app.route('/resume_draft')
