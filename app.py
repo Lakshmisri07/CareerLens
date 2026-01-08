@@ -529,7 +529,7 @@ def resume_draft():
     # Generate resume data
     resume_data = generate_complete_resume(user_data, scores_data, certificates)
     
-    return render_template('resume_builder.html', resume_data=resume_data)@app.route('/resume_builder')
+    return render_template('resume_builder.html', resume_data=resume_data)
 
 @app.route('/certificates/upload', methods=['POST'])
 def upload_certificate():
