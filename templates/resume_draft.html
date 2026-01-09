@@ -277,9 +277,11 @@
         .template-selector {
             max-width: 850px;
             margin: 20px auto;
-            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
-
         .template-btn {
             padding: 8px 16px;
             border: 2px solid #e2e8f0;
@@ -505,11 +507,11 @@
 
 <div class="template-selector">
     <span style="font-weight: 700; color: #64748b; margin-right: 10px;">Template:</span>
-    <button class="template-btn active" onclick="changeTemplate('classic')">Classic</button>
-    <button class="template-btn" onclick="changeTemplate('modern')">Modern</button>
-    <button class="template-btn" onclick="changeTemplate('twocol')">Two-Column</button>
-    <button class="template-btn" onclick="changeTemplate('creative')">Creative</button>
-    <button class="template-btn" onclick="changeTemplate('ats')">ATS Simple</button>
+    <button class="template-btn active" onclick="changeTemplate('classic', this)">Classic</button>
+    <button class="template-btn" onclick="changeTemplate('modern', this)">Modern</button>
+    <button class="template-btn" onclick="changeTemplate('twocol', this)">Two-Column</button>
+    <button class="template-btn" onclick="changeTemplate('creative', this)">Creative</button>
+    <button class="template-btn" onclick="changeTemplate('ats', this)">ATS Simple</button>
 </div>
 
 <div class="resume-container">
@@ -659,41 +661,57 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-function downloadPDF() {
-    // Hide UI elements
-    document.querySelector('.template-selector').style.display = 'none';
-    document.querySelector('.action-bar').style.display = 'none';
-    document.querySelector('.btn-back-dash').style.display = 'none';
-    
-    const element = document.getElementById('resumeContent');
-    const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
-    
-    const opt = {
-        margin: 0,
-        filename: `${name}_Resume.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2.5,
-            useCORS: true,
-            letterRendering: true,
-            backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait'
-        },
-        pagebreak: { mode: 'avoid-all' }
-    };
-    
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Show UI elements again
-        document.querySelector('.template-selector').style.display = 'flex';
-        document.querySelector('.action-bar').style.display = 'flex';
-        document.querySelector('.btn-back-dash').style.display = 'block';
-    });
-}
-function changeTemplate(template) {
+    function downloadPDF() {
+        // Get current template
+        const container = document.querySelector('.resume-container');
+        const currentTemplate = Array.from(container.classList).find(c => c.startsWith('template-'));
+        
+        // Hide UI elements
+        document.querySelector('.template-selector').style.display = 'none';
+        document.querySelector('.action-bar').style.display = 'none';
+        document.querySelector('.btn-back-dash').style.display = 'none';
+        
+        // Clone the entire container with template class
+        const element = document.querySelector('.resume-container').cloneNode(true);
+        
+        // Create temporary container
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.appendChild(element);
+        document.body.appendChild(tempContainer);
+        
+        const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
+        
+        const opt = {
+            margin: 0,
+            filename: `${name}_Resume.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2.5,
+                useCORS: true,
+                letterRendering: true,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait'
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Cleanup
+            document.body.removeChild(tempContainer);
+            
+            // Show UI elements again
+            document.querySelector('.template-selector').style.display = 'flex';
+            document.querySelector('.action-bar').style.display = 'flex';
+            document.querySelector('.btn-back-dash').style.display = 'block';
+        });
+    }
+function changeTemplate(template, btnElement) {
     const container = document.querySelector('.resume-container');
     const page = document.querySelector('.resume-page');
     
@@ -716,7 +734,45 @@ function changeTemplate(template) {
     
     // Update active button
     document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    btnElement.classList.add('active');
+}
+function restructureTwoColumn() {
+    const page = document.querySelector('.resume-page');
+    const header = page.querySelector('.resume-header');
+    const sections = Array.from(page.querySelectorAll('.resume-section'));
+    
+    // Store original content
+    if (!window.originalContent) {
+        window.originalContent = page.innerHTML;
+    }
+    
+    // Sidebar: Skills and Certifications
+    const sidebarSections = [];
+    const mainSections = [];
+    
+    sections.forEach(section => {
+        const title = section.querySelector('.section-title').textContent.toLowerCase();
+        if (title.includes('skill') || title.includes('certification')) {
+            sidebarSections.push(section.cloneNode(true));
+        } else {
+            mainSections.push(section.cloneNode(true));
+        }
+    });
+    
+    // Clear and rebuild
+    page.innerHTML = '';
+    page.appendChild(header);
+    
+    const sidebar = document.createElement('div');
+    sidebar.className = 'resume-sidebar';
+    sidebarSections.forEach(s => sidebar.appendChild(s));
+    
+    const main = document.createElement('div');
+    main.className = 'resume-main';
+    mainSections.forEach(s => main.appendChild(s));
+    
+    page.appendChild(sidebar);
+    page.appendChild(main);
 }
 
 function restructureTwoColumn() {
