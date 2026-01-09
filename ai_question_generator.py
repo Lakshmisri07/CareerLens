@@ -114,7 +114,7 @@ CRITICAL RULES:
             
             # Use NEW API syntax
             response = current_client.models.generate_content(
-                model='gemini-1.5-flash',  # Using stable model
+                model='gemini-2.0-flash-exp',  # Using stable model
                 contents=prompt_text,
                 config=types.GenerateContentConfig(
                     max_output_tokens=2048,
@@ -217,7 +217,7 @@ Make questions relevant to {topic} and {context}."""
                 raise Exception("No working API keys")
             
             response = current_client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-2.0-flash-exp',
                 contents=prompt_text,
                 config=types.GenerateContentConfig(
                     max_output_tokens=2048,

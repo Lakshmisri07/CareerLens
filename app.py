@@ -537,7 +537,6 @@ def resume_draft():
 
     user_email = session.get('user_email')
     
-    # Get user data
     result = supabase.table('users').select('*').eq('email', user_email).execute()
     if not result.data:
         flash("User data not found!")
@@ -545,22 +544,42 @@ def resume_draft():
     
     user_data = result.data[0]
     
-    # Get quiz scores (filter out Grand Test)
     scores_result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
     scores_data = [s for s in scores_result.data if s.get('topic', '').lower() != 'grand test'] if scores_result.data else []
     
-    # Get certificates with files (NEW)
+    try:
+        certs_result = supabase.table('user_certificates').select('*').eq('email', user_email).execute()
+        certificates = certs_result.data if certs_result.data else []
+    except:
+        certificates = []
+    
+    resume_data = generate_complete_resume(user_data, scores_data, certificates)
+    
+    # Show beautiful resume display page
+    return render_template('resume_draft.html', resume_data=resume_data)
+
+@app.route('/resume_edit')
+def resume_edit():
+    # Same code as resume_draft but return different template
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    user_email = session.get('user_email')
+    result = supabase.table('users').select('*').eq('email', user_email).execute()
+    user_data = result.data[0]
+    
+    scores_result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
+    scores_data = [s for s in scores_result.data if s.get('topic', '').lower() != 'grand test'] if scores_result.data else []
+    
     try:
         certs_result = supabase.table('user_certificates').select('*').eq('user_email', user_email).execute()
         certificates = certs_result.data if certs_result.data else []
-    except Exception as e:
-        print(f"Error fetching certificates: {e}")
+    except:
         certificates = []
     
-    # Generate resume data
     resume_data = generate_complete_resume(user_data, scores_data, certificates)
     
-    return render_template('resume_builder.html', resume_data=resume_data)
+    return render_template('resume_editor.html', resume_data=resume_data)
 
 @app.route('/certificates/upload', methods=['POST'])
 def upload_certificate():
