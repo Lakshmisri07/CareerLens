@@ -234,10 +234,8 @@ Format as JSON:
             avg_score = 0
         
         # Certificates as achievements (SAFE - handles empty list)
-        if certificates:
-            for cert in certificates[:2]:  # Top 2 certificates
-                achievements.append(f"Earned {cert['name']} certification from {cert['issuer']}")
-        
+        # DON'T add certificates to achievements - they have their own section
+# Certificates are already shown in the certifications section
         # Find top performing areas (but don't mention "quiz")
         topic_performance = {}
         for score in scores_data:

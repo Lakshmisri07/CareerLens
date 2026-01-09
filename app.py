@@ -661,7 +661,25 @@ def delete_certificate(cert_id):
         
     except Exception as e:
         return {'error': f'Error deleting certificate: {str(e)}'}, 500
+@app.route('/resume/save', methods=['POST'])
+def save_resume():
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
     
+    data = request.json
+    user_email = session['user_email']
+    
+    try:
+        # Update user info
+        supabase.table('users').update({
+            'name': data['personal_info']['name'],
+            'email': data['personal_info']['email']
+        }).eq('email', user_email).execute()
+        
+        return {'success': True}, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+        
 @app.route('/certificates/list', methods=['GET'])
 def list_certificates():
     """Get all certificates for current user"""
