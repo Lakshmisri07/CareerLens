@@ -64,6 +64,8 @@
         /* Section Styling */
         .resume-section {
             margin-bottom: 35px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
         
         .section-title {
@@ -175,6 +177,7 @@
         /* Projects */
         .project-item {
             margin-bottom: 25px;
+            page-break-inside: avoid;
         }
         
         .project-name {
@@ -263,33 +266,234 @@
             font-weight: 600;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            z-index: 1000;
         }
         
         .btn-back-dash:hover {
             color: #2563eb;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
-        /* Prevent content from splitting across pages */
-        .resume-section {
-            page-break-inside: avoid;
-            break-inside: avoid;
+
+        .template-selector {
+            max-width: 850px;
+            margin: 20px auto;
+            position: relative;
         }
 
-        .project-item, .cert-item, .education-item {
-            page-break-inside: avoid;
-            break-inside: avoid;
+        .template-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s;
+            font-size: 0.9rem;
         }
 
-        /* Control page breaks */
+        .template-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .template-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        /* TEMPLATE 2: MODERN MINIMAL */
+        .template-modern .resume-name {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            border-bottom: none;
+        }
+
+        .template-modern .resume-header {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .template-modern .section-title {
+            color: #1e293b;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            border-bottom: none;
+            padding-left: 0;
+        }
+
+        .template-modern .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #2563eb;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        .template-modern .skill-tag {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        /* TEMPLATE 3: TWO COLUMN */
+        /* TEMPLATE 3: TWO COLUMN */
+.template-twocol .resume-page {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    padding: 0;
+}
+
+.template-twocol .resume-sidebar {
+    background: #312fb5ff;
+    color: white;
+    padding: 40px 30px;
+}
+
+.template-twocol .resume-main {
+    padding: 40px 40px;
+}
+
+.template-twocol .resume-header {
+    border-bottom: none;
+    text-align: left;
+    grid-column: 1 / -1;
+    background: #312fb5ff;  /* Changed to blue */
+    padding: 40px;
+}
+
+.template-twocol .resume-name {
+    color: white;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);  /* Added shadow for visibility */
+}
+
+.template-twocol .resume-contact {
+    justify-content: flex-start;
+    color: #e0f2fe;  /* Much lighter */
+}
+
+.template-twocol .resume-contact i {
+    color: #d7d8dfff;  /* Gold icons */
+}
+
+.template-twocol .section-title {
+    color: #f1f5f9;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #174c8dff;
+}
+
+.template-twocol .resume-main .section-title {
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.template-twocol .skill-tag {
+    background: #1e293b;
+    color: white;
+    border: none;
+}
+
+/* TEMPLATE 4: CREATIVE/BOLD */
+.template-creative .resume-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    margin-bottom: 35px;
+    border-radius: 0;
+}
+
+.template-creative .resume-name {
+    color: white;
+}
+
+.template-creative .resume-contact {
+    color: #f0e7ff;
+}
+
+.template-creative .resume-contact i {
+    color: #fde047;
+}
+
+.template-creative .section-title {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.template-creative .skill-tag {
+    background: #ede9fe;
+    color: #6b21a8;
+    border: 2px solid #a78bfa;
+}
+
+.template-creative .project-name,
+.template-creative .cert-name,
+.template-creative .education-degree {
+    color: #6b21a8;
+}
+
+        
+        /* TEMPLATE 5: ATS SIMPLE */
+        .template-ats .resume-page {
+            padding: 40px 60px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        .template-ats .resume-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .template-ats .resume-header {
+            border-bottom: 2px solid #000;
+        }
+
+        .template-ats .section-title {
+            color: #000;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .template-ats .skill-tag {
+            background: none;
+            border: none;
+            color: #000;
+            padding: 0;
+            margin-right: 10px;
+        }
+
+        .template-ats .skill-tag::after {
+            content: ' •';
+        }
+
+        .template-ats .skill-tag:last-child::after {
+            content: '';
+        }
+
         @media print {
+            .action-bar, .btn-back-dash, .template-selector { display: none; }
+            body { background: white; }
+            .resume-container { box-shadow: none; margin: 0; }
             .resume-section {
                 page-break-inside: avoid;
             }
-        }
-        @media print {
-            .action-bar, .btn-back-dash { display: none; }
-            body { background: white; }
-            .resume-container { box-shadow: none; margin: 0; }
         }
     </style>
 </head>
@@ -298,6 +502,15 @@
 <a href="/dashboard" class="btn-back-dash">
     <i class="fas fa-arrow-left"></i> Dashboard
 </a>
+
+<div class="template-selector">
+    <span style="font-weight: 700; color: #64748b; margin-right: 10px;">Template:</span>
+    <button class="template-btn active" onclick="changeTemplate('classic')">Classic</button>
+    <button class="template-btn" onclick="changeTemplate('modern')">Modern</button>
+    <button class="template-btn" onclick="changeTemplate('twocol')">Two-Column</button>
+    <button class="template-btn" onclick="changeTemplate('creative')">Creative</button>
+    <button class="template-btn" onclick="changeTemplate('ats')">ATS Simple</button>
+</div>
 
 <div class="resume-container">
     <div class="resume-page" id="resumeContent">
@@ -447,6 +660,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 function downloadPDF() {
+    // Hide UI elements
+    document.querySelector('.template-selector').style.display = 'none';
+    document.querySelector('.action-bar').style.display = 'none';
+    document.querySelector('.btn-back-dash').style.display = 'none';
+    
     const element = document.getElementById('resumeContent');
     const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
     
@@ -454,12 +672,104 @@ function downloadPDF() {
         margin: 0,
         filename: `${name}_Resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+            scale: 2.5,
+            useCORS: true,
+            letterRendering: true,
+            backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: 'avoid-all' }
     };
     
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Show UI elements again
+        document.querySelector('.template-selector').style.display = 'flex';
+        document.querySelector('.action-bar').style.display = 'flex';
+        document.querySelector('.btn-back-dash').style.display = 'block';
+    });
 }
+function changeTemplate(template) {
+    const container = document.querySelector('.resume-container');
+    const page = document.querySelector('.resume-page');
+    
+    // Remove all template classes
+    container.classList.remove('template-classic', 'template-modern', 'template-twocol', 'template-creative', 'template-ats');
+    
+    // Add new template class
+    container.classList.add('template-' + template);
+    
+    // Handle two-column layout
+    if (template === 'twocol') {
+        if (!page.querySelector('.resume-sidebar')) {
+            restructureTwoColumn();
+        }
+    } else {
+        if (page.querySelector('.resume-sidebar')) {
+            restoreOriginalLayout();
+        }
+    }
+    
+    // Update active button
+    document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function restructureTwoColumn() {
+    const page = document.querySelector('.resume-page');
+    const header = page.querySelector('.resume-header');
+    const sections = Array.from(page.querySelectorAll('.resume-section'));
+    
+    // Identify sidebar content (skills, education, certs)
+    const sidebarSections = [];
+    const mainSections = [];
+    
+    sections.forEach(section => {
+        const title = section.querySelector('.section-title').textContent.toLowerCase();
+        if (title.includes('skill') || title.includes('education') || title.includes('certification')) {
+            sidebarSections.push(section);
+        } else {
+            mainSections.push(section);
+        }
+    });
+    
+    // Restructure
+    const sidebar = document.createElement('div');
+    sidebar.className = 'resume-sidebar';
+    sidebarSections.forEach(s => sidebar.appendChild(s));
+    
+    const main = document.createElement('div');
+    main.className = 'resume-main';
+    mainSections.forEach(s => main.appendChild(s));
+    
+    page.innerHTML = '';
+    page.appendChild(header);
+    page.appendChild(sidebar);
+    page.appendChild(main);
+}
+
+function restoreOriginalLayout() {
+    const page = document.querySelector('.resume-page');
+    const header = page.querySelector('.resume-header');
+    const sidebar = page.querySelector('.resume-sidebar');
+    const main = page.querySelector('.resume-main');
+    
+    if (sidebar && main) {
+        const allSections = [...sidebar.querySelectorAll('.resume-section'), ...main.querySelectorAll('.resume-section')];
+        page.innerHTML = '';
+        page.appendChild(header);
+        allSections.forEach(s => page.appendChild(s));
+    }
+}
+
+// Set default template
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.resume-container').classList.add('template-classic');
+});
 </script>
 </body>
 </html>
