@@ -2,220 +2,385 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Resume - CareerLens</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(to right, #6a11cb, #2575fc);
-            min-height: 100vh;
-            padding: 30px 0;
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --glass-blur: blur(12px);
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+            background-color: #0f172a;
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 20%;
+            left: 20%;
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            filter: blur(100px);
+            opacity: 0.2;
+            z-index: -1;
+            animation: float 20s infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 20%;
+            right: 20%;
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            filter: blur(80px);
+            opacity: 0.2;
+            z-index: -1;
+            animation: float 15s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
+        }
+
         .editor-container {
             max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: var(--glass-shadow);
         }
-        
+
         .editor-header {
             text-align: center;
             margin-bottom: 40px;
             position: relative;
         }
-        
+
         .editor-header h2 {
-            color: #2563eb;
+            color: white;
             font-weight: 800;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 0.5rem;
         }
-        
+
+        .editor-header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+
         .btn-back {
             position: absolute;
             left: 0;
             top: 0;
-            background: #64748b;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 12px;
             text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
+
         .btn-back:hover {
-            background: #475569;
-            color: white;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: var(--primary);
         }
-        
+
         .section-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
             margin-bottom: 25px;
-            border-left: 4px solid #2563eb;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
         }
-        
+
+        .section-box:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
         .section-title {
-            color: #2563eb;
-            font-size: 1.3rem;
+            color: var(--primary);
+            font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .form-label {
+            display: block;
             font-weight: 600;
-            color: #334155;
+            color: var(--text-main);
             margin-bottom: 8px;
+            font-size: 0.95rem;
         }
-        
-        .form-control, .form-select {
-            border-radius: 8px;
+
+        .form-control,
+        .form-select {
+            width: 100%;
+            padding: 12px 15px;
             border: 2px solid #e2e8f0;
-            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: white;
         }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+
+        .form-control:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
-        
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .row {
+            display: grid;
+            gap: 15px;
+        }
+
+        .row.g-2 {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .row.g-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        /* Buttons */
         .btn-add {
-            background: #10b981;
+            background: linear-gradient(135deg, var(--success), #059669);
             color: white;
             border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
+            padding: 10px 24px;
+            border-radius: 10px;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
+
         .btn-add:hover {
-            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
-        
+
+        /* Item Cards */
         .item-card {
-            background: white;
+            background: #f8fafc;
             border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 15px;
             position: relative;
+            transition: all 0.3s;
         }
-        
+
+        .item-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.1);
+        }
+
         .btn-remove {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ef4444;
+            top: 15px;
+            right: 15px;
+            background: var(--danger);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 1rem;
         }
-        
+
         .btn-remove:hover {
             background: #dc2626;
+            transform: scale(1.1);
         }
-        
+
+        /* Skills */
         .skill-tag-input {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-bottom: 10px;
         }
-        
+
         .skill-tag {
             background: #eff6ff;
             color: #1e40af;
-            padding: 6px 12px;
+            padding: 8px 14px;
             border-radius: 20px;
             font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
-        
+
+        .skill-tag:hover {
+            background: #dbeafe;
+        }
+
         .skill-tag button {
             background: none;
             border: none;
             color: #1e40af;
             cursor: pointer;
             font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s;
         }
-        
+
+        .skill-tag button:hover {
+            color: var(--danger);
+            transform: scale(1.2);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        /* Certificate Upload */
+        #certUploadModal {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
         .cert-upload-box {
             border: 2px dashed #cbd5e1;
             border-radius: 10px;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
-            background: #f8fafc;
+            background: white;
             cursor: pointer;
             transition: all 0.3s;
         }
-        
+
         .cert-upload-box:hover {
-            border-color: #2563eb;
+            border-color: var(--primary);
             background: #eff6ff;
         }
-        
+
         .cert-upload-box.dragging {
-            border-color: #10b981;
+            border-color: var(--success);
             background: #d1fae5;
         }
-        
+
         .upload-progress {
             display: none;
             margin-top: 15px;
         }
-        
+
         .progress {
-            height: 25px;
-            border-radius: 10px;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
         }
-        
+
         .progress-bar {
+            height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 600;
+            transition: width 0.3s;
         }
-        
+
         .cert-preview {
             display: flex;
             align-items: center;
             gap: 15px;
             background: white;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 2px solid #e2e8f0;
             margin-bottom: 10px;
+            position: relative;
+            transition: all 0.3s;
         }
-        .cert-preview {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #e2e8f0;
-            margin-bottom: 10px;
-            position: relative;  /* ADD THIS */
+
+        .cert-preview:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.1);
         }
-        .cert-preview img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
+
+        .cert-preview i {
+            font-size: 2rem;
+            color: var(--primary);
         }
-        
+
+        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -223,40 +388,75 @@
             margin-top: 40px;
             padding-top: 30px;
             border-top: 2px solid #e2e8f0;
+            flex-wrap: wrap;
         }
-        
+
+        .btn-save,
+        .btn-preview {
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
         .btn-save {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 10px;
-            transition: all 0.3s;
         }
-        
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        
+
         .btn-preview {
-            background: #10b981;
+            background: linear-gradient(135deg, var(--success), #059669);
             color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 10px;
-            text-decoration: none;
-            transition: all 0.3s;
         }
-        
+
+        .btn-save:hover,
         .btn-preview:hover {
-            background: #059669;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
             color: white;
-            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .editor-container {
+                padding: 25px;
+            }
+
+            .editor-header h2 {
+                font-size: 2rem;
+                margin-top: 50px;
+            }
+
+            .btn-back {
+                position: static;
+                margin-bottom: 20px;
+            }
+
+            .section-box {
+                padding: 20px;
+            }
+
+            .row.g-2,
+            .row.g-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-save,
+            .btn-preview {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -264,33 +464,40 @@
 
 <div class="editor-container">
     <div class="editor-header">
-        <a href="/resume_draft" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+        <a href="/resume_draft" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
         <h2><i class="fas fa-edit"></i> Edit Your Resume</h2>
+        <p>Customize your professional resume</p>
     </div>
 
     <form id="resumeForm">
         
         <!-- Personal Information -->
         <div class="section-box">
-            <div class="section-title">Personal Information</div>
+            <div class="section-title">
+                <span><i class="fas fa-user"></i> Personal Information</span>
+            </div>
             <div class="row g-3">
-                <div class="col-md-6">
+                <div>
                     <label class="form-label">Full Name *</label>
                     <input type="text" class="form-control" id="name" value="{{ resume_data.personal_info.name }}" required>
                 </div>
-                <div class="col-md-6">
+                <div>
                     <label class="form-label">Email *</label>
                     <input type="email" class="form-control" id="email" value="{{ resume_data.personal_info.email }}" required>
                 </div>
-                <div class="col-md-6">
+            </div>
+            <div class="row g-3" style="margin-top: 15px;">
+                <div>
                     <label class="form-label">Phone</label>
                     <input type="tel" class="form-control" id="phone" value="{{ resume_data.personal_info.phone }}">
                 </div>
-                <div class="col-md-6">
+                <div>
                     <label class="form-label">LinkedIn</label>
                     <input type="text" class="form-control" id="linkedin" value="{{ resume_data.personal_info.linkedin }}" placeholder="linkedin.com/in/yourprofile">
                 </div>
-                <div class="col-md-6">
+                <div>
                     <label class="form-label">GitHub</label>
                     <input type="text" class="form-control" id="github" value="{{ resume_data.personal_info.github }}" placeholder="github.com/yourusername">
                 </div>
@@ -299,27 +506,31 @@
 
         <!-- Professional Summary -->
         <div class="section-box">
-            <div class="section-title">Professional Summary</div>
+            <div class="section-title">
+                <span><i class="fas fa-file-alt"></i> Professional Summary</span>
+            </div>
             <textarea class="form-control" id="summary" rows="4" placeholder="Write a brief professional summary...">{{ resume_data.summary }}</textarea>
         </div>
 
         <!-- Education -->
         <div class="section-box">
             <div class="section-title">
-                Education
-                <button type="button" class="btn-add" onclick="addEducation()"><i class="fas fa-plus"></i> Add</button>
+                <span><i class="fas fa-graduation-cap"></i> Education</span>
+                <button type="button" class="btn-add" onclick="addEducation()">
+                    <i class="fas fa-plus"></i> Add
+                </button>
             </div>
             <div id="educationList">
                 <div class="item-card">
-                    <input type="text" class="form-control mb-2" placeholder="Degree" value="{{ resume_data.education.degree }}">
+                    <input type="text" class="form-control" style="margin-bottom: 12px;" placeholder="Degree" value="{{ resume_data.education.degree }}">
                     <div class="row g-2">
-                        <div class="col-md-4">
+                        <div>
                             <input type="text" class="form-control" placeholder="CGPA" value="{{ resume_data.education.cgpa }}">
                         </div>
-                        <div class="col-md-4">
+                        <div>
                             <input type="text" class="form-control" placeholder="Year" value="{{ resume_data.education.year }}">
                         </div>
-                        <div class="col-md-4">
+                        <div>
                             <input type="text" class="form-control" placeholder="University/College">
                         </div>
                     </div>
@@ -330,60 +541,57 @@
         <!-- Certificates -->
         <div class="section-box">
             <div class="section-title">
-                Certifications
-                <button type="button" class="btn-add" onclick="showCertUpload()"><i class="fas fa-upload"></i> Upload</button>
+                <span><i class="fas fa-certificate"></i> Certifications</span>
+                <button type="button" class="btn-add" onclick="showCertUpload()">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
             </div>
             
-            <!-- Upload Modal -->
-            <div id="certUploadModal" style="display:none; margin-bottom:20px;">
+            <div id="certUploadModal" style="display:none;">
                 <div class="cert-upload-box" id="certUploadBox" onclick="document.getElementById('certFile').click()">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #2563eb; margin-bottom: 10px;"></i>
-                    <p style="margin: 0; color: #64748b;"><strong>Click or drag & drop to upload certificate</strong></p>
-                    <small style="color: #94a3b8;">PDF, PNG, JPG (Max 5MB)</small>
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 10px;"></i>
+                    <p style="margin: 0; color: var(--text-muted);"><strong>Click or drag & drop to upload certificate</strong></p>
+                    <small style="color: var(--text-muted);">PDF, PNG, JPG (Max 5MB)</small>
                     <input type="file" id="certFile" accept=".pdf,.png,.jpg,.jpeg" style="display:none;" onchange="handleCertUpload(event)">
                 </div>
                 
-                <!-- Upload Progress -->
                 <div class="upload-progress" id="uploadProgress">
                     <div class="progress">
-                        <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%">0%</div>
+                        <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
                     </div>
-                    <small class="text-muted mt-2 d-block text-center" id="uploadStatus">Uploading...</small>
+                    <small style="display: block; text-align: center; margin-top: 10px; color: var(--text-muted);" id="uploadStatus">Uploading...</small>
                 </div>
                 
-                <div class="row g-2 mt-3">
-                    <div class="col-md-6">
+                <div class="row g-2" style="margin-top: 15px;">
+                    <div>
                         <input type="text" class="form-control" id="certName" placeholder="Certificate Name *">
                     </div>
-                    <div class="col-md-6">
+                    <div>
                         <input type="text" class="form-control" id="certIssuer" placeholder="Issuer *">
                     </div>
-                    <div class="col-md-6">
+                    <div>
                         <input type="text" class="form-control" id="certDate" placeholder="Date (e.g., Jan 2024)">
                     </div>
-                    <div class="col-md-6">
+                    <div>
                         <input type="text" class="form-control" id="certId" placeholder="Credential ID (optional)">
                     </div>
-                    <div class="col-12">
-                        <button type="button" class="btn btn-add w-100" onclick="saveCertificate()">
-                            <i class="fas fa-save"></i> Save Certificate
-                        </button>
-                    </div>
                 </div>
+                <button type="button" class="btn-add" style="margin-top: 15px; width: 100%; justify-content: center;" onclick="saveCertificate()">
+                    <i class="fas fa-save"></i> Save Certificate
+                </button>
             </div>
             
             <div id="certList">
                 {% for cert in resume_data.certificates %}
                 <div class="cert-preview" data-cert-id="{{ cert.get('id', '') }}">
-                    <i class="fas fa-certificate" style="font-size: 2rem; color: #2563eb;"></i>
+                    <i class="fas fa-certificate"></i>
                     <div style="flex-grow: 1;">
                         <strong>{{ cert.name }}</strong><br>
-                        <small style="color: #64748b;">{{ cert.issuer }}{% if cert.date %} • {{ cert.date }}{% endif %}</small>
-                        <button type="button" class="btn-remove" onclick="removeCertificate('{{ cert.get('id', '') }}', this)">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <small style="color: var(--text-muted);">{{ cert.issuer }}{% if cert.date %} • {{ cert.date }}{% endif %}</small>
                     </div>
-                    
+                    <button type="button" class="btn-remove" onclick="removeCertificate('{{ cert.get('id', '') }}', this)">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 {% endfor %}
             </div>
@@ -391,54 +599,58 @@
 
         <!-- Skills -->
         <div class="section-box">
-            <div class="section-title">Technical Skills</div>
+            <div class="section-title">
+                <span><i class="fas fa-code"></i> Technical Skills</span>
+            </div>
             
             <label class="form-label">Programming Languages</label>
             <div class="skill-tag-input" id="progSkills">
                 {% for skill in resume_data.skills.programming %}
-                <span class="skill-tag">{{ skill }} <button onclick="removeSkill(this)">×</button></span>
+                <span class="skill-tag">{{ skill }} <button type="button" onclick="removeSkill(this)">×</button></span>
                 {% endfor %}
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group">
                 <input type="text" class="form-control" id="progInput" placeholder="Add skill...">
-                <button class="btn btn-add" type="button" onclick="addSkill('prog')"><i class="fas fa-plus"></i></button>
+                <button class="btn-add" type="button" onclick="addSkill('prog')"><i class="fas fa-plus"></i></button>
             </div>
 
             <label class="form-label">Technologies & Frameworks</label>
             <div class="skill-tag-input" id="techSkills">
                 {% for skill in resume_data.skills.technologies %}
-                <span class="skill-tag">{{ skill }} <button onclick="removeSkill(this)">×</button></span>
+                <span class="skill-tag">{{ skill }} <button type="button" onclick="removeSkill(this)">×</button></span>
                 {% endfor %}
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group">
                 <input type="text" class="form-control" id="techInput" placeholder="Add skill...">
-                <button class="btn btn-add" type="button" onclick="addSkill('tech')"><i class="fas fa-plus"></i></button>
+                <button class="btn-add" type="button" onclick="addSkill('tech')"><i class="fas fa-plus"></i></button>
             </div>
 
             <label class="form-label">Tools & Platforms</label>
             <div class="skill-tag-input" id="toolSkills">
                 {% for skill in resume_data.skills.tools %}
-                <span class="skill-tag">{{ skill }} <button onclick="removeSkill(this)">×</button></span>
+                <span class="skill-tag">{{ skill }} <button type="button" onclick="removeSkill(this)">×</button></span>
                 {% endfor %}
             </div>
             <div class="input-group">
                 <input type="text" class="form-control" id="toolInput" placeholder="Add skill...">
-                <button class="btn btn-add" type="button" onclick="addSkill('tool')"><i class="fas fa-plus"></i></button>
+                <button class="btn-add" type="button" onclick="addSkill('tool')"><i class="fas fa-plus"></i></button>
             </div>
         </div>
 
         <!-- Projects -->
         <div class="section-box">
             <div class="section-title">
-                Projects
-                <button type="button" class="btn-add" onclick="addProject()"><i class="fas fa-plus"></i> Add</button>
+                <span><i class="fas fa-project-diagram"></i> Projects</span>
+                <button type="button" class="btn-add" onclick="addProject()">
+                    <i class="fas fa-plus"></i> Add
+                </button>
             </div>
             <div id="projectList">
                 {% for project in resume_data.projects %}
                 <div class="item-card">
-                    <button class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
-                    <input type="text" class="form-control mb-2" placeholder="Project Name" value="{{ project.name }}">
-                    <textarea class="form-control mb-2" rows="3" placeholder="Description">{{ project.description }}</textarea>
+                    <button type="button" class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
+                    <input type="text" class="form-control" style="margin-bottom: 12px;" placeholder="Project Name" value="{{ project.name }}">
+                    <textarea class="form-control" style="margin-bottom: 12px;" rows="3" placeholder="Description">{{ project.description }}</textarea>
                     <input type="text" class="form-control" placeholder="Technologies (comma separated)" value="{{ project.technologies|join(', ') }}">
                 </div>
                 {% endfor %}
@@ -448,14 +660,18 @@
         <!-- Achievements -->
         <div class="section-box">
             <div class="section-title">
-                Achievements
-                <button type="button" class="btn-add" onclick="addAchievement()"><i class="fas fa-plus"></i> Add</button>
+                <span><i class="fas fa-trophy"></i> Achievements</span>
+                <button type="button" class="btn-add" onclick="addAchievement()">
+                    <i class="fas fa-plus"></i> Add
+                </button>
             </div>
             <div id="achievementList">
                 {% for achievement in resume_data.achievements %}
-                <div class="input-group mb-2">
+                <div class="input-group" style="margin-bottom: 10px;">
                     <input type="text" class="form-control" value="{{ achievement }}">
-                    <button class="btn btn-danger" type="button" onclick="removeItem(this.parentElement)"><i class="fas fa-trash"></i></button>
+                    <button class="btn-remove" type="button" onclick="removeItem(this.parentElement)" style="position: static; border-radius: 10px; width: auto; height: auto; padding: 0 15px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
                 {% endfor %}
             </div>
@@ -475,7 +691,10 @@
 </div>
 
 <script>
-// Drag and Drop for Certificate Upload
+// Certificate upload
+let certUploadVisible = false;
+let selectedFile = null;
+
 const uploadBox = document.getElementById('certUploadBox');
 
 uploadBox.addEventListener('dragover', (e) => {
@@ -490,17 +709,12 @@ uploadBox.addEventListener('dragleave', () => {
 uploadBox.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadBox.classList.remove('dragging');
-    
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         document.getElementById('certFile').files = files;
         handleCertUpload({ target: { files: files } });
     }
 });
-
-// Certificate Upload
-let certUploadVisible = false;
-let selectedFile = null;
 
 function showCertUpload() {
     certUploadVisible = !certUploadVisible;
@@ -510,25 +724,19 @@ function showCertUpload() {
 function handleCertUpload(event) {
     const file = event.target.files[0];
     if (file) {
-        // Validate file size
         if (file.size > 5 * 1024 * 1024) {
             alert('File too large! Maximum size is 5MB');
             return;
         }
-        
-        // Validate file type
         const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
             alert('Invalid file type! Only PDF, PNG, JPG allowed');
             return;
         }
-        
         selectedFile = file;
-        
-        // Show file name
         const fileName = file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name;
         uploadBox.querySelector('p').innerHTML = `<strong>Selected: ${fileName}</strong>`;
-        uploadBox.style.borderColor = '#10b981';
+        uploadBox.style.borderColor = 'var(--success)';
     }
 }
 
@@ -550,7 +758,6 @@ async function saveCertificate() {
     formData.append('cert_date', date);
     formData.append('cert_id', id);
 
-    // Show progress
     const progressDiv = document.getElementById('uploadProgress');
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('uploadStatus');
@@ -561,7 +768,6 @@ async function saveCertificate() {
     statusText.textContent = 'Uploading certificate...';
 
     try {
-        // Simulate upload progress
         let progress = 0;
         const interval = setInterval(() => {
             progress += 10;
@@ -577,15 +783,12 @@ async function saveCertificate() {
         });
         
         clearInterval(interval);
-        
         const result = await response.json();
         
         if (result.success) {
             progressBar.style.width = '100%';
             progressBar.textContent = '100%';
             statusText.textContent = 'Upload complete!';
-            statusText.style.color = '#10b981';
-            
             setTimeout(() => {
                 alert('Certificate uploaded successfully!');
                 location.reload();
@@ -595,27 +798,20 @@ async function saveCertificate() {
         }
     } catch (error) {
         progressBar.style.width = '100%';
-        progressBar.classList.add('bg-danger');
+        progressBar.style.background = 'var(--danger)';
         statusText.textContent = 'Upload failed: ' + error.message;
-        statusText.style.color = '#ef4444';
-        
         setTimeout(() => {
             progressDiv.style.display = 'none';
-            progressBar.classList.remove('bg-danger');
+            progressBar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }, 3000);
     }
 }
 
 async function removeCertificate(certId, btn) {
-    if (!confirm('Are you sure you want to delete this certificate?')) {
-        return;
-    }
+    if (!confirm('Are you sure you want to delete this certificate?')) return;
     
     try {
-        const response = await fetch(`/certificates/delete/${certId}`, {
-            method: 'DELETE'
-        });
-        
+        const response = await fetch(`/certificates/delete/${certId}`, { method: 'DELETE' });
         const result = await response.json();
         
         if (result.success) {
@@ -628,6 +824,7 @@ async function removeCertificate(certId, btn) {
         alert('Error deleting certificate: ' + error);
     }
 }
+
 
 // Skills Management
 function addSkill(type) {

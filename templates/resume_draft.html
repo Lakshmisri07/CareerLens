@@ -2,168 +2,307 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume - CareerLens</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background: #f5f5f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --glass-blur: blur(12px);
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+            background-color: #0f172a;
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 20%;
+            left: 20%;
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            filter: blur(100px);
+            opacity: 0.2;
+            z-index: -1;
+            border-radius: 50%;
+            animation: float 20s infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 20%;
+            right: 20%;
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            filter: blur(80px);
+            opacity: 0.2;
+            z-index: -1;
+            border-radius: 50%;
+            animation: float 15s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            max-width: 850px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-back-dash {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back-dash:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+            color: var(--primary);
+        }
+
+        /* Template Selector */
+        .template-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .template-selector span {
+            font-weight: 700;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        .template-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--glass-border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .template-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .template-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Resume Container */
         .resume-container {
             max-width: 850px;
-            margin: 40px auto;
+            margin: 0 auto;
             background: white;
-            box-shadow: 0 0 40px rgba(0,0,0,0.1);
-            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            overflow: hidden;
         }
-        
+
         .resume-page {
             padding: 60px 70px;
             min-height: 1100px;
             background: white;
         }
-        
+
         /* Header Section */
         .resume-header {
             text-align: center;
             padding-bottom: 30px;
-            border-bottom: 4px solid #2563eb;
+            border-bottom: 4px solid var(--primary);
             margin-bottom: 35px;
         }
-        
+
         .resume-name {
             font-size: 3rem;
             font-weight: 800;
-            color: #1e293b;
+            color: var(--text-main);
             letter-spacing: 2px;
             margin-bottom: 12px;
             text-transform: uppercase;
         }
-        
+
         .resume-contact {
             display: flex;
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.95rem;
         }
-        
+
         .resume-contact span {
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        
+
         .resume-contact i {
-            color: #2563eb;
+            color: var(--primary);
         }
-        
+
         /* Section Styling */
         .resume-section {
             margin-bottom: 35px;
             page-break-inside: avoid;
-            break-inside: avoid;
         }
-        
+
         .section-title {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #2563eb;
+            color: var(--primary);
             text-transform: uppercase;
             letter-spacing: 1.5px;
             margin-bottom: 20px;
             padding-bottom: 8px;
             border-bottom: 2px solid #e2e8f0;
         }
-        
+
         .section-content {
             color: #334155;
             line-height: 1.8;
         }
-        
+
         /* Education */
         .education-item {
             margin-bottom: 15px;
         }
-        
+
         .education-degree {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-main);
             margin-bottom: 5px;
         }
-        
+
         .education-details {
             display: flex;
             justify-content: space-between;
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.95rem;
         }
-        
+
         .education-cgpa {
             font-weight: 600;
-            color: #2563eb;
+            color: var(--primary);
         }
-        
+
         /* Certificates */
         .cert-item {
             margin-bottom: 18px;
             padding-left: 20px;
             position: relative;
         }
-        
+
         .cert-item:before {
             content: "✓";
             position: absolute;
             left: 0;
-            color: #2563eb;
+            color: var(--primary);
             font-weight: bold;
             font-size: 1.2rem;
         }
-        
+
         .cert-name {
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-main);
             font-size: 1.05rem;
         }
-        
+
         .cert-issuer {
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.95rem;
         }
-        
+
         .cert-date {
             color: #94a3b8;
             font-size: 0.9rem;
         }
-        
+
         /* Skills */
         .skills-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-        
+
         .skill-category {
             margin-bottom: 15px;
         }
-        
+
         .skill-category-name {
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-main);
             margin-bottom: 8px;
             font-size: 1rem;
         }
-        
+
         .skill-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
-        
+
         .skill-tag {
             background: #eff6ff;
             color: #1e40af;
@@ -173,144 +312,92 @@
             font-weight: 500;
             border: 1px solid #bfdbfe;
         }
-        
+
         /* Projects */
         .project-item {
             margin-bottom: 25px;
-            page-break-inside: avoid;
         }
-        
+
         .project-name {
             font-size: 1.15rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-main);
             margin-bottom: 8px;
         }
-        
+
         .project-desc {
             color: #475569;
             line-height: 1.7;
             margin-bottom: 8px;
             text-align: justify;
         }
-        
+
         .project-tech {
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.9rem;
             font-style: italic;
         }
-        
+
         /* Achievements */
         .achievement-item {
             margin-bottom: 12px;
             padding-left: 25px;
             position: relative;
         }
-        
+
         .achievement-item:before {
             content: "●";
             position: absolute;
             left: 8px;
-            color: #2563eb;
+            color: var(--primary);
         }
-        
+
         /* Action Buttons */
         .action-bar {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
+            max-width: 850px;
+            margin: 30px auto;
             display: flex;
+            justify-content: center;
             gap: 15px;
-            z-index: 1000;
+            flex-wrap: wrap;
         }
-        
+
         .btn-action {
             padding: 15px 30px;
             font-size: 1rem;
             font-weight: 600;
             border-radius: 12px;
             border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 10px;
             text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
+
         .btn-edit {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        
+
         .btn-download {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
-        
+
         .btn-action:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 25px rgba(0,0,0,0.3);
             color: white;
         }
-        
-        .btn-back-dash {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #64748b;
-            font-weight: 600;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-        
-        .btn-back-dash:hover {
-            color: #2563eb;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
 
-        .template-selector {
-            max-width: 850px;
-            margin: 20px auto;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .template-btn {
-            padding: 8px 16px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #64748b;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-
-        .template-btn:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-        }
-
-        .template-btn.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-
-        /* TEMPLATE 2: MODERN MINIMAL */
+        /* Template Variations */
         .template-modern .resume-name {
             font-size: 2.5rem;
             font-weight: 300;
             letter-spacing: 8px;
-            border-bottom: none;
         }
 
         .template-modern .resume-header {
@@ -318,12 +405,10 @@
         }
 
         .template-modern .section-title {
-            color: #1e293b;
             font-size: 1.1rem;
             font-weight: 600;
             letter-spacing: 3px;
             border-bottom: none;
-            padding-left: 0;
         }
 
         .template-modern .section-title::before {
@@ -331,123 +416,79 @@
             display: inline-block;
             width: 4px;
             height: 20px;
-            background: #2563eb;
+            background: var(--primary);
             margin-right: 12px;
             vertical-align: middle;
         }
 
-        .template-modern .skill-tag {
-            background: white;
-            border: 1px solid #cbd5e1;
-            color: #475569;
+        .template-twocol .resume-page {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+            padding: 0;
         }
 
-        /* TEMPLATE 3: TWO COLUMN */
-        /* TEMPLATE 3: TWO COLUMN */
-.template-twocol .resume-page {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 0;
-    padding: 0;
-}
+        .template-twocol .resume-sidebar {
+            background: #312fb5;
+            color: white;
+            padding: 40px 30px;
+        }
 
-.template-twocol .resume-sidebar {
-    background: #312fb5ff;
-    color: white;
-    padding: 40px 30px;
-}
+        .template-twocol .resume-main {
+            padding: 40px;
+        }
 
-.template-twocol .resume-main {
-    padding: 40px 40px;
-}
+        .template-twocol .resume-header {
+            grid-column: 1 / -1;
+            background: #312fb5;
+            padding: 40px;
+            border-bottom: none;
+        }
 
-.template-twocol .resume-header {
-    border-bottom: none;
-    text-align: left;
-    grid-column: 1 / -1;
-    background: #312fb5ff;  /* Changed to blue */
-    padding: 40px;
-}
+        .template-twocol .resume-name {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
 
-.template-twocol .resume-name {
-    color: white;
-    font-size: 2.5rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);  /* Added shadow for visibility */
-}
+        .template-twocol .resume-contact {
+            color: #e0f2fe;
+        }
 
-.template-twocol .resume-contact {
-    justify-content: flex-start;
-    color: #e0f2fe;  /* Much lighter */
-}
+        .template-twocol .section-title {
+            color: #f1f5f9;
+            border-bottom: 2px solid #4f46e5;
+        }
 
-.template-twocol .resume-contact i {
-    color: #d7d8dfff;  /* Gold icons */
-}
+        .template-twocol .resume-main .section-title {
+            color: var(--text-main);
+            border-bottom: 2px solid #e2e8f0;
+        }
 
-.template-twocol .section-title {
-    color: #f1f5f9;
-    font-size: 1.2rem;
-    border-bottom: 2px solid #174c8dff;
-}
+        .template-creative .resume-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            margin-bottom: 35px;
+            border-radius: 0;
+        }
 
-.template-twocol .resume-main .section-title {
-    color: #1e293b;
-    border-bottom: 2px solid #e2e8f0;
-}
+        .template-creative .resume-name {
+            color: white;
+        }
 
-.template-twocol .skill-tag {
-    background: #1e293b;
-    color: white;
-    border: none;
-}
+        .template-creative .resume-contact {
+            color: #f0e7ff;
+        }
 
-/* TEMPLATE 4: CREATIVE/BOLD */
-.template-creative .resume-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px;
-    margin-bottom: 35px;
-    border-radius: 0;
-}
+        .template-creative .section-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+        }
 
-.template-creative .resume-name {
-    color: white;
-}
-
-.template-creative .resume-contact {
-    color: #f0e7ff;
-}
-
-.template-creative .resume-contact i {
-    color: #fde047;
-}
-
-.template-creative .section-title {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    display: inline-block;
-    margin-bottom: 20px;
-}
-
-.template-creative .skill-tag {
-    background: #ede9fe;
-    color: #6b21a8;
-    border: 2px solid #a78bfa;
-}
-
-.template-creative .project-name,
-.template-creative .cert-name,
-.template-creative .education-degree {
-    color: #6b21a8;
-}
-
-        
-        /* TEMPLATE 5: ATS SIMPLE */
         .template-ats .resume-page {
-            padding: 40px 60px;
             font-family: 'Times New Roman', Times, serif;
         }
 
@@ -468,50 +509,61 @@
             font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: 0;
-            text-transform: uppercase;
             border-bottom: 1px solid #000;
-            padding-bottom: 5px;
         }
 
-        .template-ats .skill-tag {
-            background: none;
-            border: none;
-            color: #000;
-            padding: 0;
-            margin-right: 10px;
-        }
+        @media (max-width: 768px) {
+            .resume-page {
+                padding: 40px 30px;
+            }
 
-        .template-ats .skill-tag::after {
-            content: ' •';
-        }
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .template-ats .skill-tag:last-child::after {
-            content: '';
+            .top-nav {
+                flex-direction: column;
+            }
+
+            .template-selector {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media print {
-            .action-bar, .btn-back-dash, .template-selector { display: none; }
-            body { background: white; }
-            .resume-container { box-shadow: none; margin: 0; }
-            .resume-section {
-                page-break-inside: avoid;
+            body {
+                background: white;
+            }
+
+            .top-nav,
+            .template-selector,
+            .action-bar {
+                display: none;
+            }
+
+            .resume-container {
+                box-shadow: none;
+                margin: 0;
             }
         }
     </style>
 </head>
 <body>
 
-<a href="/dashboard" class="btn-back-dash">
-    <i class="fas fa-arrow-left"></i> Dashboard
-</a>
+<div class="top-nav">
+    <a href="/dashboard" class="btn-back-dash">
+        <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
 
-<div class="template-selector">
-    <span style="font-weight: 700; color: #64748b; margin-right: 10px;">Template:</span>
-    <button class="template-btn active" onclick="changeTemplate('classic', this)">Classic</button>
-    <button class="template-btn" onclick="changeTemplate('modern', this)">Modern</button>
-    <button class="template-btn" onclick="changeTemplate('twocol', this)">Two-Column</button>
-    <button class="template-btn" onclick="changeTemplate('creative', this)">Creative</button>
-    <button class="template-btn" onclick="changeTemplate('ats', this)">ATS Simple</button>
+    <div class="template-selector">
+        <span>Template:</span>
+        <button class="template-btn active" onclick="changeTemplate('classic', this)">Classic</button>
+        <button class="template-btn" onclick="changeTemplate('modern', this)">Modern</button>
+        <button class="template-btn" onclick="changeTemplate('twocol', this)">Two-Column</button>
+        <button class="template-btn" onclick="changeTemplate('creative', this)">Creative</button>
+        <button class="template-btn" onclick="changeTemplate('ats', this)">ATS Simple</button>
+    </div>
 </div>
 
 <div class="resume-container">
@@ -661,67 +713,38 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-    function downloadPDF() {
-        // Get current template
-        const container = document.querySelector('.resume-container');
-        const currentTemplate = Array.from(container.classList).find(c => c.startsWith('template-'));
-        
-        // Hide UI elements
-        document.querySelector('.template-selector').style.display = 'none';
-        document.querySelector('.action-bar').style.display = 'none';
-        document.querySelector('.btn-back-dash').style.display = 'none';
-        
-        // Clone the entire container with template class
-        const element = document.querySelector('.resume-container').cloneNode(true);
-        
-        // Create temporary container
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.appendChild(element);
-        document.body.appendChild(tempContainer);
-        
-        const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
-        
-        const opt = {
-            margin: 0,
-            filename: `${name}_Resume.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2.5,
-                useCORS: true,
-                letterRendering: true,
-                backgroundColor: '#ffffff'
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait'
-            },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        
-        html2pdf().set(opt).from(element).save().then(() => {
-            // Cleanup
-            document.body.removeChild(tempContainer);
-            
-            // Show UI elements again
-            document.querySelector('.template-selector').style.display = 'flex';
-            document.querySelector('.action-bar').style.display = 'flex';
-            document.querySelector('.btn-back-dash').style.display = 'block';
-        });
-    }
+function downloadPDF() {
+    const element = document.querySelector('.resume-container').cloneNode(true);
+    const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
+    
+    const opt = {
+        margin: 0,
+        filename: `${name}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2.5,
+            useCORS: true,
+            letterRendering: true,
+            backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+}
+
 function changeTemplate(template, btnElement) {
     const container = document.querySelector('.resume-container');
     const page = document.querySelector('.resume-page');
     
-    // Remove all template classes
     container.classList.remove('template-classic', 'template-modern', 'template-twocol', 'template-creative', 'template-ats');
-    
-    // Add new template class
     container.classList.add('template-' + template);
     
-    // Handle two-column layout
     if (template === 'twocol') {
         if (!page.querySelector('.resume-sidebar')) {
             restructureTwoColumn();
@@ -732,47 +755,8 @@ function changeTemplate(template, btnElement) {
         }
     }
     
-    // Update active button
     document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
     btnElement.classList.add('active');
-}
-function restructureTwoColumn() {
-    const page = document.querySelector('.resume-page');
-    const header = page.querySelector('.resume-header');
-    const sections = Array.from(page.querySelectorAll('.resume-section'));
-    
-    // Store original content
-    if (!window.originalContent) {
-        window.originalContent = page.innerHTML;
-    }
-    
-    // Sidebar: Skills and Certifications
-    const sidebarSections = [];
-    const mainSections = [];
-    
-    sections.forEach(section => {
-        const title = section.querySelector('.section-title').textContent.toLowerCase();
-        if (title.includes('skill') || title.includes('certification')) {
-            sidebarSections.push(section.cloneNode(true));
-        } else {
-            mainSections.push(section.cloneNode(true));
-        }
-    });
-    
-    // Clear and rebuild
-    page.innerHTML = '';
-    page.appendChild(header);
-    
-    const sidebar = document.createElement('div');
-    sidebar.className = 'resume-sidebar';
-    sidebarSections.forEach(s => sidebar.appendChild(s));
-    
-    const main = document.createElement('div');
-    main.className = 'resume-main';
-    mainSections.forEach(s => main.appendChild(s));
-    
-    page.appendChild(sidebar);
-    page.appendChild(main);
 }
 
 function restructureTwoColumn() {
@@ -780,7 +764,6 @@ function restructureTwoColumn() {
     const header = page.querySelector('.resume-header');
     const sections = Array.from(page.querySelectorAll('.resume-section'));
     
-    // Identify sidebar content (skills, education, certs)
     const sidebarSections = [];
     const mainSections = [];
     
@@ -793,7 +776,6 @@ function restructureTwoColumn() {
         }
     });
     
-    // Restructure
     const sidebar = document.createElement('div');
     sidebar.className = 'resume-sidebar';
     sidebarSections.forEach(s => sidebar.appendChild(s));
@@ -822,7 +804,6 @@ function restoreOriginalLayout() {
     }
 }
 
-// Set default template
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.resume-container').classList.add('template-classic');
 });
