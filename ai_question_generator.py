@@ -566,7 +566,6 @@ Make questions relevant to {topic} and {context}."""
             print(f"⚠️  AI failed: {str(e)[:50]}")
     
     # Use fallback
-    print(f"📚 Using fallback questions")
     return get_fallback_questions(topic, '', num_questions)
 
 
