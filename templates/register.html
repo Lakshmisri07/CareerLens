@@ -2,89 +2,325 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Register - Placement Prep</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - CareerLens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --secondary: #ec4899;
+        --success: #10b981;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
+        font-family: 'Inter', sans-serif;
+        background:
+            radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+            radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+            radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+        background-color: #0f172a;
+        background-attachment: fixed;
         min-height: 100vh;
         display: flex;
         align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
     }
-    .card {
+
+    body::before {
+        content: '';
+        position: fixed;
+        top: 20%;
+        left: 20%;
+        width: 400px;
+        height: 400px;
+        background: var(--primary);
+        filter: blur(100px);
+        opacity: 0.2;
+        z-index: -1;
+        border-radius: 50%;
+        animation: float 20s infinite alternate;
+    }
+
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: 20%;
+        right: 20%;
+        width: 300px;
+        height: 300px;
+        background: var(--secondary);
+        filter: blur(80px);
+        opacity: 0.2;
+        z-index: -1;
+        border-radius: 50%;
+        animation: float 15s infinite alternate-reverse;
+    }
+
+    @keyframes float {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(30px, 50px); }
+    }
+
+    .register-container {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        padding: 3rem;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .logo i {
+        font-size: 3rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .logo h1 {
+        color: var(--text-main);
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .logo p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid rgba(226, 232, 240, 0.8);
         border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: rgba(255, 255, 255, 0.8);
     }
-    .card-title {
-        font-weight: bold;
-        color: #2575fc;
-    }
+
     .form-control:focus {
-        box-shadow: none;
-        border-color: #2575fc;
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     }
-    .btn-success {
-        background-color: #28a745;
-        border-color: #28a745;
+
+    .form-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid rgba(226, 232, 240, 0.8);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
     }
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #218838;
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        margin-top: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        filter: brightness(1.1);
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(226, 232, 240, 0.8);
+        color: var(--text-muted);
+    }
+
+    .login-link a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .login-link a:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(209, 250, 229, 0.9);
+        color: #065f46;
+        border-left: 4px solid var(--success);
+        font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .register-container {
+            padding: 2rem;
+        }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow-lg p-4">
-                <div class="card-body">
-                    <h3 class="card-title text-center mb-4">Register</h3>
+<div class="register-container">
+    <div class="logo">
+        <i class="fas fa-graduation-cap"></i>
+        <h1>Create Account</h1>
+        <p>Join CareerLens Today</p>
+    </div>
 
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ messages[0] }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert">
+                <i class="fas fa-check-circle"></i>
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-                    <form action="{{ url_for('register') }}" method="POST">
-                        <div class="mb-3">
-                            <input type="text" name="name" class="form-control" placeholder="Full Name" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="email" name="email" class="form-control" placeholder="Email" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="text" name="branch" class="form-control" placeholder="Branch" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="number" step="0.01" name="cgpa" class="form-control" placeholder="CGPA" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="number" name="backlogs" class="form-control" placeholder="Backlogs" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="text" name="internships" class="form-control" placeholder="Internships" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="password" name="password" class="form-control" placeholder="Password" required>
-                        </div>
-                        <button type="submit" class="btn btn-success w-100">Register</button>
-                    </form>
+    <form action="{{ url_for('register') }}" method="POST">
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-user"></i> Full Name
+            </label>
+            <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+        </div>
 
-                    <p class="text-center mt-3 text-blue">
-                        Already have an account? 
-                        <a href="{{ url_for('index') }}" class="text-decoration-none fw-bold">Login</a>
-                    </p>
-                </div>
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-envelope"></i> Email Address
+            </label>
+            <input type="email" name="email" class="form-control" placeholder="your.email@example.com" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-graduation-cap"></i> Branch
+                </label>
+                <select name="branch" class="form-select" required>
+                    <option value="">Select Branch</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Electronics">Electronics & Communication</option>
+                    <option value="Mechanical">Mechanical Engineering</option>
+                    <option value="Civil">Civil Engineering</option>
+                    <option value="Electrical">Electrical Engineering</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-chart-line"></i> CGPA
+                </label>
+                <input type="number" step="0.01" name="cgpa" class="form-control" placeholder="8.5" min="0" max="10" required>
             </div>
         </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-exclamation-triangle"></i> Backlogs
+                </label>
+                <input type="number" name="backlogs" class="form-control" placeholder="0" min="0" value="0" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-briefcase"></i> Internships
+                </label>
+                <input type="text" name="internships" class="form-control" placeholder="e.g., ABC Corp" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-lock"></i> Password
+            </label>
+            <input type="password" name="password" class="form-control" placeholder="Create a strong password" required>
+        </div>
+
+        <button type="submit" class="btn-primary">
+            <i class="fas fa-user-plus"></i> Create Account
+        </button>
+    </form>
+
+    <div class="login-link">
+        Already have an account? <a href="{{ url_for('index') }}">Login here</a>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -6,71 +6,59 @@
     <h1>Welcome To CareerLens, {{ user }}! 👋</h1>
     <p class="text-muted mb-3">{{ session.user_branch }} Branch</p>
 
+    <!-- Stats Section -->
+    <div class="grid grid-3 mb-4">
+        <div class="stat-card">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>{{ total_quizzes or 0 }}</h3>
+            <p>Quizzes Taken</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <i class="fas fa-trophy"></i>
+            <h3>{{ average_score or 0 }}%</h3>
+            <p>Average Score</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+            <i class="fas fa-fire"></i>
+            <h3>{{ streak_days or 0 }}</h3>
+            <p>Day Streak</p>
+        </div>
+    </div>
+
     <!-- Main Category Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <a href="{{ url_for('technical') }}" class="category-card shadow-sm">
-                <span><i class="fas fa-code me-2"></i> Technical</span>
-            </a>
-        </div>
+    <h2 class="mb-4 text-center"><i class="fas fa-th-large"></i> Assessment Categories</h2>
+    <div class="grid grid-3 mb-4">
+        <a href="{{ url_for('technical') }}" class="category-card">
+            <span><i class="fas fa-code me-2"></i> Technical</span>
+        </a>
 
-        <div class="col-md-4">
-            <a href="{{ url_for('aptitude') }}" class="category-card shadow-sm">
-                <span><i class="fas fa-brain me-2"></i> Aptitude</span>
-            </a>
-        </div>
+        <a href="{{ url_for('aptitude') }}" class="category-card">
+            <span><i class="fas fa-brain me-2"></i> Aptitude</span>
+        </a>
 
-        <div class="col-md-4">
-            <a href="{{ url_for('english') }}" class="category-card shadow-sm">
-                <span><i class="fas fa-book me-2"></i> English</span>
-            </a>
-        </div>
+        <a href="{{ url_for('english') }}" class="category-card">
+            <span><i class="fas fa-book me-2"></i> English</span>
+        </a>
     </div>
 
-    <!-- Feature Buttons -->
-    <div class="text-center">
-        <h2 class="mb-4"><i class="fas fa-rocket me-2"></i> Quick Actions</h2>
-        <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="{{ url_for('suggestions') }}" class="btn btn-primary">
-                <i class="fas fa-lightbulb"></i> AI Suggestions
-            </a>
-            <a href="{{ url_for('grand_test') }}" class="btn btn-secondary">
-                <i class="fas fa-trophy"></i> Grand Test
-            </a>
-            <a href="{{ url_for('resume_draft') }}" class="btn btn-success">
-                <i class="fas fa-file-alt"></i> Resume Builder
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Stats Card (Optional - Add if you have data) -->
-{% if show_stats %}
-<div class="card">
-    <h2 class="mb-4"><i class="fas fa-chart-line me-2"></i> Your Progress</h2>
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="stat-card">
-                <i class="fas fa-clipboard-list"></i>
-                <h3>{{ total_quizzes or 0 }}</h3>
-                <p>Quizzes Taken</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                <i class="fas fa-trophy"></i>
-                <h3>{{ average_score or 0 }}%</h3>
-                <p>Average Score</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                <i class="fas fa-fire"></i>
-                <h3>{{ streak_days or 0 }}</h3>
-                <p>Day Streak</p>
-            </div>
-        </div>
+    <!-- Quick Actions -->
+    <h2 class="mb-4 text-center"><i class="fas fa-rocket"></i> Quick Actions</h2>
+    <div class="grid grid-3">
+        <a href="{{ url_for('suggestions') }}" class="btn btn-primary" style="padding: 1.5rem; font-size: 1.1rem;">
+            <div><i class="fas fa-lightbulb" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
+            <div style="font-weight: 700;">AI Suggestions</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Get personalized recommendations</div>
+        </a>
+        <a href="{{ url_for('grand_test') }}" class="btn btn-secondary" style="padding: 1.5rem; font-size: 1.1rem;">
+            <div><i class="fas fa-trophy" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
+            <div style="font-weight: 700;">Grand Test</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Comprehensive assessment</div>
+        </a>
+        <a href="{{ url_for('resume_draft') }}" class="btn btn-success" style="padding: 1.5rem; font-size: 1.1rem;">
+            <div><i class="fas fa-file-alt" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
+            <div style="font-weight: 700;">Resume Builder</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Create professional resume</div>
+        </a>
     </div>
 </div>
-{% endif %}
 {% endblock %}

@@ -2,149 +2,428 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Personalized Suggestions - CareerLens</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Suggestions - CareerLens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --glass-blur: blur(12px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(to right, #6a11cb, #2575fc);
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+            background-color: #0f172a;
+            background-attachment: fixed;
             min-height: 100vh;
             color: white;
-            font-family: Arial, sans-serif;
-            padding: 30px 0;
+            padding: 30px 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 20%;
+            left: 20%;
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            filter: blur(100px);
+            opacity: 0.2;
+            z-index: -1;
+            border-radius: 50%;
+            animation: float 20s infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 20%;
+            right: 20%;
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            filter: blur(80px);
+            opacity: 0.2;
+            z-index: -1;
+            border-radius: 50%;
+            animation: float 15s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
         }
 
         .container {
             max-width: 1000px;
+            margin: 0 auto;
         }
 
         .header {
             position: relative;
             margin-bottom: 40px;
-        }
-
-        .header h2 {
-            font-weight: bold;
             text-align: center;
-            color: white;
         }
 
         .btn-back {
             position: absolute;
-            top: 0;
             left: 0;
-            background-color: #35b2dcff;
-            border-color: #3554dcff;
-            font-weight: bold;
-            color: white;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: var(--glass-shadow);
         }
 
         .btn-back:hover {
-            background-color: #23a7c8ff;
-            border-color: #232ec8ff;
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+            color: var(--primary);
+        }
+
+        .header h2 {
+            font-weight: 800;
+            font-size: 2.5rem;
             color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
-        .suggestion-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            color: #333;
-            border-left: 5px solid #4D96FF;
-            transition: all 0.3s;
-        }
-
-        .suggestion-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-        }
-
-        .suggestion-text {
-            font-size: 1.1rem;
-            margin: 0;
-            color: #555;
-        }
-
-        .no-suggestions {
-            background: white;
-            border-radius: 15px;
-            padding: 50px;
+        .readiness-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 3rem;
             text-align: center;
-            color: #666;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .readiness-card h3 {
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .score-circle {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin: 1.5rem 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .readiness-status {
+            font-size: 1.8rem;
+            color: var(--text-main);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .readiness-message {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
         }
 
         .info-box {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.25rem;
             text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--glass-shadow);
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .suggestion-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .suggestion-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .suggestion-card.priority-3::before {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+
+        .suggestion-card.priority-2::before {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        .suggestion-card.priority-1::before {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .suggestion-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+        }
+
+        .suggestion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .suggestion-topic {
+            color: var(--text-main);
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .priority-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .priority-3 .priority-badge {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+
+        .priority-2 .priority-badge {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        .priority-1 .priority-badge {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .stats-box {
+            background: rgba(248, 250, 252, 0.5);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            color: var(--text-main);
+            font-weight: 800;
+        }
+
+        .recommendation-text {
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .action-box {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .no-suggestions {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .no-suggestions i {
+            font-size: 4rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+        }
+
+        .no-suggestions h4 {
+            color: var(--text-main);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-suggestions p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+            filter: brightness(1.1);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header h2 {
+                margin-top: 3rem;
+            }
+
+            .btn-back {
+                position: static;
+                transform: none;
+                display: inline-block;
+                margin-bottom: 1rem;
+            }
+
+            .readiness-card {
+                padding: 2rem;
+            }
+
+            .stats-box {
+                grid-template-columns: 1fr;
+            }
+
+            .suggestion-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back</a>
-        <h2>🔍 Personalized Suggestions</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <h2>🔍 AI-Powered Suggestions</h2>
     </div>
 
     {% if readiness %}
-    <div class="readiness-card" style="background: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.2);">
-        <h3 style="color: #2575fc; margin-bottom: 20px;">Overall Placement Readiness</h3>
-        <div style="font-size: 3rem; font-weight: 900; color: {% if readiness.score >= 80 %}#28a745{% elif readiness.score >= 65 %}#ffc107{% elif readiness.score >= 50 %}#fd7e14{% else %}#dc3545{% endif %};">
-            {{ readiness.score }}%
-        </div>
-        <div style="font-size: 1.5rem; color: #666; font-weight: 600; margin: 15px 0;">
-            {{ readiness.status }}
-        </div>
-        <p style="color: #777; font-size: 1.1rem; margin-bottom: 10px;">{{ readiness.message }}</p>
-        <p style="color: #999; font-size: 0.9rem;">Based on {{ readiness.total_quizzes }} quiz attempts</p>
+    <div class="readiness-card">
+        <h3>Overall Placement Readiness</h3>
+        <div class="score-circle">{{ readiness.score }}%</div>
+        <div class="readiness-status">{{ readiness.status }}</div>
+        <p class="readiness-message">{{ readiness.message }}</p>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Based on {{ readiness.total_quizzes }} quiz attempts</p>
     </div>
     {% endif %}
 
     <div class="info-box">
-        <p style="margin: 0;">AI-powered analysis of your performance. Focus on high-priority topics to improve faster!</p>
+        <i class="fas fa-robot"></i> AI-powered analysis of your performance. Focus on high-priority topics to improve faster!
     </div>
 
     {% if suggestions %}
         {% for s in suggestions %}
-        <div class="suggestion-card" style="border-left-color: {% if s.priority == 3 %}#dc3545{% elif s.priority == 2 %}#ffc107{% else %}#28a745{% endif %};">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                <h5 style="color: #2575fc; margin: 0; font-weight: 700;">{{ s.topic }}</h5>
-                <span style="background: {% if s.priority == 3 %}#dc3545{% elif s.priority == 2 %}#ffc107{% else %}#28a745{% endif %}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                    {{ s.level }}
-                </span>
+        <div class="suggestion-card priority-{{ s.priority }}">
+            <div class="suggestion-header">
+                <h5 class="suggestion-topic">{{ s.topic }}</h5>
+                <span class="priority-badge">{{ s.level }}</span>
             </div>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #666; font-weight: 600;">Score:</span>
-                    <span style="color: #333; font-weight: 700;">{{ s.percentage }}%</span>
+            
+            <div class="stats-box">
+                <div class="stat-item">
+                    <span class="stat-label">Score:</span>
+                    <span class="stat-value">{{ s.percentage }}%</span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #666; font-weight: 600;">Attempts:</span>
-                    <span style="color: #333; font-weight: 700;">{{ s.attempts }}</span>
+                <div class="stat-item">
+                    <span class="stat-label">Attempts:</span>
+                    <span class="stat-value">{{ s.attempts }}</span>
                 </div>
             </div>
-            <p style="color: #555; margin-bottom: 10px; font-size: 1rem;">{{ s.recommendation }}</p>
-            <div style="background: linear-gradient(to right, #6a11cb, #2575fc); color: white; padding: 10px 15px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">
-                Action: {{ s.action }}
+            
+            <p class="recommendation-text">{{ s.recommendation }}</p>
+            
+            <div class="action-box">
+                <i class="fas fa-lightbulb"></i> Action: {{ s.action }}
             </div>
         </div>
         {% endfor %}
     {% else %}
         <div class="no-suggestions">
+            <i class="fas fa-chart-line"></i>
             <h4>🎯 No Data Yet</h4>
             <p>Complete some quizzes to get AI-powered personalized recommendations!</p>
-            <a href="{{ url_for('dashboard') }}" style="display: inline-block; margin-top: 20px; background: linear-gradient(to right, #6a11cb, #2575fc); color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                Take Your First Quiz
+            <a href="{{ url_for('dashboard') }}" class="btn-primary">
+                <i class="fas fa-play-circle"></i> Take Your First Quiz
             </a>
         </div>
     {% endif %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
