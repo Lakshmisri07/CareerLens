@@ -374,6 +374,25 @@
             font-size: 3rem;
         }
     }
+    /* Quiz Timer Styles */
+#timer {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+}
+
+#timer.warning {
+    color: #f59e0b !important;
+    animation: pulse 1s infinite;
+}
+
+#timer.critical {
+    color: #ef4444 !important;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
   </style>
 </head>
 <body>
@@ -399,13 +418,19 @@
     </span>
   </div>
 
-  <div class="info-box">
+<div class="info-box">
     <h5 style="margin-bottom: 1rem; font-size: 1.3rem; font-weight: 700;">📋 Quiz Information</h5>
     <p style="margin: 0;"><strong>Total Questions:</strong> {{ questions|length }}</p>
-    {% if difficulty %}
-    <p style="margin: 0.5rem 0 0 0;">Questions adapt based on your past performance. Keep practicing to level up!</p>
-    {% endif %}
-  </div>
+    
+    <!-- ADD TIMER HERE -->
+    <p style="margin: 0.5rem 0 0 0;">
+        <strong>Time Remaining:</strong> 
+        <span id="timer" style="color: #10b981; font-weight: 800; font-size: 1.2rem;">15:00</span>
+    </p>
+    <div id="timerWarning" style="display: none; color: #ef4444; font-weight: 600; margin-top: 0.5rem;">
+        ⚠️ Time is running out!
+    </div>
+</div>
 
   <form method="POST" id="quizForm">
     {% for q in questions %}
@@ -513,7 +538,55 @@ document.getElementById('quizForm')?.addEventListener('submit', function(e) {
             return;
         }
     }
-});
+});<script>
+// Quiz Timer Logic
+let timeRemaining = 15 * 60; // 15 minutes in seconds
+let timerInterval;
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        document.getElementById('timer').textContent = display;
+        
+        // Warning at 3 minutes
+        if (timeRemaining === 180) {
+            document.getElementById('timer').classList.add('warning');
+            document.getElementById('timerWarning').style.display = 'block';
+        }
+        
+        // Critical at 1 minute
+        if (timeRemaining === 60) {
+            document.getElementById('timer').classList.remove('warning');
+            document.getElementById('timer').classList.add('critical');
+        }
+        
+        // Time's up
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            alert('Time is up! Submitting your quiz...');
+            document.getElementById('quizForm').submit();
+        }
+    }, 1000);
+}
+
+// Start timer when quiz loads
+if (document.getElementById('quizForm')) {
+    startTimer();
+}
+</script>
+
+<!-- EXISTING SCRIPT BELOW -->
+<script>
+// Form validation
+document.getElementById('quizForm')?.addEventListener('submit', function(e) {
+    // ... existing code ...
+</script>
+
 </script>
 
 </body>

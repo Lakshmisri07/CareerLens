@@ -176,9 +176,32 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'user' in session:
-        return render_template('dashboard.html', user=session['user'])
-    return redirect(url_for('index'))
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    # ADD THIS CODE:
+    user_email = session.get('user_email')
+    
+    # Get quiz statistics
+    result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
+    
+    total_quizzes = len(result.data) if result.data else 0
+    
+    if result.data:
+        total_score = sum(s['score'] for s in result.data)
+        total_questions = sum(s['total_questions'] for s in result.data)
+        average_score = round((total_score / total_questions * 100), 1) if total_questions > 0 else 0
+    else:
+        average_score = 0
+    
+    # Calculate streak (simplified - count unique quiz dates)
+    streak_days = 0  # You can enhance this later
+    
+    return render_template('dashboard.html', 
+                         user=session['user'],
+                         total_quizzes=total_quizzes,
+                         average_score=average_score,
+                         streak_days=streak_days)
 
 
 @app.route('/technical')
