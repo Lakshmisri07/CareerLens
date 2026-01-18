@@ -1,593 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ topic }} Quiz - CareerLens</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <style>
-    :root {
-        --primary: #6366f1;
-        --primary-dark: #4f46e5;
-        --secondary: #ec4899;
-        --accent: #8b5cf6;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --text-main: #1e293b;
-        --text-muted: #64748b;
-        --glass-bg: rgba(255, 255, 255, 0.7);
-        --glass-border: rgba(255, 255, 255, 0.5);
-        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        --glass-blur: blur(12px);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Inter', sans-serif;
-        background:
-            radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-            radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-            radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
-        background-color: #0f172a;
-        background-attachment: fixed;
-        min-height: 100vh;
-        color: white;
-        padding: 30px 15px;
-    }
-
-    body::before {
-        content: '';
-        position: fixed;
-        top: 20%;
-        left: 20%;
-        width: 400px;
-        height: 400px;
-        background: var(--primary);
-        filter: blur(100px);
-        opacity: 0.2;
-        z-index: -1;
-        border-radius: 50%;
-        animation: float 20s infinite alternate;
-    }
-
-    body::after {
-        content: '';
-        position: fixed;
-        bottom: 20%;
-        right: 20%;
-        width: 300px;
-        height: 300px;
-        background: var(--secondary);
-        filter: blur(80px);
-        opacity: 0.2;
-        z-index: -1;
-        border-radius: 50%;
-        animation: float 15s infinite alternate-reverse;
-    }
-
-    @keyframes float {
-        0% { transform: translate(0, 0); }
-        100% { transform: translate(30px, 50px); }
-    }
-
-    .container {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    .header {
-        position: relative;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-
-    .btn-back {
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--glass-border);
-        color: var(--text-main);
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s;
-        box-shadow: var(--glass-shadow);
-    }
-
-    .btn-back:hover {
-        transform: translateY(-50%) translateY(-2px);
-        box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
-        color: var(--primary);
-    }
-
-    .header h2 {
-        font-weight: 800;
-        font-size: 2rem;
-        color: white;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-
-    .ai-badge {
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        color: white;
-        padding: 12px 30px;
-        border-radius: 50px;
-        font-size: 1rem;
-        font-weight: 700;
-        display: inline-block;
-        margin: 20px 0;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-    }
-
-    .difficulty-badge {
-        padding: 8px 20px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        display: inline-block;
-        margin-left: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .info-box {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 30px;
-        text-align: center;
-        box-shadow: var(--glass-shadow);
-        color: var(--text-main);
-    }
-
-    .question-card {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 2.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--glass-shadow);
-        transition: all 0.3s;
-    }
-
-    .question-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
-    }
-
-    .question-number {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        margin-right: 1rem;
-        font-size: 1.2rem;
-        flex-shrink: 0;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    }
-
-    .question-text {
-        color: var(--text-main);
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        line-height: 1.6;
-    }
-
-    .form-check {
-        background: rgba(255, 255, 255, 0.5);
-        padding: 1rem 1.25rem;
-        border-radius: 12px;
-        margin-bottom: 0.75rem;
-        border: 2px solid transparent;
-        transition: all 0.3s;
-        cursor: pointer;
-    }
-
-    .form-check:hover {
-        background: rgba(255, 255, 255, 0.8);
-        border-color: var(--primary);
-        transform: translateX(4px);
-    }
-
-    .form-check-input:checked + .form-check-label {
-        color: var(--primary);
-        font-weight: 700;
-    }
-
-    .form-check-input {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        margin-right: 0.75rem;
-    }
-
-    .form-check-label {
-        color: var(--text-main);
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 500;
-    }
-
-    .btn-submit {
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        color: white;
-        border: none;
-        padding: 1.25rem 4rem;
-        font-size: 1.2rem;
-        font-weight: 800;
-        border-radius: 50px;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        cursor: pointer;
-    }
-
-    .btn-submit:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
-        filter: brightness(1.1);
-    }
-
-    /* RESULTS STYLING */
-    .result-card {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        padding: 4rem;
-        text-align: center;
-        box-shadow: var(--glass-shadow);
-        color: var(--text-main);
-    }
-
-    .score-display {
-        font-size: 4.5rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 2rem 0;
-    }
-
-    .percentage {
-        font-size: 2rem;
-        color: var(--text-muted);
-        margin-bottom: 2rem;
-        font-weight: 700;
-    }
-
-    .result-message {
-        font-size: 1.8rem;
-        font-weight: 800;
-        margin-bottom: 2rem;
-    }
-
-    .suggestion-box {
-        background: rgba(251, 243, 199, 0.9);
-        border-left: 5px solid var(--warning);
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin: 2rem 0;
-        text-align: left;
-    }
-
-    .suggestion-box h5 {
-        color: #92400e;
-        margin: 0 0 0.75rem 0;
-        font-size: 1.2rem;
-    }
-
-    .suggestion-box p {
-        color: #92400e;
-        margin: 0;
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-
-    .action-buttons {
-        margin-top: 2rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .action-buttons .btn {
-        padding: 1rem 2rem;
-        font-weight: 700;
-        border-radius: 12px;
-        text-decoration: none;
-        transition: all 0.3s;
-        font-size: 1rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        color: white;
-        border: none;
-    }
-
-    .btn-secondary {
-        background: linear-gradient(135deg, var(--text-muted), #475569);
-        color: white;
-        border: none;
-    }
-
-    .btn-success {
-        background: linear-gradient(135deg, var(--success), #059669);
-        color: white;
-        border: none;
-    }
-
-    .action-buttons .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        color: white;
-    }
-
-    @media (max-width: 768px) {
-        .header h2 {
-            margin-top: 3rem;
-        }
-
-        .btn-back {
-            position: static;
-            transform: none;
-            display: inline-block;
-            margin-bottom: 1rem;
-        }
-
-        .question-card {
-            padding: 1.5rem;
-        }
-
-        .result-card {
-            padding: 2rem;
-        }
-
-        .score-display {
-            font-size: 3rem;
-        }
-    }
-    /* Quiz Timer Styles */
-#timer {
-    font-family: 'Courier New', monospace;
-    font-size: 1.5rem;
-}
-
-#timer.warning {
-    color: #f59e0b !important;
-    animation: pulse 1s infinite;
-}
-
-#timer.critical {
-    color: #ef4444 !important;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ topic }} Quiz - CareerLens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-
-<div class="container">
-  <div class="header">
-    <a href="{{ url_for('dashboard') }}" class="btn-back">
-      <i class="fas fa-arrow-left"></i> Back
-    </a>
-    <h2>🎯 {{ topic }}{% if subtopic %} - {{ subtopic }}{% endif %} Quiz</h2>
-  </div>
-
-  {% if not submitted %}
-  
-  <div style="text-align: center;">
-    <span class="ai-badge">
-      🤖 AI-Powered Adaptive Quiz
-      {% if difficulty %}
-      <span class="difficulty-badge" style="background: linear-gradient(135deg, #10b981, #059669);">
-        {{ difficulty }} Level
-      </span>
-      {% endif %}
-    </span>
-  </div>
-
-<div class="info-box">
-    <h5 style="margin-bottom: 1rem; font-size: 1.3rem; font-weight: 700;">📋 Quiz Information</h5>
-    <p style="margin: 0;"><strong>Total Questions:</strong> {{ questions|length }}</p>
-    
-    <!-- ADD TIMER HERE -->
-    <p style="margin: 0.5rem 0 0 0;">
-        <strong>Time Remaining:</strong> 
-        <span id="timer" style="color: #10b981; font-weight: 800; font-size: 1.2rem;">15:00</span>
-    </p>
-    <div id="timerWarning" style="display: none; color: #ef4444; font-weight: 600; margin-top: 0.5rem;">
-        ⚠️ Time is running out!
-    </div>
-</div>
-
-  <form method="POST" id="quizForm">
-    {% for q in questions %}
-    <div class="question-card">
-      <div style="display: flex; align-items: start;">
-        <span class="question-number">{{ loop.index }}</span>
-        <div style="flex-grow: 1;">
-          <div class="question-text">{{ q.q }}</div>
-          {% set outer_loop = loop %}
-          {% for opt in q.options %}
-          <div class="form-check">
-            <input class="form-check-input" 
-                   type="radio" 
-                   name="q{{ outer_loop.index0 }}" 
-                   id="q{{ outer_loop.index0 }}_opt{{ loop.index }}" 
-                   value="{{ opt }}" 
-                   required>
-            <label class="form-check-label" for="q{{ outer_loop.index0 }}_opt{{ loop.index }}">
-              {{ opt }}
-            </label>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-    
-    <div style="text-align: center; margin-top: 3rem;">
-      <button type="submit" class="btn-submit">
-        <i class="fas fa-paper-plane"></i> Submit Quiz
-      </button>
-    </div>
-  </form>
-  
-  {% else %}
-  
-  <div class="result-card">
-    <span class="ai-badge" style="margin-bottom: 2rem;">
-      🤖 AI Quiz Completed
-      {% if difficulty %}
-      <span class="difficulty-badge" style="background: linear-gradient(135deg, #10b981, #059669);">
-        {{ difficulty }} Level
-      </span>
-      {% endif %}
-    </span>
-
-    {% set percent = (score / questions|length * 100)|round(1) %}
-    <div class="result-message" style="color: {% if percent >= 80 %}#10b981{% elif percent >= 60 %}#6366f1{% else %}#f59e0b{% endif %};">
-      {% if percent >= 80 %}
-        🏆 Outstanding Performance!
-      {% elif percent >= 60 %}
-        ⭐ Great Job!
-      {% elif percent >= 40 %}
-        📈 Good Effort!
-      {% else %}
-        📚 Keep Practicing!
-      {% endif %}
-    </div>
-
-    <div class="score-display">{{ score }}/{{ questions|length }}</div>
-    <div class="percentage">{{ percent }}%</div>
-    
-    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem;">
-      You answered <strong style="color: var(--text-main);">{{ score }}</strong> questions correctly out of <strong style="color: var(--text-main);">{{ questions|length }}</strong> total questions.
-    </p>
-
-    {% if suggestion %}
-    <div class="suggestion-box">
-      <h5>📊 Performance Feedback</h5>
-      <p>{{ suggestion }}</p>
+    {% if not submitted %}
+    <!-- Timer (only during quiz) -->
+    <div class="timer" id="timer">
+        <i class="fas fa-clock"></i> <span id="timeDisplay">15:00</span>
     </div>
     {% endif %}
 
-    <div class="action-buttons">
-      <a href="{{ url_for('quiz', topic=topic, subtopic=subtopic) }}" class="btn btn-primary">
-        🔄 Retake Quiz
-      </a>
-      <a href="{{ url_for('suggestions') }}" class="btn btn-success">
-        📈 View AI Suggestions
-      </a>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-        🏠 Back to Dashboard
-      </a>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
+            <span style="color: var(--text-secondary);">{{ session.user }}</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if not submitted %}
+        <!-- Quiz Form -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h1>{{ topic }}{% if subtopic %} - {{ subtopic }}{% endif %}</h1>
+            <button type="button" onclick="saveProgress()" class="btn btn-outline">
+                <i class="fas fa-save"></i> Save & Exit
+            </button>
+        </div>
+
+        <form method="POST" id="quizForm">
+            {% for q in questions %}
+            <div class="question-card">
+                <div style="display: flex; align-items: start; margin-bottom: 1rem;">
+                    <span class="question-number">{{ loop.index }}</span>
+                    <p class="question-text">{{ q.q }}</p>
+                </div>
+                
+                {% for opt in q.options %}
+                <label class="option">
+                    <input type="radio" name="q{{ loop.index0 }}" value="{{ opt }}" 
+                           {% if saved_answers.get('q' ~ loop.index0) == opt %}checked{% endif %}
+                           required>
+                    {{ opt }}
+                </label>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            
+            <div class="action-buttons">
+                <button type="submit" class="btn" style="flex: 1;">
+                    <i class="fas fa-paper-plane"></i> Submit Quiz
+                </button>
+            </div>
+        </form>
+
+        {% else %}
+        <!-- Results -->
+        <a href="{{ url_for('dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <div class="quiz-info">
+            <div class="quiz-info-header">
+                <h1>Quiz Completed!</h1>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">
+                    {{ score }}/{{ questions|length }}
+                </div>
+                <div style="font-size: 1.5rem; color: var(--text-secondary);">
+                    {{ (score / questions|length * 100)|round(1) }}%
+                </div>
+            </div>
+
+            <div style="background: var(--bg-tertiary); padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0;">
+                <p style="margin: 0;">{{ suggestion }}</p>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{{ url_for('quiz_details', topic=topic, subtopic=subtopic or '') }}" class="btn">
+                    <i class="fas fa-redo"></i> Retake Quiz
+                </a>
+                <a href="{{ url_for('suggestions') }}" class="btn btn-outline">
+                    <i class="fas fa-chart-line"></i> View Suggestions
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
-  </div>
-  
-  {% endif %}
-</div>
 
-<script>
-// Validation before submit
-document.getElementById('quizForm')?.addEventListener('submit', function(e) {
-    const questions = document.querySelectorAll('.question-card');
-    for (let question of questions) {
-        const radios = question.querySelectorAll('input[type="radio"]');
-        const answered = Array.from(radios).some(radio => radio.checked);
-        if (!answered) {
-            e.preventDefault();
-            question.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            question.style.border = '2px solid #ef4444';
-            setTimeout(() => {
-                question.style.border = 'none';
-            }, 2000);
-            alert('Please answer all questions before submitting!');
-            return;
-        }
-    }
-});<script>
-// Quiz Timer Logic
-let timeRemaining = 15 * 60; // 15 minutes in seconds
-let timerInterval;
+    {% if not submitted %}
+    <script>
+        let timeLeft = {{ time_left or 900 }};
+        let timerInterval;
+        const topic = "{{ topic }}";
+        const subtopic = "{{ subtopic or '' }}";
 
-function startTimer() {
-    timerInterval = setInterval(() => {
-        timeRemaining--;
-        
-        const minutes = Math.floor(timeRemaining / 60);
-        const seconds = timeRemaining % 60;
-        const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        document.getElementById('timer').textContent = display;
-        
-        // Warning at 3 minutes
-        if (timeRemaining === 180) {
-            document.getElementById('timer').classList.add('warning');
-            document.getElementById('timerWarning').style.display = 'block';
+        function startTimer() {
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                // Warning at 3 minutes
+                if (timeLeft === 180) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+                
+                // Critical at 1 minute
+                if (timeLeft === 60) {
+                    document.getElementById('timer').classList.remove('warning');
+                    document.getElementById('timer').classList.add('critical');
+                }
+                
+                // Time's up
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up! Submitting your quiz...');
+                    document.getElementById('quizForm').submit();
+                }
+            }, 1000);
         }
-        
-        // Critical at 1 minute
-        if (timeRemaining === 60) {
-            document.getElementById('timer').classList.remove('warning');
-            document.getElementById('timer').classList.add('critical');
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timeDisplay').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
-        
-        // Time's up
-        if (timeRemaining <= 0) {
+
+        function getCurrentAnswers() {
+            const answers = {};
+            const form = document.getElementById('quizForm');
+            const inputs = form.querySelectorAll('input[type="radio"]:checked');
+            
+            inputs.forEach(input => {
+                answers[input.name] = input.value;
+            });
+            
+            return answers;
+        }
+
+        async function saveProgress() {
             clearInterval(timerInterval);
-            alert('Time is up! Submitting your quiz...');
-            document.getElementById('quizForm').submit();
+            
+            const questions = {{ questions | tojson }};
+            const answers = getCurrentAnswers();
+            const answeredCount = Object.keys(answers).length;
+            
+            try {
+                const response = await fetch('/quiz/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        topic: topic,
+                        subtopic: subtopic,
+                        questions: questions,
+                        current_question: answeredCount,
+                        answers: answers,
+                        time_left: timeLeft
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Progress saved! You can resume this quiz later from the dashboard.');
+                    window.location.href = '/dashboard';
+                } else {
+                    alert('Failed to save progress: ' + (result.error || 'Unknown error'));
+                    startTimer(); // Resume timer
+                }
+            } catch (error) {
+                alert('Error saving progress: ' + error);
+                startTimer(); // Resume timer
+            }
         }
-    }, 1000);
-}
 
-// Start timer when quiz loads
-if (document.getElementById('quizForm')) {
-    startTimer();
-}
-</script>
+        // Form validation
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            const questions = document.querySelectorAll('.question-card');
+            
+            for (let question of questions) {
+                const radios = question.querySelectorAll('input[type="radio"]');
+                const answered = Array.from(radios).some(radio => radio.checked);
+                
+                if (!answered) {
+                    e.preventDefault();
+                    question.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    question.style.borderColor = 'var(--accent)';
+                    setTimeout(() => {
+                        question.style.borderColor = '';
+                    }, 2000);
+                    alert('Please answer all questions before submitting!');
+                    return;
+                }
+            }
+            
+            clearInterval(timerInterval);
+        });
 
-<!-- EXISTING SCRIPT BELOW -->
-<script>
-// Form validation
-document.getElementById('quizForm')?.addEventListener('submit', function(e) {
-    // ... existing code ...
-</script>
+        // Prevent accidental page close
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = 'Your quiz progress will be lost if you leave this page. Save your progress first!';
+        });
 
-</script>
-
+        // Start timer when page loads
+        startTimer();
+    </script>
+    {% endif %}
 </body>
 </html>

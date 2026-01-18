@@ -1,64 +1,235 @@
-{% extends "base.html" %}
-{% block title %}Dashboard - CareerLens{% endblock %}
-
-{% block content %}
-<div class="card">
-    <h1>Welcome To CareerLens, {{ user }}! 👋</h1>
-    <p class="text-muted mb-3">{{ session.user_branch }} Branch</p>
-
-    <!-- Stats Section -->
-    <div class="grid grid-3 mb-4">
-        <div class="stat-card">
-            <i class="fas fa-clipboard-list"></i>
-            <h3>{{ total_quizzes or 0 }}</h3>
-            <p>Quizzes Taken</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CareerLens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span style="color: var(--text-secondary);">{{ session.user }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
         </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <i class="fas fa-trophy"></i>
-            <h3>{{ average_score or 0 }}%</h3>
-            <p>Average Score</p>
+    </nav>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="grid grid-3 mb-2">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_quizzes or 0 }}</div>
+                <div class="stat-label">Quizzes Taken</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ average_score or 0 }}%</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ streak_days or 0 }}</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
         </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-            <i class="fas fa-fire"></i>
-            <h3>{{ streak_days or 0 }}</h3>
-            <p>Day Streak</p>
+
+        <!-- Main Categories with Dropdown -->
+        <h2 class="mb-2">Assessment Categories</h2>
+        <div class="grid grid-3 mb-2">
+            <!-- Technical Dropdown -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;"><i class="fas fa-code"></i> Technical</h3>
+                <button class="btn" onclick="toggleDropdown('technicalDropdown')" style="width: 100%;">
+                    Browse Topics <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div id="technicalDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                    <div class="search-input">
+                        <input type="text" id="techSearch" placeholder="🔍 Search topics..." 
+                               onkeyup="filterTopics('techSearch', 'techList')">
+                    </div>
+                    <div id="techList">
+                        {% for topic in ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP'] %}
+                        <div class="dropdown-item" onclick="showSubtopics('{{ topic }}')">
+                            <i class="fas fa-code"></i> {{ topic }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aptitude Dropdown -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;"><i class="fas fa-brain"></i> Aptitude</h3>
+                <button class="btn" onclick="toggleDropdown('aptitudeDropdown')" style="width: 100%;">
+                    Browse Topics <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div id="aptitudeDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                    <div class="search-input">
+                        <input type="text" id="aptSearch" placeholder="🔍 Search topics..." 
+                               onkeyup="filterTopics('aptSearch', 'aptList')">
+                    </div>
+                    <div id="aptList">
+                        {% for topic in ['Quantitative Aptitude', 'Logical Reasoning', 'Data Interpretation'] %}
+                        <a href="{{ url_for('quiz', topic=topic) }}" class="dropdown-item">
+                            <i class="fas fa-calculator"></i> {{ topic }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- English Dropdown -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;"><i class="fas fa-book"></i> English</h3>
+                <button class="btn" onclick="toggleDropdown('englishDropdown')" style="width: 100%;">
+                    Browse Topics <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div id="englishDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                    <div class="search-input">
+                        <input type="text" id="engSearch" placeholder="🔍 Search topics..." 
+                               onkeyup="filterTopics('engSearch', 'engList')">
+                    </div>
+                    <div id="engList">
+                        {% for topic in ['Grammar', 'Reading Comprehension', 'Synonyms & Antonyms'] %}
+                        <a href="{{ url_for('quiz', topic=topic) }}" class="dropdown-item">
+                            <i class="fas fa-spell-check"></i> {{ topic }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <h2 class="mb-2">Quick Actions</h2>
+        <div class="grid grid-3">
+            <a href="{{ url_for('suggestions') }}" class="card" style="text-decoration: none;">
+                <h3><i class="fas fa-lightbulb"></i> AI Suggestions</h3>
+                <p class="text-muted">Get personalized recommendations</p>
+            </a>
+            <a href="{{ url_for('grand_test') }}" class="card" style="text-decoration: none;">
+                <h3><i class="fas fa-trophy"></i> Grand Test</h3>
+                <p class="text-muted">Comprehensive assessment</p>
+            </a>
+            <a href="{{ url_for('resume_draft') }}" class="card" style="text-decoration: none;">
+                <h3><i class="fas fa-file-alt"></i> Resume Builder</h3>
+                <p class="text-muted">Create professional resume</p>
+            </a>
         </div>
     </div>
 
-    <!-- Main Category Cards -->
-    <h2 class="mb-4 text-center"><i class="fas fa-th-large"></i> Assessment Categories</h2>
-    <div class="grid grid-3 mb-4">
-        <a href="{{ url_for('technical') }}" class="category-card">
-            <span><i class="fas fa-code me-2"></i> Technical</span>
-        </a>
-
-        <a href="{{ url_for('aptitude') }}" class="category-card">
-            <span><i class="fas fa-brain me-2"></i> Aptitude</span>
-        </a>
-
-        <a href="{{ url_for('english') }}" class="category-card">
-            <span><i class="fas fa-book me-2"></i> English</span>
-        </a>
+    <!-- Subtopics Modal -->
+    <div id="subtopicsModal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="card" style="max-width: 500px; margin: 2rem;" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 id="modalTitle" style="margin: 0;">Subtopics</h2>
+                <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.5rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="search-input">
+                <input type="text" id="subtopicSearch" placeholder="🔍 Search subtopics..." 
+                       onkeyup="filterTopics('subtopicSearch', 'subtopicList')">
+            </div>
+            
+            <div id="subtopicList"></div>
+        </div>
     </div>
 
-    <!-- Quick Actions -->
-    <h2 class="mb-4 text-center"><i class="fas fa-rocket"></i> Quick Actions</h2>
-    <div class="grid grid-3">
-        <a href="{{ url_for('suggestions') }}" class="btn btn-primary" style="padding: 1.5rem; font-size: 1.1rem;">
-            <div><i class="fas fa-lightbulb" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
-            <div style="font-weight: 700;">AI Suggestions</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Get personalized recommendations</div>
-        </a>
-        <a href="{{ url_for('grand_test') }}" class="btn btn-secondary" style="padding: 1.5rem; font-size: 1.1rem;">
-            <div><i class="fas fa-trophy" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
-            <div style="font-weight: 700;">Grand Test</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Comprehensive assessment</div>
-        </a>
-        <a href="{{ url_for('resume_draft') }}" class="btn btn-success" style="padding: 1.5rem; font-size: 1.1rem;">
-            <div><i class="fas fa-file-alt" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i></div>
-            <div style="font-weight: 700;">Resume Builder</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem;">Create professional resume</div>
-        </a>
-    </div>
-</div>
-{% endblock %}
+    <script>
+        // Initialize dropdowns as hidden
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('technicalDropdown').classList.add('hidden');
+            document.getElementById('aptitudeDropdown').classList.add('hidden');
+            document.getElementById('englishDropdown').classList.add('hidden');
+        });
+
+        const SUBTOPICS = {
+            'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
+            'Java': ['OOPs', 'Inheritance', 'Exceptions'],
+            'Python': ['Lists', 'Dictionaries', 'File Handling'],
+            'DBMS': ['SQL', 'Normalization', 'Transactions'],
+            'OS': ['Processes', 'Threads', 'Memory Management'],
+            'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
+            'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
+            'Computer Networks': ['OSI Model', 'TCP/IP', 'Routing'],
+            'OOP': ['Classes', 'Inheritance', 'Polymorphism']
+        };
+
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            dropdown.classList.toggle('hidden');
+        }
+
+        function filterTopics(searchId, listId) {
+            const input = document.getElementById(searchId).value.toLowerCase();
+            const items = document.getElementById(listId).getElementsByClassName('dropdown-item');
+            
+            Array.from(items).forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(input) ? 'block' : 'none';
+            });
+        }
+
+        function showSubtopics(topic) {
+            const modal = document.getElementById('subtopicsModal');
+            const title = document.getElementById('modalTitle');
+            const list = document.getElementById('subtopicList');
+            
+            title.textContent = topic + ' - Subtopics';
+            
+            const subtopics = SUBTOPICS[topic] || [];
+            list.innerHTML = subtopics.map(sub => 
+                `<a href="/quiz/${topic}/${sub}/details" class="dropdown-item">
+                    <i class="fas fa-chevron-right"></i> ${sub}
+                </a>`
+            ).join('');
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.id === 'subtopicsModal') {
+                document.getElementById('subtopicsModal').classList.add('hidden');
+            }
+        }
+
+        // Close modal on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .dropdown-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</body>
+</html>

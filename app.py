@@ -8,6 +8,7 @@ from resume_generator import generate_complete_resume
 load_dotenv()
 from werkzeug.utils import secure_filename
 from certificate_manager import CertificateManager
+from datetime import datetime
 import json
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -202,205 +203,6 @@ def dashboard():
                          total_quizzes=total_quizzes,
                          average_score=average_score,
                          streak_days=streak_days)
-
-
-@app.route('/technical')
-def technical():
-    if 'user' not in session:
-        return redirect(url_for('index'))
-    
-    user_branch = get_user_branch()
-    topics = BRANCH_TOPICS.get(user_branch, BRANCH_TOPICS['DEFAULT'])
-    
-    return render_template('technical.html', topics=topics, branch=session.get('user_branch', 'N/A'))
-
-
-@app.route('/technical/<topic>')
-def subtopics(topic):
-    subtopic_map = {
-        'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
-        'Java': ['OOPs', 'Inheritance', 'Exceptions'],
-        'Python': ['Lists', 'Dictionaries', 'File Handling'],
-        'DBMS': ['SQL', 'Normalization', 'Transactions'],
-        'OS': ['Processes', 'Threads', 'Memory Management'],
-        'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
-        'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
-        'Computer Networks': ['OSI Model', 'TCP/IP', 'Routing'],
-        'OOP': ['Classes', 'Inheritance', 'Polymorphism'],
-        'Web Development': ['HTML/CSS', 'JavaScript', 'Backend'],
-        'Networking': ['Protocols', 'Security', 'Troubleshooting'],
-        'Cloud Computing': ['AWS', 'Azure', 'Docker'],
-        'Digital Electronics': ['Logic Gates', 'Combinational Circuits', 'Sequential Circuits'],
-        'Signal Processing': ['Fourier Transform', 'Filters', 'Sampling'],
-        'Embedded Systems': ['Microcontrollers', 'Sensors', 'Programming'],
-        'VLSI': ['Design', 'Verification', 'Testing'],
-        'Microprocessors': ['8086', 'Architecture', 'Assembly'],
-        'Circuit Theory': ['Kirchhoff Laws', 'Network Theorems', 'AC Circuits'],
-        'Power Systems': ['Generation', 'Transmission', 'Distribution'],
-        'Control Systems': ['Transfer Functions', 'Stability', 'Controllers'],
-        'Electrical Machines': ['DC Machines', 'Transformers', 'Induction Motors'],
-        'Thermodynamics': ['Laws', 'Heat Transfer', 'Entropy'],
-        'Mechanics': ['Statics', 'Dynamics', 'Strength of Materials'],
-        'Manufacturing': ['Casting', 'Welding', 'Machining'],
-        'CAD/CAM': ['AutoCAD', '3D Modeling', 'CNC'],
-        'AutoCAD': ['2D Drawing', '3D Modeling', 'Commands'],
-        'Structural Analysis': ['Beams', 'Trusses', 'Frames'],
-        'Surveying': ['Leveling', 'Theodolite', 'GPS'],
-        'Construction Management': ['Planning', 'Scheduling', 'Cost Estimation'],
-        'Machine Learning': ['Supervised Learning', 'Unsupervised Learning', 'Neural Networks'],
-        'Deep Learning': ['CNN', 'RNN', 'Transfer Learning'],
-        'Statistics': ['Probability', 'Hypothesis Testing', 'Regression'],
-        'Neural Networks': ['Perceptron', 'Backpropagation', 'Activation Functions']
-    }
-    subtopics = subtopic_map.get(topic, [])
-    return render_template('subtopics.html', topic=topic, subtopics=subtopics)
-
-
-@app.route('/aptitude')
-def aptitude():
-    topics = ['Quantitative Aptitude', 'Logical Reasoning', 'Data Interpretation']
-    return render_template('aptitude.html', topics=topics)
-
-
-@app.route('/english')
-def english():
-    topics = ['Grammar', 'Reading Comprehension', 'Synonyms & Antonyms']
-    return render_template('english.html', topics=topics)
-
-
-# Key changes needed in app.py
-
-# 1. Update the quiz route to use AI for ALL topics (around line 300)
-@app.route('/quiz/<topic>', methods=['GET', 'POST'])
-@app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
-def quiz(topic, subtopic=None):
-    if 'user' not in session:
-        return redirect(url_for('index'))
-
-    # Get user scores for adaptive difficulty
-    result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
-
-    user_scores = []
-    for row in result.data:
-        user_scores.append({
-            'topic': row['topic'],
-            'subtopic': row['subtopic'],
-            'score': row['score'],
-            'total_questions': row['total_questions']
-        })
-    
-    try:
-        # Use AI for ALL topics and subtopics
-        ai_result = get_adaptive_questions(
-            user_email=session['user_email'],
-            topic=topic,
-            subtopic=subtopic or '',
-            user_scores=user_scores,
-            num_questions=5
-        )
-        
-        topic_questions = ai_result['questions']
-        difficulty = ai_result['difficulty']
-        ai_generated = True
-        
-        print(f"✅ Loaded {len(topic_questions)} AI-generated questions at {difficulty} level")
-        
-    except Exception as e:
-        print(f"❌ Error loading AI questions: {e}")
-        flash("Error loading quiz. Please try again.")
-        return redirect(url_for('dashboard'))
-
-    if not topic_questions:
-        flash("No quiz available for this topic yet.")
-        return redirect(url_for('dashboard'))
-
-    if request.method == 'POST':
-        score = 0
-        user_answers = request.form
-
-        print("\n" + "="*80)
-        print("📝 SCORING DEBUG")
-        print("="*80)
-        
-        for i, q in enumerate(topic_questions):
-            user_answer = user_answers.get(f'q{i}', '')
-            correct_answer = str(q['answer'])
-            
-            is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
-            
-            if is_correct:
-                score += 1
-            
-            print(f"Q{i+1}: User='{user_answer}' | Correct='{correct_answer}' | Match={is_correct}")
-
-        print(f"\n📊 FINAL: {score}/{len(topic_questions)}")
-
-        # Save score to database
-        supabase.table('user_scores').insert({
-            'user_email': session['user_email'],
-            'topic': topic,
-            'subtopic': subtopic or '',
-            'score': score,
-            'total_questions': len(topic_questions)
-        }).execute()
-
-        percent = (score / len(topic_questions)) * 100
-
-        # Generate feedback
-        if percent < 40:
-            suggestion = f"Your score is {percent:.1f}%. You need significant practice in {subtopic if subtopic else topic}."
-            performance = "needs_work"
-        elif percent < 60:
-            suggestion = f"Your score is {percent:.1f}%. Keep practicing {subtopic if subtopic else topic} to improve."
-            performance = "fair"
-        elif percent < 80:
-            suggestion = f"Your score is {percent:.1f}%. Good work! A bit more practice will help you master {subtopic if subtopic else topic}."
-            performance = "good"
-        else:
-            suggestion = f"Your score is {percent:.1f}%. Excellent! You have strong knowledge in {subtopic if subtopic else topic}."
-            performance = "excellent"
-
-        # Adaptive feedback
-        if difficulty == 'beginner':
-            if percent >= 80:
-                suggestion += " 🎉 Great job on beginner questions! Next quiz will be at intermediate level."
-            else:
-                suggestion += " Keep practicing fundamentals to build a strong foundation."
-        elif difficulty == 'intermediate':
-            if percent >= 80:
-                suggestion += " 🔥 Impressive! Next quiz will challenge you with advanced questions."
-            else:
-                suggestion += " You're making progress. Keep practicing at this level."
-        else:
-            if percent >= 80:
-                suggestion += " 🏆 Outstanding! You've mastered this topic at expert level!"
-            else:
-                suggestion += " Advanced questions are challenging. Review concepts and try again."
-
-        # Generate topic recommendations
-        topic_recommendations = generate_topic_recommendations(
-            topic, subtopic, percent, difficulty, session['user_email'], supabase
-        )
-
-        return render_template('quiz.html',
-                             topic=topic,
-                             subtopic=subtopic,
-                             questions=topic_questions,
-                             submitted=True,
-                             score=score,
-                             suggestion=suggestion,
-                             difficulty=difficulty,
-                             ai_generated=ai_generated,
-                             performance=performance,
-                             recommendations=topic_recommendations)
-
-    return render_template('quiz.html', 
-                         topic=topic, 
-                         subtopic=subtopic,
-                         questions=topic_questions, 
-                         submitted=False,
-                         difficulty=difficulty,
-                         ai_generated=ai_generated)
 
 
 # 2. Update Grand Test to use AI questions (around line 500)
@@ -718,7 +520,233 @@ def list_certificates():
         
     except Exception as e:
         return {'error': f'Error fetching certificates: {str(e)}'}, 500
-       
+
+@app.route('/quiz/<topic>/<subtopic>/details')
+def quiz_details(topic, subtopic):
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    user_email = session['user_email']
+    
+    # Check for saved progress
+    try:
+        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic).execute()
+        
+        has_saved = bool(saved.data)
+        saved_question = saved.data[0]['current_question'] if has_saved else 0
+        saved_time = saved.data[0]['time_left'] if has_saved else 900
+        
+        # Format time
+        mins = saved_time // 60
+        secs = saved_time % 60
+        saved_time_left = f"{mins}:{secs:02d}"
+        
+    except:
+        has_saved = False
+        saved_question = 0
+        saved_time_left = "15:00"
+    
+    # Get difficulty
+    result = supabase.table('user_scores').select('score, total_questions').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic).execute()
+    
+    user_scores = []
+    for row in result.data:
+        user_scores.append({
+            'topic': topic,
+            'subtopic': subtopic,
+            'score': row['score'],
+            'total_questions': row['total_questions']
+        })
+    
+    from ai_question_generator import determine_difficulty_level
+    difficulty = determine_difficulty_level(user_scores, topic, subtopic)
+    
+    return render_template('quiz_details.html',
+                         topic=topic,
+                         subtopic=subtopic,
+                         difficulty=difficulty.capitalize(),
+                         has_saved_progress=has_saved,
+                         saved_question=saved_question,
+                         saved_time_left=saved_time_left)
+
+
+# ============================================================================
+# UPDATED QUIZ ROUTE (with resume/save)
+# ============================================================================
+@app.route('/quiz/<topic>', methods=['GET', 'POST'])
+@app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
+def quiz(topic, subtopic=None):
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    user_email = session['user_email']
+    
+    # Handle resume or restart
+    resume = request.args.get('resume') == 'true'
+    restart = request.args.get('restart') == 'true'
+    
+    if restart:
+        # Delete saved progress
+        try:
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+        except:
+            pass
+    
+    # Check for saved progress
+    saved_progress = None
+    if resume and not restart:
+        try:
+            result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+            if result.data:
+                saved_progress = result.data[0]
+        except:
+            pass
+    
+    # POST - Submit quiz
+    if request.method == 'POST':
+        # Get questions from session
+        topic_questions = session.get('quiz_questions', [])
+        
+        if not topic_questions:
+            flash("Quiz session expired. Please start again.")
+            return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
+        
+        score = 0
+        user_answers = request.form
+        
+        for i, q in enumerate(topic_questions):
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
+            
+            if user_answer.strip().lower() == correct_answer.strip().lower():
+                score += 1
+        
+        # Save score
+        supabase.table('user_scores').insert({
+            'user_email': user_email,
+            'topic': topic,
+            'subtopic': subtopic or '',
+            'score': score,
+            'total_questions': len(topic_questions)
+        }).execute()
+        
+        # Delete saved progress
+        try:
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+        except:
+            pass
+        
+        # Clear session
+        session.pop('quiz_questions', None)
+        
+        percent = (score / len(topic_questions)) * 100
+        
+        # Generate feedback
+        if percent < 40:
+            suggestion = f"Your score is {percent:.1f}%. Focus on fundamentals."
+        elif percent < 60:
+            suggestion = f"Your score is {percent:.1f}%. Keep practicing!"
+        elif percent < 80:
+            suggestion = f"Your score is {percent:.1f}%. Good work!"
+        else:
+            suggestion = f"Your score is {percent:.1f}%. Excellent!"
+        
+        return render_template('quiz.html',
+                             topic=topic,
+                             subtopic=subtopic,
+                             questions=topic_questions,
+                             submitted=True,
+                             score=score,
+                             suggestion=suggestion)
+    
+    # GET - Load quiz
+    if saved_progress:
+        # Resume from saved
+        topic_questions = json.loads(saved_progress['questions'])
+        current_question = saved_progress['current_question']
+        time_left = saved_progress['time_left']
+        saved_answers = json.loads(saved_progress['answers']) if saved_progress['answers'] else {}
+    else:
+        # Generate new questions
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
+        
+        user_scores = []
+        for row in result.data:
+            user_scores.append({
+                'topic': row['topic'],
+                'subtopic': row['subtopic'],
+                'score': row['score'],
+                'total_questions': row['total_questions']
+            })
+        
+        try:
+            from ai_question_generator import get_adaptive_questions
+            ai_result = get_adaptive_questions(
+                user_email=user_email,
+                topic=topic,
+                subtopic=subtopic or '',
+                user_scores=user_scores,
+                num_questions=5
+            )
+            
+            topic_questions = ai_result['questions']
+            difficulty = ai_result['difficulty']
+            current_question = 0
+            time_left = 900  # 15 minutes
+            saved_answers = {}
+            
+        except Exception as e:
+            print(f"Error generating questions: {e}")
+            flash("Error loading quiz. Please try again.")
+            return redirect(url_for('dashboard'))
+    
+    # Store in session
+    session['quiz_questions'] = topic_questions
+    
+    return render_template('quiz.html',
+                         topic=topic,
+                         subtopic=subtopic,
+                         questions=topic_questions,
+                         submitted=False,
+                         time_left=time_left,
+                         current_question=current_question,
+                         saved_answers=saved_answers)
+
+
+# ============================================================================
+# SAVE QUIZ PROGRESS (AJAX)
+# ============================================================================
+@app.route('/quiz/save', methods=['POST'])
+def save_quiz():
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    data = request.json
+    user_email = session['user_email']
+    
+    try:
+        # Delete existing progress
+        supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', data['topic']).eq('subtopic', data.get('subtopic', '')).execute()
+        
+        # Save new progress
+        supabase.table('quiz_progress').insert({
+            'user_email': user_email,
+            'topic': data['topic'],
+            'subtopic': data.get('subtopic', ''),
+            'questions': json.dumps(data['questions']),
+            'current_question': data['current_question'],
+            'answers': json.dumps(data['answers']),
+            'time_left': data['time_left'],
+            'saved_at': datetime.now().isoformat()
+        }).execute()
+        
+        return {'success': True}, 200
+        
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
