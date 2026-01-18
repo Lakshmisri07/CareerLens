@@ -6,9 +6,99 @@
     <title>Dashboard - CareerLens</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .dropdown-section {
+            margin-top: 1rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            opacity: 0;
+        }
+        
+        .dropdown-section.active {
+            max-height: 600px;
+            opacity: 1;
+            overflow: visible;
+            transition: max-height 0.5s ease-in, opacity 0.3s ease-in;
+        }
+        
+        .browse-btn {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .browse-btn i.fa-chevron-down {
+            transition: transform 0.3s;
+        }
+        
+        .browse-btn.active i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .search-input {
+            position: relative;
+            margin: 1rem 0;
+            z-index: 10;
+        }
+
+        .search-input input {
+            width: 100% !important;
+            padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+            background: white !important;
+            border: 2px solid var(--border) !important;
+            border-radius: 8px !important;
+            color: #1e293b !important;
+            font-size: 0.95rem !important;
+            pointer-events: auto !important;
+            cursor: text !important;
+            font-family: inherit !important;
+        }
+
+        .search-input input:focus {
+            outline: none !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+        }
+
+        .search-input::before {
+            content: '🔍';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 11;
+            pointer-events: none;
+        }
+
+        .topic-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.875rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-tertiary);
+            padding-left: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
@@ -22,7 +112,6 @@
     </nav>
 
     <div class="container">
-        <!-- Stats -->
         <div class="grid grid-3 mb-2">
             <div class="stat-card">
                 <div class="stat-value">{{ total_quizzes or 0 }}</div>
@@ -38,22 +127,26 @@
             </div>
         </div>
 
-        <!-- Main Categories with Dropdown -->
         <h2 class="mb-2">Assessment Categories</h2>
         <div class="grid grid-3 mb-2">
-            <!-- Technical Dropdown -->
+            
+            <!-- Technical -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem;"><i class="fas fa-code"></i> Technical</h3>
-                <button class="btn" onclick="toggleDropdown('technicalDropdown')" style="width: 100%;">
+                <button class="btn browse-btn" type="button" onclick="toggleDropdown('technicalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div id="technicalDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                <div id="technicalDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" id="techSearch" placeholder="🔍 Search topics..." 
-                               onkeyup="filterTopics('techSearch', 'techList')">
+                        <input type="text" 
+                               id="techSearch" 
+                               placeholder="Search topics..." 
+                               onkeyup="filterTopics(this, 'techList')"
+                               onclick="event.stopPropagation()"
+                               autocomplete="off">
                     </div>
-                    <div id="techList">
+                    <div class="topic-list" id="techList">
                         {% for topic in ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP'] %}
                         <div class="dropdown-item" onclick="showSubtopics('{{ topic }}')">
                             <i class="fas fa-code"></i> {{ topic }}
@@ -63,21 +156,25 @@
                 </div>
             </div>
 
-            <!-- Aptitude Dropdown -->
+            <!-- Aptitude -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem;"><i class="fas fa-brain"></i> Aptitude</h3>
-                <button class="btn" onclick="toggleDropdown('aptitudeDropdown')" style="width: 100%;">
+                <button class="btn browse-btn" type="button" onclick="toggleDropdown('aptitudeDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div id="aptitudeDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                <div id="aptitudeDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" id="aptSearch" placeholder="🔍 Search topics..." 
-                               onkeyup="filterTopics('aptSearch', 'aptList')">
+                        <input type="text" 
+                               id="aptSearch" 
+                               placeholder="Search topics..." 
+                               onkeyup="filterTopics(this, 'aptList')"
+                               onclick="event.stopPropagation()"
+                               autocomplete="off">
                     </div>
-                    <div id="aptList">
+                    <div class="topic-list" id="aptList">
                         {% for topic in ['Quantitative Aptitude', 'Logical Reasoning', 'Data Interpretation'] %}
-                        <a href="{{ url_for('quiz', topic=topic) }}" class="dropdown-item">
+                        <a href="/quiz/{{ topic }}/details" class="dropdown-item">
                             <i class="fas fa-calculator"></i> {{ topic }}
                         </a>
                         {% endfor %}
@@ -85,21 +182,25 @@
                 </div>
             </div>
 
-            <!-- English Dropdown -->
+            <!-- English -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem;"><i class="fas fa-book"></i> English</h3>
-                <button class="btn" onclick="toggleDropdown('englishDropdown')" style="width: 100%;">
+                <button class="btn browse-btn" type="button" onclick="toggleDropdown('englishDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div id="englishDropdown" class="dropdown-content" style="position: static; margin-top: 1rem;">
+                <div id="englishDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" id="engSearch" placeholder="🔍 Search topics..." 
-                               onkeyup="filterTopics('engSearch', 'engList')">
+                        <input type="text" 
+                               id="engSearch" 
+                               placeholder="Search topics..." 
+                               onkeyup="filterTopics(this, 'engList')"
+                               onclick="event.stopPropagation()"
+                               autocomplete="off">
                     </div>
-                    <div id="engList">
+                    <div class="topic-list" id="engList">
                         {% for topic in ['Grammar', 'Reading Comprehension', 'Synonyms & Antonyms'] %}
-                        <a href="{{ url_for('quiz', topic=topic) }}" class="dropdown-item">
+                        <a href="/quiz/{{ topic }}/details" class="dropdown-item">
                             <i class="fas fa-spell-check"></i> {{ topic }}
                         </a>
                         {% endfor %}
@@ -108,7 +209,6 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <h2 class="mb-2">Quick Actions</h2>
         <div class="grid grid-3">
             <a href="{{ url_for('suggestions') }}" class="card" style="text-decoration: none;">
@@ -128,31 +228,28 @@
 
     <!-- Subtopics Modal -->
     <div id="subtopicsModal" class="modal-overlay hidden" onclick="closeModal(event)">
-        <div class="card" style="max-width: 500px; margin: 2rem;" onclick="event.stopPropagation()">
+        <div class="card" style="max-width: 500px; margin: 2rem; background: white;" onclick="event.stopPropagation()">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2 id="modalTitle" style="margin: 0;">Subtopics</h2>
+                <h2 id="modalTitle" style="margin: 0; color: var(--text-main);">Subtopics</h2>
                 <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.5rem;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
             <div class="search-input">
-                <input type="text" id="subtopicSearch" placeholder="🔍 Search subtopics..." 
-                       onkeyup="filterTopics('subtopicSearch', 'subtopicList')">
+                <input type="text" 
+                       id="subtopicSearch" 
+                       placeholder="Search subtopics..." 
+                       onkeyup="filterTopics(this, 'subtopicList')"
+                       onclick="event.stopPropagation()"
+                       autocomplete="off">
             </div>
             
-            <div id="subtopicList"></div>
+            <div class="topic-list" id="subtopicList"></div>
         </div>
     </div>
 
     <script>
-        // Initialize dropdowns as hidden
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('technicalDropdown').classList.add('hidden');
-            document.getElementById('aptitudeDropdown').classList.add('hidden');
-            document.getElementById('englishDropdown').classList.add('hidden');
-        });
-
         const SUBTOPICS = {
             'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
             'Java': ['OOPs', 'Inheritance', 'Exceptions'],
@@ -165,18 +262,55 @@
             'OOP': ['Classes', 'Inheritance', 'Polymorphism']
         };
 
-        function toggleDropdown(id) {
+        function toggleDropdown(id, buttonElement) {
             const dropdown = document.getElementById(id);
-            dropdown.classList.toggle('hidden');
+            const isActive = dropdown.classList.contains('active');
+            
+            // Close all dropdowns
+            document.querySelectorAll('.dropdown-section').forEach(d => {
+                d.classList.remove('active');
+            });
+            document.querySelectorAll('.browse-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // Open clicked dropdown
+            if (!isActive) {
+                dropdown.classList.add('active');
+                buttonElement.classList.add('active');
+                
+                // Focus search input
+                setTimeout(() => {
+                    const searchInput = dropdown.querySelector('input[type="text"]');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.focus();
+                    }
+                    // Reset all items to visible
+                    const listId = dropdown.querySelector('.topic-list').id;
+                    const items = document.getElementById(listId).querySelectorAll('.dropdown-item');
+                    items.forEach(item => {
+                        item.style.display = 'block';
+                    });
+                }, 100);
+            }
         }
 
-        function filterTopics(searchId, listId) {
-            const input = document.getElementById(searchId).value.toLowerCase();
-            const items = document.getElementById(listId).getElementsByClassName('dropdown-item');
+        // FIXED: Filter function that actually works
+        function filterTopics(inputElement, listId) {
+            const searchTerm = inputElement.value.toLowerCase().trim();
+            const listContainer = document.getElementById(listId);
+            const items = listContainer.querySelectorAll('.dropdown-item');
             
-            Array.from(items).forEach(item => {
+            console.log('Filtering:', searchTerm, 'in', listId); // Debug
+            
+            items.forEach(item => {
                 const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(input) ? 'block' : 'none';
+                if (searchTerm === '' || text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
             });
         }
 
@@ -189,10 +323,13 @@
             
             const subtopics = SUBTOPICS[topic] || [];
             list.innerHTML = subtopics.map(sub => 
-                `<a href="/quiz/${topic}/${sub}/details" class="dropdown-item">
+                `<a href="/quiz/${encodeURIComponent(topic)}/${encodeURIComponent(sub)}/details" class="dropdown-item">
                     <i class="fas fa-chevron-right"></i> ${sub}
                 </a>`
             ).join('');
+            
+            // Reset search
+            document.getElementById('subtopicSearch').value = '';
             
             modal.classList.remove('hidden');
         }
@@ -203,9 +340,33 @@
             }
         }
 
-        // Close modal on ESC
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape') {
+                closeModal();
+                // Close dropdowns
+                document.querySelectorAll('.dropdown-section').forEach(d => {
+                    d.classList.remove('active');
+                });
+                document.querySelectorAll('.browse-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+            }
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            const isCard = e.target.closest('.card');
+            const isButton = e.target.closest('.browse-btn');
+            const isSearch = e.target.closest('.search-input');
+            
+            if (!isCard && !isButton && !isSearch) {
+                document.querySelectorAll('.dropdown-section').forEach(d => {
+                    d.classList.remove('active');
+                });
+                document.querySelectorAll('.browse-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+            }
         });
     </script>
 
@@ -224,11 +385,6 @@
 
         .hidden {
             display: none !important;
-        }
-
-        .dropdown-content {
-            max-height: 300px;
-            overflow-y: auto;
         }
     </style>
 </body>

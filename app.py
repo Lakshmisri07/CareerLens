@@ -521,16 +521,26 @@ def list_certificates():
     except Exception as e:
         return {'error': f'Error fetching certificates: {str(e)}'}, 500
 
-@app.route('/quiz/<topic>/<subtopic>/details')
-def quiz_details(topic, subtopic):
+# UPDATED: Quiz details page for ALL topics (Technical, Aptitude, English)
+@app.route('/quiz/<path:topic>/details')
+@app.route('/quiz/<path:topic>/<path:subtopic>/details')
+def quiz_details(topic, subtopic=None):
     if 'user' not in session:
         return redirect(url_for('index'))
     
     user_email = session['user_email']
     
+    # Decode URL encoding
+    from urllib.parse import unquote
+    topic = unquote(topic)
+    if subtopic:
+        subtopic = unquote(subtopic)
+    
+    print(f"Quiz Details: topic={topic}, subtopic={subtopic}")
+    
     # Check for saved progress
     try:
-        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic).execute()
+        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
         
         has_saved = bool(saved.data)
         saved_question = saved.data[0]['current_question'] if has_saved else 0
@@ -541,25 +551,30 @@ def quiz_details(topic, subtopic):
         secs = saved_time % 60
         saved_time_left = f"{mins}:{secs:02d}"
         
-    except:
+    except Exception as e:
+        print(f"Error checking saved progress: {e}")
         has_saved = False
         saved_question = 0
         saved_time_left = "15:00"
     
-    # Get difficulty
-    result = supabase.table('user_scores').select('score, total_questions').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic).execute()
-    
-    user_scores = []
-    for row in result.data:
-        user_scores.append({
-            'topic': topic,
-            'subtopic': subtopic,
-            'score': row['score'],
-            'total_questions': row['total_questions']
-        })
-    
-    from ai_question_generator import determine_difficulty_level
-    difficulty = determine_difficulty_level(user_scores, topic, subtopic)
+    # Get difficulty based on past performance
+    try:
+        result = supabase.table('user_scores').select('score, total_questions').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+        
+        user_scores = []
+        for row in result.data:
+            user_scores.append({
+                'topic': topic,
+                'subtopic': subtopic or '',
+                'score': row['score'],
+                'total_questions': row['total_questions']
+            })
+        
+        from ai_question_generator import determine_difficulty_level
+        difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
+    except Exception as e:
+        print(f"Error determining difficulty: {e}")
+        difficulty = 'intermediate'
     
     return render_template('quiz_details.html',
                          topic=topic,
@@ -568,20 +583,23 @@ def quiz_details(topic, subtopic):
                          has_saved_progress=has_saved,
                          saved_question=saved_question,
                          saved_time_left=saved_time_left)
-
-
 # ============================================================================
 # UPDATED QUIZ ROUTE (with resume/save)
-# ============================================================================
-@app.route('/quiz/<topic>', methods=['GET', 'POST'])
-@app.route('/quiz/<topic>/<subtopic>', methods=['GET', 'POST'])
+
+@app.route('/quiz/<path:topic>', methods=['GET', 'POST'])
+@app.route('/quiz/<path:topic>/<path:subtopic>', methods=['GET', 'POST'])
 def quiz(topic, subtopic=None):
     if 'user' not in session:
         return redirect(url_for('index'))
     
-    user_email = session['user_email']
+    # Decode URL encoding
+    from urllib.parse import unquote
+    topic = unquote(topic)
+    if subtopic:
+        subtopic = unquote(subtopic)
     
-    # Handle resume or restart
+    user_email = session['user_email']
+        # Handle resume or restart
     resume = request.args.get('resume') == 'true'
     restart = request.args.get('restart') == 'true'
     
