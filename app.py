@@ -348,7 +348,11 @@ def grand_test():
         traceback.print_exc()
         flash("Failed to generate Grand Test. Please try again.")
         return redirect(url_for('dashboard'))
-
+@app.route('/grand_test/details')
+def grand_test_details():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    return render_template('grand_test_details.html')
 @app.route('/suggestions')
 def suggestions():
     if 'user' not in session:

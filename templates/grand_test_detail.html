@@ -1,3 +1,4 @@
+<!-- templates/grand_test_details.html - CORRECTED VERSION -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -146,24 +147,6 @@
             font-weight: 600;
         }
 
-        .saved-progress-alert {
-            background: rgba(99, 102, 241, 0.1);
-            border-left: 3px solid var(--accent);
-            padding: 1rem 1.25rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .saved-progress-alert p {
-            margin: 0;
-            color: var(--text-primary);
-        }
-
-        .saved-progress-alert small {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
         .action-buttons {
             display: grid;
             gap: 1rem;
@@ -191,19 +174,6 @@
             background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
             transform: translateY(-2px);
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-            box-shadow: none;
-        }
-
-        .btn-outline:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
-            box-shadow: none;
         }
 
         .instructions {
@@ -239,7 +209,7 @@
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
-            <span style="color: var(--text-secondary);">User Name</span>
+            <span style="color: var(--text-secondary);">{{ session.user }}</span>
         </div>
     </nav>
 
@@ -275,12 +245,6 @@
                 </div>
             </div>
 
-            <!-- Saved Progress (Hidden by default) -->
-            <div class="saved-progress-alert" style="display: none;">
-                <p><i class="fas fa-info-circle"></i> <strong>You have a saved test in progress</strong></p>
-                <p style="margin-top: 0.5rem;"><small>Question 8/15 • 12:30 remaining</small></p>
-            </div>
-
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <form action="/grand_test" method="GET">
@@ -297,8 +261,8 @@
                     <li>Covers all major topics: Technical (5Q), Aptitude (5Q), English (5Q)</li>
                     <li>Questions are AI-generated based on your performance</li>
                     <li>Timer will start once you begin the test</li>
-                    <li>You can save and resume the test anytime</li>
                     <li>Your score will be calculated instantly after submission</li>
+                    <li>All questions must be answered before submission</li>
                 </ul>
             </div>
         </div>
