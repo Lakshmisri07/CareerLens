@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Test - CareerLens</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-back:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .quiz-info {
+            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .quiz-info-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .quiz-info-header h1 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-info-header p {
+            color: var(--text-secondary);
+        }
+
+        .quiz-info-details {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.875rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.875rem;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .saved-progress-alert {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .saved-progress-alert p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .saved-progress-alert small {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: grid;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, var(--accent), #5558d9);
+            color: white;
+            border: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            box-shadow: none;
+        }
+
+        .instructions {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .instructions h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .instructions ul {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding-left: 1.5rem;
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
+            <span style="color: var(--text-secondary);">User Name</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/dashboard" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <div class="quiz-info">
+            <div class="quiz-info-header">
+                <h1>Grand Test</h1>
+                <p>Comprehensive Placement Assessment</p>
+            </div>
+
+            <div class="quiz-info-details">
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-list"></i> Questions</span>
+                    <span class="info-value">15 Questions</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-clock"></i> Time Limit</span>
+                    <span class="info-value">20 Minutes</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-layer-group"></i> Categories</span>
+                    <span class="info-value">Technical, Aptitude, English</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-signal"></i> Difficulty</span>
+                    <span class="info-value">
+                        <span class="badge">Adaptive</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Saved Progress (Hidden by default) -->
+            <div class="saved-progress-alert" style="display: none;">
+                <p><i class="fas fa-info-circle"></i> <strong>You have a saved test in progress</strong></p>
+                <p style="margin-top: 0.5rem;"><small>Question 8/15 • 12:30 remaining</small></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <form action="/grand_test" method="GET">
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-play"></i> Start Grand Test
+                    </button>
+                </form>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <h3>Test Overview:</h3>
+                <ul>
+                    <li>Covers all major topics: Technical (5Q), Aptitude (5Q), English (5Q)</li>
+                    <li>Questions are AI-generated based on your performance</li>
+                    <li>Timer will start once you begin the test</li>
+                    <li>You can save and resume the test anytime</li>
+                    <li>Your score will be calculated instantly after submission</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
