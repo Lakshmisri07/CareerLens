@@ -9,6 +9,7 @@ load_dotenv()
 from werkzeug.utils import secure_filename
 from certificate_manager import CertificateManager
 from datetime import datetime
+from validators import validate_email, validate_password
 import json
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -27,13 +28,22 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 # Branch-specific technical topics
 BRANCH_TOPICS = {
-    'CSE': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP'],
-    'IT': ['C', 'Java', 'Python', 'DBMS', 'Web Development', 'Data Structures', 'Networking', 'Cloud Computing'],
-    'ECE': ['C', 'Python', 'Digital Electronics', 'Signal Processing', 'Embedded Systems', 'VLSI', 'Microprocessors'],
-    'EEE': ['C', 'Python', 'Circuit Theory', 'Power Systems', 'Control Systems', 'Electrical Machines'],
-    'MECH': ['C', 'Python', 'Thermodynamics', 'Mechanics', 'Manufacturing', 'CAD/CAM'],
-    'CIVIL': ['C', 'AutoCAD', 'Structural Analysis', 'Surveying', 'Construction Management'],
-    'AI/ML': ['Python', 'Machine Learning', 'Deep Learning', 'Data Structures', 'Statistics', 'Neural Networks'],
+    'CSE': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP', 'Web Development', 'Cloud Computing'],
+    
+    'IT': ['C', 'Java', 'Python', 'DBMS', 'Web Development', 'Data Structures', 'Networking', 'Cloud Computing', 'Cybersecurity', 'Software Engineering'],
+    
+    'ECE': ['C', 'Python', 'Digital Electronics', 'Signal Processing', 'Embedded Systems', 'VLSI', 'Microprocessors', 'Communication Systems', 'Antenna Theory', 'Control Systems'],
+    
+    'EEE': ['C', 'Python', 'Circuit Theory', 'Power Systems', 'Control Systems', 'Electrical Machines', 'Power Electronics', 'Renewable Energy', 'Electrical Drives', 'Switchgear'],
+    
+    'MECH': ['C', 'Python', 'Thermodynamics', 'Mechanics', 'Manufacturing', 'CAD/CAM', 'Fluid Mechanics', 'Heat Transfer', 'Machine Design', 'Automobile Engineering'],
+    
+    'CIVIL': ['C', 'AutoCAD', 'Structural Analysis', 'Surveying', 'Construction Management', 'Geotechnical Engineering', 'Transportation Engineering', 'Environmental Engineering', 'Concrete Technology', 'Estimation & Costing'],
+    
+    'CHEM': ['C', 'Python', 'Chemical Thermodynamics', 'Fluid Mechanics', 'Process Control', 'Reaction Engineering', 'Mass Transfer', 'Heat Transfer', 'Process Equipment Design', 'Chemical Plant Design'],
+    
+    'AI/ML': ['Python', 'Machine Learning', 'Deep Learning', 'Data Structures', 'Statistics', 'Neural Networks', 'NLP', 'Computer Vision', 'Data Science', 'TensorFlow'],
+    
     'DEFAULT': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']
 }
 
@@ -97,7 +107,14 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
         'OS': {'Processes': ['Threads', 'Memory Management'], 'Threads': ['Processes', 'Memory Management'],
                'Memory Management': ['Processes', 'Threads']},
         'Data Structures': {'Linked List': ['Stacks', 'Queues'], 'Stacks': ['Queues', 'Trees'],
-                           'Queues': ['Stacks', 'Trees'], 'Trees': ['Linked List', 'Stacks']}
+                           'Queues': ['Stacks', 'Trees'], 'Trees': ['Linked List', 'Stacks']},
+        # Add these to existing subtopic_map:
+        'Fluid Mechanics': {'Fluid Properties', 'Fluid Statics', 'Flow Measurement', 'Boundary Layer'},
+        'Heat Transfer': {'Conduction', 'Convection', 'Radiation', 'Heat Exchangers'},
+        'Machine Design': {'Design of Shafts', 'Gears', 'Bearings', 'Springs'},
+        'Geotechnical Engineering': {'Soil Mechanics', 'Foundation Engineering', 'Slope Stability'},
+        'Chemical Thermodynamics': {'Laws of Thermodynamics', 'Phase Equilibrium', 'Chemical Equilibrium'},
+        'Process Control': {'Feedback Control', 'PID Controllers', 'Advanced Control'},
     }
 
     if topic in related_topics_map and subtopic in related_topics_map[topic]:
@@ -117,14 +134,24 @@ def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_em
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        name = request.form['name']
         email = request.form['email']
+        password = request.form['password']
+        
+        # Validate email
+        if not validate_email(email):
+            flash("Please enter a valid email address")
+            return redirect(url_for('register'))
+        
+        # Validate password
+        is_valid, msg = validate_password(password)
+        if not is_valid:
+            flash(msg)
+            return redirect(url_for('register'))
+        name = request.form['name']
         branch = request.form['branch']
         cgpa = request.form['cgpa']
         backlogs = request.form['backlogs']
         internships = request.form['internships']
-        password = request.form['password']
-
         try:
             supabase.table('users').insert({
                 'name': name,
@@ -138,7 +165,12 @@ def register():
             flash("Registration successful! Please login.")
             return redirect(url_for('index'))
         except Exception as e:
-            flash(f"Registration failed: {str(e)}")
+            error_str = str(e)
+            # User-friendly error messages
+            if '23505' in error_str or 'duplicate key' in error_str:
+                flash("This email is already registered. Please login or use a different email.")
+            else:
+                flash("Registration failed. Please try again.")
             return redirect(url_for('register'))
     return render_template('register.html')
 
