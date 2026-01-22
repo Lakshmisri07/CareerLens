@@ -53,29 +53,29 @@
             </div>
             {% endif %}
 
-            <div class="action-buttons">
+            <div class="action-buttons" style="display: flex; justify-content: center; gap: 1rem;">
                 {% if has_saved_progress %}
                 <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
-                <input type="hidden" name="resume" value="true">
-                <button type="submit" class="btn">
-                    <i class="fas fa-play"></i> Resume Quiz
-                </button>
-            </form>
-            <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
-                <input type="hidden" name="restart" value="true">
-                <button type="submit" class="btn btn-outline">
-                    <i class="fas fa-redo"></i> Start Fresh
-                </button>
-            </form>
-            {% else %}
-            <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
-                <button type="submit" class="btn">
-                    <i class="fas fa-play"></i> Start Quiz
-                </button>
-            </form>
-             {% endif %}
+                    <input type="hidden" name="resume" value="true">
+                    <button type="submit" class="btn" style="min-width: 200px;">
+                        <i class="fas fa-play"></i> Resume Quiz
+                    </button>
+                </form>
+                <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
+                    <input type="hidden" name="restart" value="true">
+                    <button type="submit" class="btn btn-outline" style="min-width: 200px;">
+                        <i class="fas fa-redo"></i> Start Fresh
+                    </button>
+                </form>
+                {% else %}
+                <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
+                    <button type="submit" class="btn" style="min-width: 200px;">
+                        <i class="fas fa-play"></i> Start Quiz
+                    </button>
+                </form>
+                {% endif %}
             </div>
-
+            
             <!-- Instructions -->
             <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                 <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Instructions:</h3>

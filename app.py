@@ -786,12 +786,6 @@ def save_quiz():
     except Exception as e:
         return {'error': str(e)}, 500
 
-@app.route('/grand_test/details')
-def grand_test_details():
-    if 'user' not in session:
-        return redirect(url_for('index'))
-    return render_template('grand_test_details.html')
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
