@@ -12,6 +12,7 @@
         --primary-dark: #4f46e5;
         --secondary: #ec4899;
         --success: #10b981;
+        --danger: #ef4444;
         --text-main: #1e293b;
         --text-muted: #64748b;
     }
@@ -122,6 +123,7 @@
 
     .form-group {
         margin-bottom: 1.25rem;
+        position: relative;
     }
 
     .form-label {
@@ -130,6 +132,12 @@
         color: var(--text-main);
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
     }
 
     .form-control {
@@ -142,11 +150,70 @@
         background: rgba(255, 255, 255, 0.8);
     }
 
+    .form-control.password-input {
+        padding-right: 3rem;
+    }
+
     .form-control:focus {
         outline: none;
         border-color: var(--primary);
         background: white;
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-control.valid {
+        border-color: var(--success);
+    }
+
+    .form-control.invalid {
+        border-color: var(--danger);
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        transition: color 0.3s;
+    }
+
+    .password-toggle:hover {
+        color: var(--primary);
+    }
+
+    .error-message {
+        display: none;
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding-left: 0.25rem;
+    }
+
+    .error-message.show {
+        display: block;
+        animation: fadeIn 0.3s;
+    }
+
+    .success-message {
+        display: none;
+        color: var(--success);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding-left: 0.25rem;
+    }
+
+    .success-message.show {
+        display: block;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .form-select {
@@ -167,6 +234,73 @@
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     }
 
+    .password-strength {
+        margin-top: 0.5rem;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        overflow: hidden;
+        display: none;
+    }
+
+    .password-strength.show {
+        display: block;
+    }
+
+    .password-strength-bar {
+        height: 100%;
+        transition: all 0.3s;
+        border-radius: 2px;
+    }
+
+    .password-strength.weak .password-strength-bar {
+        width: 33%;
+        background: var(--danger);
+    }
+
+    .password-strength.medium .password-strength-bar {
+        width: 66%;
+        background: var(--secondary);
+    }
+
+    .password-strength.strong .password-strength-bar {
+        width: 100%;
+        background: var(--success);
+    }
+
+    .password-requirements {
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(241, 245, 249, 0.5);
+        border-radius: 8px;
+        display: none;
+    }
+
+    .password-requirements.show {
+        display: block;
+    }
+
+    .password-req-item {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .password-req-item i {
+        font-size: 0.75rem;
+    }
+
+    .password-req-item.met {
+        color: var(--success);
+    }
+
+    .password-req-item.met i {
+        color: var(--success);
+    }
+
     .btn-primary {
         width: 100%;
         padding: 1rem;
@@ -182,10 +316,15 @@
         margin-top: 0.5rem;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         filter: brightness(1.1);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .login-link {
@@ -215,9 +354,9 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        background: rgba(209, 250, 229, 0.9);
-        color: #065f46;
-        border-left: 4px solid var(--success);
+        background: rgba(254, 226, 226, 0.9);
+        color: #991b1b;
+        border-left: 4px solid var(--danger);
         font-weight: 500;
     }
 
@@ -244,25 +383,28 @@
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="alert">
-                <i class="fas fa-check-circle"></i>
+                <i class="fas fa-exclamation-circle"></i>
                 {{ messages[0] }}
             </div>
         {% endif %}
     {% endwith %}
 
-    <form action="{{ url_for('register') }}" method="POST">
+    <form action="{{ url_for('register') }}" method="POST" id="registerForm">
         <div class="form-group">
             <label class="form-label">
                 <i class="fas fa-user"></i> Full Name
             </label>
-            <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+            <input type="text" name="name" id="name" class="form-control" placeholder="John Doe" required>
+            <span class="error-message" id="nameError">Please enter your full name</span>
         </div>
 
         <div class="form-group">
             <label class="form-label">
                 <i class="fas fa-envelope"></i> Email Address
             </label>
-            <input type="email" name="email" class="form-control" placeholder="your.email@example.com" required>
+            <input type="email" name="email" id="email" class="form-control" placeholder="your.email@example.com" required>
+            <span class="error-message" id="emailError">Please enter a valid email address</span>
+            <span class="success-message" id="emailSuccess"><i class="fas fa-check-circle"></i> Valid email</span>
         </div>
 
         <div class="form-row">
@@ -270,7 +412,7 @@
                 <label class="form-label">
                     <i class="fas fa-graduation-cap"></i> Branch
                 </label>
-                <select name="branch" class="form-select" required>
+                <select name="branch" id="branch" class="form-select" required>
                     <option value="">Select Branch</option>
                     <option value="Computer Science">Computer Science</option>
                     <option value="Information Technology">Information Technology</option>
@@ -279,13 +421,15 @@
                     <option value="Civil">Civil Engineering</option>
                     <option value="Electrical">Electrical Engineering</option>
                 </select>
+                <span class="error-message" id="branchError">Please select your branch</span>
             </div>
 
             <div class="form-group">
                 <label class="form-label">
                     <i class="fas fa-chart-line"></i> CGPA
                 </label>
-                <input type="number" step="0.01" name="cgpa" class="form-control" placeholder="8.5" min="0" max="10" required>
+                <input type="number" step="0.01" name="cgpa" id="cgpa" class="form-control" placeholder="8.5" min="0" max="10" required>
+                <span class="error-message" id="cgpaError">CGPA must be between 0 and 10</span>
             </div>
         </div>
 
@@ -294,14 +438,16 @@
                 <label class="form-label">
                     <i class="fas fa-exclamation-triangle"></i> Backlogs
                 </label>
-                <input type="number" name="backlogs" class="form-control" placeholder="0" min="0" value="0" required>
+                <input type="number" name="backlogs" id="backlogs" class="form-control" placeholder="0" min="0" value="0" required>
+                <span class="error-message" id="backlogsError">Must be 0 or greater</span>
             </div>
 
             <div class="form-group">
                 <label class="form-label">
                     <i class="fas fa-briefcase"></i> Internships
                 </label>
-                <input type="text" name="internships" class="form-control" placeholder="e.g., ABC Corp" required>
+                <input type="text" name="internships" id="internships" class="form-control" placeholder="e.g., ABC Corp" required>
+                <span class="error-message" id="internshipsError">Please enter internship details</span>
             </div>
         </div>
 
@@ -309,10 +455,30 @@
             <label class="form-label">
                 <i class="fas fa-lock"></i> Password
             </label>
-            <input type="password" name="password" class="form-control" placeholder="Create a strong password" required>
+            <div class="input-wrapper">
+                <input type="password" name="password" id="password" class="form-control password-input" placeholder="Create a strong password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('password', 'passwordIcon')">
+                    <i class="fas fa-eye" id="passwordIcon"></i>
+                </button>
+            </div>
+            <div class="password-strength" id="passwordStrength">
+                <div class="password-strength-bar"></div>
+            </div>
+            <div class="password-requirements" id="passwordReqs">
+                <div class="password-req-item" id="req-length">
+                    <i class="fas fa-circle"></i> At least 8 characters
+                </div>
+                <div class="password-req-item" id="req-uppercase">
+                    <i class="fas fa-circle"></i> At least 1 uppercase letter
+                </div>
+                <div class="password-req-item" id="req-number">
+                    <i class="fas fa-circle"></i> At least 1 number
+                </div>
+            </div>
+            <span class="error-message" id="passwordError">Password does not meet requirements</span>
         </div>
 
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn-primary" id="submitBtn">
             <i class="fas fa-user-plus"></i> Create Account
         </button>
     </form>
@@ -321,6 +487,229 @@
         Already have an account? <a href="{{ url_for('index') }}">Login here</a>
     </div>
 </div>
+
+<script>
+// Email validation
+const emailInput = document.getElementById('email');
+const emailError = document.getElementById('emailError');
+const emailSuccess = document.getElementById('emailSuccess');
+
+emailInput.addEventListener('blur', function() {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (this.value && !emailRegex.test(this.value)) {
+        this.classList.add('invalid');
+        this.classList.remove('valid');
+        emailError.classList.add('show');
+        emailSuccess.classList.remove('show');
+    } else if (this.value) {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        emailError.classList.remove('show');
+        emailSuccess.classList.add('show');
+    }
+});
+
+emailInput.addEventListener('input', function() {
+    if (this.classList.contains('invalid')) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (emailRegex.test(this.value)) {
+            this.classList.remove('invalid');
+            this.classList.add('valid');
+            emailError.classList.remove('show');
+            emailSuccess.classList.add('show');
+        }
+    }
+});
+
+// Password validation
+const passwordInput = document.getElementById('password');
+const passwordStrength = document.getElementById('passwordStrength');
+const passwordReqs = document.getElementById('passwordReqs');
+const passwordError = document.getElementById('passwordError');
+
+passwordInput.addEventListener('focus', function() {
+    passwordReqs.classList.add('show');
+    passwordStrength.classList.add('show');
+});
+
+passwordInput.addEventListener('input', function() {
+    const password = this.value;
+    
+    // Check requirements
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    // Update requirement indicators
+    updateRequirement('req-length', hasLength);
+    updateRequirement('req-uppercase', hasUppercase);
+    updateRequirement('req-number', hasNumber);
+    
+    // Update strength bar
+    let strength = 0;
+    if (hasLength) strength++;
+    if (hasUppercase) strength++;
+    if (hasNumber) strength++;
+    
+    passwordStrength.classList.remove('weak', 'medium', 'strong');
+    if (strength === 1) {
+        passwordStrength.classList.add('weak');
+    } else if (strength === 2) {
+        passwordStrength.classList.add('medium');
+    } else if (strength === 3) {
+        passwordStrength.classList.add('strong');
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        passwordError.classList.remove('show');
+    }
+    
+    if (strength < 3) {
+        this.classList.add('invalid');
+        this.classList.remove('valid');
+    }
+});
+
+passwordInput.addEventListener('blur', function() {
+    const password = this.value;
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    if (password && !(hasLength && hasUppercase && hasNumber)) {
+        this.classList.add('invalid');
+        this.classList.remove('valid');
+        passwordError.classList.add('show');
+    }
+});
+
+function updateRequirement(id, met) {
+    const elem = document.getElementById(id);
+    if (met) {
+        elem.classList.add('met');
+        elem.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        elem.classList.remove('met');
+        elem.querySelector('i').className = 'fas fa-circle';
+    }
+}
+
+// Password visibility toggle
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+// Name validation
+const nameInput = document.getElementById('name');
+const nameError = document.getElementById('nameError');
+
+nameInput.addEventListener('blur', function() {
+    if (!this.value.trim()) {
+        this.classList.add('invalid');
+        nameError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        nameError.classList.remove('show');
+    }
+});
+
+// Branch validation
+const branchInput = document.getElementById('branch');
+const branchError = document.getElementById('branchError');
+
+branchInput.addEventListener('change', function() {
+    if (!this.value) {
+        this.classList.add('invalid');
+        branchError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        branchError.classList.remove('show');
+    }
+});
+
+// CGPA validation
+const cgpaInput = document.getElementById('cgpa');
+const cgpaError = document.getElementById('cgpaError');
+
+cgpaInput.addEventListener('blur', function() {
+    const cgpa = parseFloat(this.value);
+    if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
+        this.classList.add('invalid');
+        cgpaError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        cgpaError.classList.remove('show');
+    }
+});
+
+// Backlogs validation
+const backlogsInput = document.getElementById('backlogs');
+const backlogsError = document.getElementById('backlogsError');
+
+backlogsInput.addEventListener('blur', function() {
+    const backlogs = parseInt(this.value);
+    if (isNaN(backlogs) || backlogs < 0) {
+        this.classList.add('invalid');
+        backlogsError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        backlogsError.classList.remove('show');
+    }
+});
+
+// Internships validation
+const internshipsInput = document.getElementById('internships');
+const internshipsError = document.getElementById('internshipsError');
+
+internshipsInput.addEventListener('blur', function() {
+    if (!this.value.trim()) {
+        this.classList.add('invalid');
+        internshipsError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        internshipsError.classList.remove('show');
+    }
+});
+
+// Form submission validation
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Trigger blur on all fields to show errors
+    const inputs = this.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        const event = new Event('blur');
+        input.dispatchEvent(event);
+        
+        if (input.classList.contains('invalid')) {
+            isValid = false;
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+        // Scroll to first error
+        const firstError = this.querySelector('.invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+</script>
 
 </body>
 </html>

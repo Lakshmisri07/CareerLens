@@ -13,6 +13,7 @@
             --primary-dark: #4f46e5;
             --secondary: #ec4899;
             --danger: #ef4444;
+            --success: #10b981;
             --text-main: #1e293b;
             --text-muted: #64748b;
         }
@@ -116,6 +117,7 @@
 
         .form-group {
             margin-bottom: 1.5rem;
+            position: relative;
         }
 
         .form-label {
@@ -123,6 +125,12 @@
             font-weight: 600;
             color: var(--text-main);
             margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .form-control {
@@ -135,11 +143,58 @@
             background: rgba(255, 255, 255, 0.8);
         }
 
+        .form-control.password-input {
+            padding-right: 3rem;
+        }
+
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
             background: white;
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-control.valid {
+            border-color: var(--success);
+        }
+
+        .form-control.invalid {
+            border-color: var(--danger);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            transition: color 0.3s;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        .error-message {
+            display: none;
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            padding-left: 0.25rem;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .btn-primary {
@@ -214,19 +269,37 @@
         {% endif %}
     {% endwith %}
 
-    <form action="{{ url_for('login') }}" method="POST">
+    <form action="{{ url_for('login') }}" method="POST" id="loginForm">
         <div class="form-group">
             <label for="email" class="form-label">
                 <i class="fas fa-envelope"></i> Email Address
             </label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="your.email@example.com" required autofocus>
+            <input type="email" 
+                   name="email" 
+                   id="email" 
+                   class="form-control" 
+                   placeholder="your.email@example.com" 
+                   required 
+                   autofocus>
+            <span class="error-message" id="emailError">Please enter a valid email address</span>
         </div>
 
         <div class="form-group">
             <label for="password" class="form-label">
                 <i class="fas fa-lock"></i> Password
             </label>
-            <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+            <div class="input-wrapper">
+                <input type="password" 
+                       name="password" 
+                       id="password" 
+                       class="form-control password-input" 
+                       placeholder="Enter your password" 
+                       required>
+                <button type="button" class="password-toggle" onclick="togglePassword()">
+                    <i class="fas fa-eye" id="passwordIcon"></i>
+                </button>
+            </div>
+            <span class="error-message" id="passwordError">Please enter your password</span>
         </div>
 
         <button type="submit" class="btn-primary">
@@ -238,5 +311,110 @@
         Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
     </div>
 </div>
+
+<script>
+// Password visibility toggle
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        passwordIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        passwordIcon.className = 'fas fa-eye';
+    }
+}
+
+// Email validation
+const emailInput = document.getElementById('email');
+const emailError = document.getElementById('emailError');
+
+emailInput.addEventListener('blur', function() {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (this.value && !emailRegex.test(this.value)) {
+        this.classList.add('invalid');
+        this.classList.remove('valid');
+        emailError.classList.add('show');
+    } else if (this.value) {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        emailError.classList.remove('show');
+    }
+});
+
+emailInput.addEventListener('input', function() {
+    if (this.classList.contains('invalid')) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (emailRegex.test(this.value)) {
+            this.classList.remove('invalid');
+            this.classList.add('valid');
+            emailError.classList.remove('show');
+        }
+    }
+});
+
+// Password validation
+const passwordInput = document.getElementById('password');
+const passwordError = document.getElementById('passwordError');
+
+passwordInput.addEventListener('blur', function() {
+    if (!this.value.trim()) {
+        this.classList.add('invalid');
+        passwordError.classList.add('show');
+    } else {
+        this.classList.add('valid');
+        this.classList.remove('invalid');
+        passwordError.classList.remove('show');
+    }
+});
+
+passwordInput.addEventListener('input', function() {
+    if (this.classList.contains('invalid') && this.value.trim()) {
+        this.classList.remove('invalid');
+        this.classList.add('valid');
+        passwordError.classList.remove('show');
+    }
+});
+
+// Form submission validation
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Validate email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailInput.value || !emailRegex.test(emailInput.value)) {
+        emailInput.classList.add('invalid');
+        emailError.classList.add('show');
+        isValid = false;
+    }
+    
+    // Validate password
+    if (!passwordInput.value.trim()) {
+        passwordInput.classList.add('invalid');
+        passwordError.classList.add('show');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        const firstError = this.querySelector('.invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+
+// Enter key support for password toggle
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.activeElement === passwordInput) {
+        e.preventDefault();
+        document.getElementById('loginForm').submit();
+    }
+});
+</script>
+
 </body>
 </html>
