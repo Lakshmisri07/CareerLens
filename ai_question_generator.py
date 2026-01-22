@@ -1,4 +1,4 @@
-# ai_question_generator.py - ENHANCED WITH COMPREHENSIVE FALLBACKS
+# ai_question_generator.py - FIXED VERSION
 
 import os
 import json
@@ -15,14 +15,14 @@ except ImportError:
     GENAI_AVAILABLE = False
     print("⚠️  Google GenAI not available - using fallback questions")
 
-# Get multiple API keys from environment
-API_KEYS = [
-    os.getenv("GEMINI_API_KEY_1") or os.getenv("GEMINI_API_KEY"),
-    os.getenv("GEMINI_API_KEY_2"),
-    os.getenv("GEMINI_API_KEY_3"),
-    os.getenv("GEMINI_API_KEY_4"),
-]
-API_KEYS = [k for k in API_KEYS if k]
+# ============================================================================
+# FIX #1: BETTER API KEY HANDLING
+# ============================================================================
+API_KEYS = []
+for i in range(1, 5):
+    key = os.getenv(f"GEMINI_API_KEY_{i}") or (os.getenv("GEMINI_API_KEY") if i == 1 else None)
+    if key:
+        API_KEYS.append(key)
 
 current_key_index = 0
 client = None
@@ -31,7 +31,7 @@ client = None
 if GENAI_AVAILABLE and API_KEYS:
     try:
         client = genai.Client(api_key=API_KEYS[0])
-        print(f"✓ GenAI initialized with key #{current_key_index + 1}")
+        print(f"✓ GenAI initialized with {len(API_KEYS)} API key(s)")
     except Exception as e:
         print(f"⚠️  Could not initialize GenAI: {e}")
         client = None
@@ -422,6 +422,9 @@ def determine_difficulty_level(user_scores, topic, subtopic):
 
 # ==================== MAIN FUNCTIONS ====================
 
+# ============================================================================
+# FIX #2: IMPROVED AI GENERATION WITH BETTER ERROR HANDLING
+# ============================================================================
 def generate_questions(user_email, topic, subtopic, user_scores, num_questions=5):
     """
     Generate adaptive quiz questions with GUARANTEED fallback
@@ -436,11 +439,16 @@ def generate_questions(user_email, topic, subtopic, user_scores, num_questions=5
     print(f"\n{'='*80}")
     print(f"🎯 GENERATING QUESTIONS")
     print(f"Topic: {topic} | Subtopic: {subtopic} | Difficulty: {difficulty}")
+    print(f"API Keys Available: {len(API_KEYS)}")
+    print(f"GenAI Available: {GENAI_AVAILABLE}")
+    print(f"Client Initialized: {client is not None}")
     print(f"{'='*80}")
     
     # Try AI generation ONLY if client exists
-    if client and GENAI_AVAILABLE:
+    if client and GENAI_AVAILABLE and API_KEYS:
         try:
+            print("🤖 Attempting AI question generation...")
+            
             prompt_text = f"""Generate {num_questions} multiple choice questions.
 
 Topic: {topic}
@@ -472,7 +480,9 @@ CRITICAL RULES:
             )
 
             raw = response.text.strip()
+            print(f"✓ Received AI response ({len(raw)} chars)")
             
+            # Clean response
             if '```json' in raw:
                 raw = raw.split('```json')[1].split('```')[0].strip()
             elif '```' in raw:
@@ -480,6 +490,7 @@ CRITICAL RULES:
             
             data = json.loads(raw)
             
+            # Validate structure
             if isinstance(data, list) and len(data) > 0:
                 for item in data:
                     if 'q' not in item or 'options' not in item or 'answer' not in item:
@@ -489,9 +500,17 @@ CRITICAL RULES:
                 
                 print(f"✅ Generated {len(data)} AI questions at {difficulty} level")
                 return data[:num_questions], difficulty
+            else:
+                raise ValueError("Invalid response format")
         
         except Exception as e:
-            print(f"⚠️  AI generation failed: {str(e)[:100]}")
+            print(f"⚠️  AI generation failed: {str(e)[:200]}")
+            print(f"Error type: {type(e).__name__}")
+    else:
+        print(f"⚠️  Skipping AI generation:")
+        print(f"   - Client exists: {client is not None}")
+        print(f"   - GenAI available: {GENAI_AVAILABLE}")
+        print(f"   - API keys: {len(API_KEYS)}")
     
     # ALWAYS use fallback if AI fails or unavailable
     print(f"📚 Using high-quality fallback questions for {topic} {subtopic}")
@@ -575,6 +594,11 @@ print("🎓 CAREERLENS QUESTION GENERATOR INITIALIZED")
 print("="*80)
 if client and GENAI_AVAILABLE:
     print(f"✅ AI Mode: ACTIVE ({len(API_KEYS)} keys available)")
+    print(f"   Keys configured: {', '.join([f'KEY_{i+1}' for i in range(len(API_KEYS))])}")
 else:
     print("📚 Fallback Mode: ACTIVE (High-quality question bank)")
+    if not GENAI_AVAILABLE:
+        print("   Reason: google-genai package not installed")
+    elif not API_KEYS:
+        print("   Reason: No API keys found in environment")
 print("="*80 + "\n")

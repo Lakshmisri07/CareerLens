@@ -60,6 +60,19 @@ def get_user_branch():
                 return key
 
     return 'DEFAULT'
+@app.route('/api/branch_topics')
+def get_branch_topics():
+    """API endpoint to get topics for user's branch"""
+    if 'user_email' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    branch_key = get_user_branch()
+    topics = BRANCH_TOPICS.get(branch_key, BRANCH_TOPICS['DEFAULT'])
+    
+    return {
+        'branch': branch_key,
+        'topics': topics
+    }
 
 def generate_topic_recommendations(topic, subtopic, percent, difficulty, user_email, supabase_client):
     recommendations = {
