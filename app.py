@@ -174,16 +174,18 @@ def logout():
 def index():
     return render_template('index.html')
 
-
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('index'))
     
-    # ADD THIS CODE:
     user_email = session.get('user_email')
     
-    # Get quiz statistics
+    # Get user profile
+    user_result = supabase.table('users').select('*').eq('email', user_email).execute()
+    user_profile = user_result.data[0] if user_result.data else None
+    
+    # Get quiz data
     result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
     
     total_quizzes = len(result.data) if result.data else 0
@@ -192,19 +194,36 @@ def dashboard():
         total_score = sum(s['score'] for s in result.data)
         total_questions = sum(s['total_questions'] for s in result.data)
         average_score = round((total_score / total_questions * 100), 1) if total_questions > 0 else 0
+        
+        # Calculate streak
+        from datetime import datetime, timedelta
+        dates = sorted([datetime.fromisoformat(s['created_at'].replace('Z', '+00:00')).date() 
+                       for s in result.data], reverse=True)
+        
+        streak_days = 0
+        if dates:
+            current_date = datetime.now().date()
+            for i, date in enumerate(dates):
+                if i == 0:
+                    if date == current_date or date == current_date - timedelta(days=1):
+                        streak_days = 1
+                    else:
+                        break
+                else:
+                    if date == dates[i-1] - timedelta(days=1):
+                        streak_days += 1
+                    else:
+                        break
     else:
         average_score = 0
-    
-    # Calculate streak (simplified - count unique quiz dates)
-    streak_days = 0  # You can enhance this later
+        streak_days = 0
     
     return render_template('dashboard.html', 
                          user=session['user'],
+                         user_profile=user_profile,
                          total_quizzes=total_quizzes,
                          average_score=average_score,
                          streak_days=streak_days)
-
-
 # 2. Update Grand Test to use AI questions (around line 500)
 @app.route('/grand_test', methods=['GET', 'POST'])
 def grand_test():

@@ -421,28 +421,12 @@
             vertical-align: middle;
         }
 
-        .template-twocol .resume-page {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 0;
-            padding: 0;
+        .template-twocol .resume-header {
+            background: #2563eb;  /* Blue instead of dark */
         }
 
         .template-twocol .resume-sidebar {
-            background: #312fb5;
-            color: white;
-            padding: 40px 30px;
-        }
-
-        .template-twocol .resume-main {
-            padding: 40px;
-        }
-
-        .template-twocol .resume-header {
-            grid-column: 1 / -1;
-            background: #312fb5;
-            padding: 40px;
-            border-bottom: none;
+            background: #475569;  /* Lighter gray */
         }
 
         .template-twocol .resume-name {
@@ -451,17 +435,11 @@
         }
 
         .template-twocol .resume-contact {
-            color: #e0f2fe;
+            color: #e0f2fe;  /* Much lighter */
         }
 
-        .template-twocol .section-title {
-            color: #f1f5f9;
-            border-bottom: 2px solid #4f46e5;
-        }
-
-        .template-twocol .resume-main .section-title {
-            color: var(--text-main);
-            border-bottom: 2px solid #e2e8f0;
+        .template-twocol .resume-contact i {
+            color: #fbbf24;  /* Gold icons */
         }
 
         .template-creative .resume-header {
@@ -714,30 +692,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 function downloadPDF() {
-    const element = document.querySelector('.resume-container').cloneNode(true);
+    // Hide UI
+    document.querySelector('.top-nav').style.display = 'none';
+    document.querySelector('.action-bar').style.display = 'none';
+    
+    const element = document.querySelector('.resume-container');
     const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
     
-    const opt = {
-        margin: 0,
-        filename: `${name}_Resume.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2.5,
-            useCORS: true,
-            letterRendering: true,
-            backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait'
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    
-    html2pdf().set(opt).from(element).save();
+    html2pdf()
+        .set({
+            margin: 0,
+            filename: `${name}_Resume.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2.5, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: 'avoid-all' }
+        })
+        .from(element)
+        .save()
+        .then(() => {
+            document.querySelector('.top-nav').style.display = 'flex';
+            document.querySelector('.action-bar').style.display = 'flex';
+        });
 }
-
 function changeTemplate(template, btnElement) {
     const container = document.querySelector('.resume-container');
     const page = document.querySelector('.resume-page');

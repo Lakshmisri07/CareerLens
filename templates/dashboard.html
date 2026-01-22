@@ -330,26 +330,61 @@
         <div class="navbar-content">
             <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
             <div style="display: flex; gap: 1rem; align-items: center;">
-                <span style="color: var(--text-secondary);">User Name</span>
-                <a href="#" class="btn btn-outline" style="padding: 0.5rem 1rem;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </div>
+                <div style="position: relative;">
+                    <button onclick="toggleProfile()" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 0.5rem 1rem; border-radius: 8px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                        <i class="fas fa-user-circle"></i> {{ session.user }}
+                    </button>
+        
+                    <!-- Profile Dropdown -->
+                    <div id="profileDropdown" style="display: none; position: absolute; top: 110%; right: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; min-width: 280px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 1000; padding: 1.5rem;">
+                        <div style="text-align: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                            <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--accent); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white;">
+                                {{ session.user[0].upper() }}
+                            </div>
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.25rem;">{{ session.user }}</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">{{ user_profile.email if user_profile else '' }}</p>
+                        </div>
+        
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="color: var(--text-muted);">Branch:</span>
+                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.branch if user_profile else 'N/A' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="color: var(--text-muted);">CGPA:</span>
+                                <span style="color: var(--accent); font-weight: 600;">{{ user_profile.cgpa if user_profile else 'N/A' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="color: var(--text-muted);">Backlogs:</span>
+                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.backlogs if user_profile else 'N/A' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">Internships:</span>
+                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.internships if user_profile else 'N/A' }}</span>
+                            </div>
+                        </div>
+        
+                        <a href="/logout" style="display: block; width: 100%; background: var(--danger); color: white; padding: 0.75rem; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>       
         </div>
     </nav>
 
     <div class="container">
         <div class="grid grid-3 mb-2">
             <div class="stat-card">
-                <div class="stat-value">15</div>
+                <div class="stat-value">{{ total_quizzes }}</div>
                 <div class="stat-label">Quizzes Taken</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">78%</div>
+                <div class="stat-value">{{ average_score }}%</div>
                 <div class="stat-label">Average Score</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">7</div>
+                <div class="stat-value">{{ streak_days }}</div>
                 <div class="stat-label">Day Streak</div>
             </div>
         </div>
@@ -617,6 +652,21 @@
                     b.classList.remove('active');
                 });
             }
+        });
+    </script>
+    <script>
+        function toggleProfile() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('profileDropdown');
+                const button = e.target.closest('button');
+                if (!button || !button.onclick) {
+                 dropdown.style.display = 'none';
+                }
         });
     </script>
 </body>
