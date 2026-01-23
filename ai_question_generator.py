@@ -475,27 +475,25 @@ def get_fallback_questions(topic, subtopic, num_questions=5):
     # Try topic-subtopic
     if topic in FALLBACK_QUESTIONS:
         if isinstance(FALLBACK_QUESTIONS[topic], dict) and subtopic in FALLBACK_QUESTIONS[topic]:
-            pool = FALLBACK_QUESTIONS[topic][subtopic][:]  # Copy
-            random.shuffle(pool)  # Randomize
+            pool = FALLBACK_QUESTIONS[topic][subtopic][:]
+            random.shuffle(pool)
             questions = pool[:num_questions]
         elif isinstance(FALLBACK_QUESTIONS[topic], list):
             pool = FALLBACK_QUESTIONS[topic][:]
             random.shuffle(pool)
             questions = pool[:num_questions]
     
-    # If not enough, add from DEFAULT pool
+    # If not enough, add from GENERIC pool
     if len(questions) < num_questions:
-        default_pool = FALLBACK_QUESTIONS['DEFAULT'][:]
+        default_pool = GENERIC_FALLBACK[:]  # <-- CHANGE THIS LINE
         random.shuffle(default_pool)
         questions.extend(default_pool[:num_questions - len(questions)])
     
-    # CRITICAL: Shuffle options for each question to vary placement
+    # Shuffle options
     for q in questions:
         opts = q['options'][:]
-        correct = q['answer']
         random.shuffle(opts)
         q['options'] = opts
-        # Answer remains same text, position changes
     
     return questions[:num_questions]
 def determine_difficulty_level(user_scores, topic, subtopic):
