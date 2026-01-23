@@ -3,34 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ topic }} Quiz - CareerLens</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Quiz - CareerLens</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Timer - positioned below navbar */
-        .timer {
-            position: fixed;
-            top: 80px;
-            right: 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(148, 163, 184, 0.1);
         }
 
-        /* Clean Radio Buttons - NO HIGHLIGHT */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* FIXED TIMER - Better positioning */
+        .timer {
+            position: fixed;
+            top: 120px; /* Moved down more to avoid buttons */
+            right: 1rem;
+            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
+            border: 2px solid var(--accent);
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            z-index: 500; /* Lower z-index than navbar */
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .timer i {
+            font-size: 1.3rem;
+        }
+
+        .timer.warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .timer.critical {
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: pulse-timer 1s infinite;
+        }
+
+        @keyframes pulse-timer {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* IMPROVED SAVE BUTTON */
+        .btn-save-exit {
+            background: rgba(245, 158, 11, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-save-exit:hover {
+            background: var(--warning);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* IMPROVED MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            color: var(--warning);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-message {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-modal {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-modal-primary {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-modal-primary:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+
+        .btn-modal-secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-modal-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .question-card {
+            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+        }
+
         .options-container {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-        }
-
-        .option-wrapper {
-            display: block;
         }
 
         .option-label {
@@ -49,7 +293,6 @@
             border-color: var(--accent);
         }
 
-        /* Hide default radio */
         .option-radio {
             appearance: none;
             width: 20px;
@@ -61,7 +304,6 @@
             flex-shrink: 0;
             transition: all 0.2s;
             margin: 0;
-            background: transparent;
         }
 
         .option-radio:checked {
@@ -87,84 +329,54 @@
             font-size: 0.95rem;
         }
 
-        /* Submit button centered */
         .action-buttons {
             display: flex;
             justify-content: center;
             margin-top: 2rem;
         }
 
-        .action-buttons .btn {
-            width: auto;
-            max-width: 300px;
-            padding: 0.875rem 2rem;
+        .btn-submit {
+            background: linear-gradient(145deg, var(--accent), #5558d9);
+            color: white;
+            border: none;
+            padding: 0.875rem 3rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
 
-        /* Remove focus outline flash */
-        .option-radio:focus {
-            outline: none !important;
-            box-shadow: none !important;
+        .btn-submit:hover {
+            background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
+            transform: translateY(-2px);
         }
 
-        .option-label:focus-within {
-            outline: none !important;
-        }
+        @media (max-width: 768px) {
+            .timer {
+                top: auto;
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                width: auto;
+            }
 
-        /* Better Timer Design */
-        .timer {
-            position: fixed;
-            top: 80px;
-            right: 1rem;
-            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
-            border: 2px solid var(--accent);
-            padding: 0.875rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.2rem;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.3);
-            z-index: 1000;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .timer i {
-            font-size: 1.3rem;
-            animation: pulse-icon 2s infinite;
-        }
-
-        @keyframes pulse-icon {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-
-        .timer.warning {
-            border-color: var(--warning);
-            color: var(--warning);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.4);
-        }
-
-        .timer.critical {
-            border-color: var(--danger);
-            color: var(--danger);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(239, 68, 68, 0.5);
-            animation: pulse-timer 1s infinite;
-        }
-
-        @keyframes pulse-timer {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.85; transform: scale(1.02); }
+            .quiz-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Timer -->
     {% if not submitted %}      
-    <div class="timer" id="timer" style="top: 80px; right: 1rem; left: auto; width: auto;">
+    <div class="timer" id="timer">
         <i class="fas fa-clock"></i> <span id="timeDisplay">15:00</span>
     </div>
     {% endif %}
 
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
@@ -172,15 +384,38 @@
         </div>
     </nav>
 
+    <!-- Save Confirmation Modal -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-save"></i>
+            </div>
+            <div class="modal-title">Save Your Progress?</div>
+            <div class="modal-message">
+                Your quiz progress will be saved and you can resume later from where you left off. The timer will also be saved.
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-primary" onclick="confirmSave()">
+                    <i class="fas fa-check"></i> Save & Exit
+                </button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         {% if not submitted %}
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <!-- Quiz Header -->
+        <div class="quiz-header">
             <h1>{{ topic }}{% if subtopic %} - {{ subtopic }}{% endif %}</h1>
-            <button type="button" onclick="saveProgress()" class="btn btn-outline">
+            <button type="button" onclick="showSaveModal()" class="btn-save-exit">
                 <i class="fas fa-save"></i> Save & Exit
             </button>
         </div>
 
+        <!-- Quiz Form -->
         <form method="POST" id="quizForm">
             {% for q in questions %}
             <div class="question-card" data-question="{{ loop.index0 }}">
@@ -192,17 +427,14 @@
                 <div class="options-container">
                     {% set outer_loop = loop %}
                     {% for opt in q.options %}
-                    <label class="option-wrapper" for="q{{ outer_loop.index0 }}_opt{{ loop.index0 }}">
-                        <div class="option-label">
-                            <input type="radio" 
-                                   class="option-radio"
-                                   id="q{{ outer_loop.index0 }}_opt{{ loop.index0 }}"
-                                   name="q{{ outer_loop.index0 }}" 
-                                   value="{{ opt }}" 
-                                   {% if saved_answers and saved_answers.get('q' ~ outer_loop.index0) == opt %}checked{% endif %}
-                                   required>
-                            <span class="option-text">{{ opt }}</span>
-                        </div>
+                    <label class="option-label">
+                        <input type="radio" 
+                               class="option-radio"
+                               name="q{{ outer_loop.index0 }}" 
+                               value="{{ opt }}" 
+                               {% if saved_answers and saved_answers.get('q' ~ outer_loop.index0) == opt %}checked{% endif %}
+                               required>
+                        <span class="option-text">{{ opt }}</span>
                     </label>
                     {% endfor %}
                 </div>
@@ -210,38 +442,34 @@
             {% endfor %}
             
             <div class="action-buttons">
-                <button type="submit" class="btn" style="flex: 1;">
+                <button type="submit" class="btn-submit">
                     <i class="fas fa-paper-plane"></i> Submit Quiz
                 </button>
             </div>
         </form>
 
         {% else %}
-        <!-- Results -->
-        <a href="{{ url_for('dashboard') }}" class="btn-back">
+        <!-- Results (keep existing) -->
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
 
-        <div class="quiz-info">
-            <div class="quiz-info-header">
-                <h1>Quiz Completed!</h1>
-                <div style="font-size: 3rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">
-                    {{ score }}/{{ questions|length }}
-                </div>
-                <div style="font-size: 1.5rem; color: var(--text-secondary);">
-                    {{ (score / questions|length * 100)|round(1) }}%
-                </div>
+        <div style="background: var(--bg-secondary); border-radius: 12px; padding: 2rem; text-align: center;">
+            <h1>Quiz Completed!</h1>
+            <div style="font-size: 3rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">
+                {{ score }}/{{ questions|length }}
             </div>
-
+            <div style="font-size: 1.5rem; color: var(--text-secondary);">
+                {{ (score / questions|length * 100)|round(1) }}%
+            </div>
             <div style="background: var(--bg-tertiary); padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0;">
                 <p style="margin: 0;">{{ suggestion }}</p>
             </div>
-
-            <div class="action-buttons">
-                <a href="{{ url_for('quiz_details', topic=topic, subtopic=subtopic or '') }}" class="btn">
+            <div class="action-buttons" style="margin-top: 2rem;">
+                <a href="{{ url_for('quiz_details', topic=topic, subtopic=subtopic or '') }}" class="btn-submit" style="text-decoration: none; background: linear-gradient(145deg, var(--success), #059669);">
                     <i class="fas fa-redo"></i> Retake Quiz
                 </a>
-                <a href="{{ url_for('suggestions') }}" class="btn" style="background: linear-gradient(145deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
+                <a href="{{ url_for('suggestions') }}" class="btn-submit" style="text-decoration: none; background: linear-gradient(145deg, #8b5cf6, #7c3aed); margin-left: 1rem;">
                     <i class="fas fa-lightbulb"></i> View AI Suggestions
                 </a>
             </div>
@@ -274,7 +502,6 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    alert('Time is up! Submitting your quiz...');
                     document.getElementById('quizForm').submit();
                 }
             }, 1000);
@@ -299,8 +526,17 @@
             return answers;
         }
 
-        async function saveProgress() {
+        function showSaveModal() {
+            document.getElementById('saveModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('saveModal').classList.remove('show');
+        }
+
+        async function confirmSave() {
             clearInterval(timerInterval);
+            closeModal();
             
             const questions = {{ questions | tojson }};
             const answers = getCurrentAnswers();
@@ -325,14 +561,13 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('Progress saved! You can resume this quiz later from the dashboard.');
                     window.location.href = '/dashboard';
                 } else {
-                    alert('Failed to save progress: ' + (result.error || 'Unknown error'));
+                    alert('Failed to save: ' + (result.error || 'Unknown error'));
                     startTimer();
                 }
             } catch (error) {
-                alert('Error saving progress: ' + error);
+                alert('Error: ' + error);
                 startTimer();
             }
         }
@@ -351,13 +586,13 @@
                     setTimeout(() => {
                         question.style.borderColor = '';
                     }, 2000);
-                    // Removed annoying alert
                     return;
                 }
             }
     
             clearInterval(timerInterval);
         });
+
         startTimer();
     </script>
     {% endif %}

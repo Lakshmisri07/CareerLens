@@ -53,7 +53,7 @@
             </div>
             {% endif %}
 
-            <div class="action-buttons" style="display: flex; justify-content: center; gap: 1rem;">
+            <div class="action-buttons" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
                 {% if has_saved_progress %}
                 <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET">
                     <input type="hidden" name="resume" value="true">
@@ -74,8 +74,7 @@
                     </button>
                 </form>
                 {% endif %}
-            </div>
-            
+            </div>            
             <!-- Instructions -->
             <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                 <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Instructions:</h3>
