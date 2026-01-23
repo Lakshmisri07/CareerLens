@@ -73,7 +73,7 @@
             100% { transform: translate(30px, 50px); }
         }
 
-        /* Top Navigation Bar */
+        /* Top Navigation */
         .top-nav {
             max-width: 850px;
             margin: 0 auto 20px;
@@ -149,7 +149,7 @@
             border-color: var(--primary);
         }
 
-        /* Resume Container */
+        /* Resume Container - SINGLE PAGE A4 */
         .resume-container {
             max-width: 850px;
             margin: 0 auto;
@@ -160,41 +160,43 @@
         }
 
         .resume-page {
-            padding: 60px 70px;
-            min-height: 1100px;
+            padding: 50px 60px;
             background: white;
+            /* A4 aspect ratio - single page */
+            height: 1100px;
+            overflow: hidden;
         }
 
         /* Header Section */
         .resume-header {
             text-align: center;
-            padding-bottom: 30px;
-            border-bottom: 4px solid var(--primary);
-            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 25px;
         }
 
         .resume-name {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: 2px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-transform: uppercase;
         }
 
         .resume-contact {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .resume-contact span {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
         .resume-contact i {
@@ -203,43 +205,43 @@
 
         /* Section Styling */
         .resume-section {
-            margin-bottom: 35px;
-            page-break-inside: avoid;
+            margin-bottom: 20px;
         }
 
         .section-title {
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
-            padding-bottom: 8px;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 5px;
             border-bottom: 2px solid #e2e8f0;
         }
 
         .section-content {
             color: #334155;
-            line-height: 1.8;
+            line-height: 1.6;
+            font-size: 0.9rem;
         }
 
         /* Education */
         .education-item {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .education-degree {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .education-details {
             display: flex;
             justify-content: space-between;
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .education-cgpa {
@@ -249,8 +251,8 @@
 
         /* Certificates */
         .cert-item {
-            margin-bottom: 18px;
-            padding-left: 20px;
+            margin-bottom: 12px;
+            padding-left: 18px;
             position: relative;
         }
 
@@ -260,95 +262,96 @@
             left: 0;
             color: var(--primary);
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1rem;
         }
 
         .cert-name {
             font-weight: 700;
             color: var(--text-main);
-            font-size: 1.05rem;
+            font-size: 0.95rem;
         }
 
         .cert-issuer {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .cert-date {
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         /* Skills */
         .skills-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
 
         .skill-category {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .skill-category-name {
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 8px;
-            font-size: 1rem;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
         }
 
         .skill-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
 
         .skill-tag {
             background: #eff6ff;
             color: #1e40af;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.875rem;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
             font-weight: 500;
             border: 1px solid #bfdbfe;
         }
 
         /* Projects */
         .project-item {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         .project-name {
-            font-size: 1.15rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
         .project-desc {
             color: #475569;
-            line-height: 1.7;
-            margin-bottom: 8px;
-            text-align: justify;
+            line-height: 1.5;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
         }
 
         .project-tech {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-style: italic;
         }
 
         /* Achievements */
         .achievement-item {
-            margin-bottom: 12px;
-            padding-left: 25px;
+            margin-bottom: 8px;
+            padding-left: 20px;
             position: relative;
+            font-size: 0.85rem;
         }
 
         .achievement-item:before {
             content: "●";
             position: absolute;
-            left: 8px;
+            left: 5px;
             color: var(--primary);
         }
 
@@ -393,61 +396,35 @@
             color: white;
         }
 
-        /* ========== STYLE VARIATIONS ========== */
-
-        /* Modern Minimalist */
-        .style-modern .resume-name {
-            font-size: 2.5rem;
-            font-weight: 300;
-            letter-spacing: 8px;
-        }
-
-        .style-modern .resume-header {
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .style-modern .section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            letter-spacing: 3px;
-            border-bottom: none;
-        }
-
-        .style-modern .section-title::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 20px;
-            background: var(--primary);
-            margin-right: 12px;
-            vertical-align: middle;
-        }
-
-        /* Two Column Layout */
+        /* ========== TWO COLUMN LAYOUT ========== */
         .style-twocol .resume-page {
             display: grid;
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: auto 1fr;
             gap: 0;
             padding: 0;
+            height: 1100px;
         }
 
         .style-twocol .resume-header {
             grid-column: 1 / -1;
-            background: #2563eb;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             color: white;
-            padding: 40px;
+            padding: 35px 40px;
             margin: 0;
             border: none;
-            border-radius: 0;
+            text-align: left;
         }
 
         .style-twocol .resume-name {
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.2rem;
+            text-shadow: none;
         }
 
         .style-twocol .resume-contact {
-            color: #e0f2fe;
+            color: #dbeafe;
+            justify-content: flex-start;
         }
 
         .style-twocol .resume-contact i {
@@ -455,57 +432,73 @@
         }
 
         .style-twocol .resume-sidebar {
-            background: #475569;
-            color: white;
-            padding: 30px 25px;
+            background: #f8fafc;
+            border-right: 2px solid #e2e8f0;
+            padding: 25px 20px;
+            overflow-y: auto;
         }
 
         .style-twocol .resume-sidebar .section-title {
-            color: #fbbf24;
-            border-bottom-color: rgba(255,255,255,0.2);
+            color: #1e3a8a;
+            font-size: 1rem;
+            border-bottom-color: #cbd5e1;
         }
 
         .style-twocol .resume-sidebar .section-content {
-            color: #e2e8f0;
+            color: #334155;
         }
 
         .style-twocol .resume-sidebar .skill-category-name {
-            color: white;
-        }
-
-        .style-twocol .resume-sidebar .skill-tag {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border-color: rgba(255,255,255,0.3);
+            color: #1e293b;
         }
 
         .style-twocol .resume-sidebar .education-degree {
-            color: white;
-        }
-
-        .style-twocol .resume-sidebar .education-details {
-            color: #cbd5e1;
+            color: #1e293b;
         }
 
         .style-twocol .resume-sidebar .cert-name {
-            color: white;
-        }
-
-        .style-twocol .resume-sidebar .cert-issuer {
-            color: #cbd5e1;
+            color: #1e293b;
         }
 
         .style-twocol .resume-main {
-            padding: 40px 35px;
+            padding: 25px 30px;
+            overflow-y: auto;
+        }
+
+        /* Modern Style */
+        .style-modern .resume-name {
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 6px;
+        }
+
+        .style-modern .resume-header {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .style-modern .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            border-bottom: none;
+        }
+
+        .style-modern .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary);
+            margin-right: 10px;
+            vertical-align: middle;
         }
 
         /* Creative Gradient */
         .style-creative .resume-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
-            margin: -60px -70px 35px;
-            border-radius: 0;
+            padding: 35px;
+            margin: -50px -60px 25px;
         }
 
         .style-creative .resume-name {
@@ -519,18 +512,18 @@
         .style-creative .section-title {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 8px 15px;
+            border-radius: 6px;
             border: none;
         }
 
-        /* ATS-Friendly Simple */
+        /* ATS-Friendly */
         .style-ats .resume-page {
             font-family: 'Times New Roman', Times, serif;
         }
 
         .style-ats .resume-name {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #000;
             letter-spacing: 0;
@@ -543,7 +536,7 @@
 
         .style-ats .section-title {
             color: #000;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             letter-spacing: 0;
             border-bottom: 1px solid #000;
@@ -555,7 +548,8 @@
 
         @media (max-width: 768px) {
             .resume-page {
-                padding: 40px 30px;
+                padding: 30px 25px;
+                height: auto;
             }
 
             .skills-grid {
@@ -573,14 +567,7 @@
 
             .style-twocol .resume-page {
                 grid-template-columns: 1fr;
-            }
-
-            .style-twocol .resume-sidebar {
-                order: 2;
-            }
-
-            .style-twocol .resume-main {
-                order: 3;
+                height: auto;
             }
         }
 
@@ -604,15 +591,21 @@
                 box-shadow: none;
                 margin: 0;
                 border-radius: 0;
+                max-width: 100%;
             }
 
             .resume-page {
-                min-height: auto;
+                padding: 0.5in 0.7in !important;
+                height: 11in;
+                width: 8.5in;
+                overflow: hidden;
             }
 
             .style-twocol .resume-page {
                 display: grid;
-                grid-template-columns: 280px 1fr;
+                grid-template-columns: 260px 1fr;
+                grid-template-rows: auto 1fr;
+                height: 11in;
             }
         }
     </style>
@@ -669,7 +662,7 @@
                 <div class="education-item">
                     <div class="education-degree">{{ resume_data.education.degree }}</div>
                     <div class="education-details">
-                        <span>Expected Graduation: {{ resume_data.education.year }}</span>
+                        <span>Expected: {{ resume_data.education.year }}</span>
                         <span class="education-cgpa">CGPA: {{ resume_data.education.cgpa }}</span>
                     </div>
                 </div>
@@ -679,13 +672,10 @@
             {% if resume_data.certificates %}
             <div class="resume-section">
                 <div class="section-title">Certifications</div>
-                {% for cert in resume_data.certificates %}
+                {% for cert in resume_data.certificates[:3] %}
                 <div class="cert-item">
                     <div class="cert-name">{{ cert.name }}</div>
-                    <div class="cert-issuer">{{ cert.issuer }}</div>
-                    {% if cert.date %}
-                    <div class="cert-date">{{ cert.date }}</div>
-                    {% endif %}
+                    <div class="cert-issuer">{{ cert.issuer }}{% if cert.date %} • {{ cert.date }}{% endif %}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -698,9 +688,9 @@
                 <div class="skills-grid">
                     {% if resume_data.skills.programming %}
                     <div class="skill-category">
-                        <div class="skill-category-name">Programming Languages</div>
+                        <div class="skill-category-name">Programming</div>
                         <div class="skill-tags">
-                            {% for skill in resume_data.skills.programming %}
+                            {% for skill in resume_data.skills.programming[:6] %}
                             <span class="skill-tag">{{ skill }}</span>
                             {% endfor %}
                         </div>
@@ -709,9 +699,9 @@
                     
                     {% if resume_data.skills.technologies %}
                     <div class="skill-category">
-                        <div class="skill-category-name">Technologies & Frameworks</div>
+                        <div class="skill-category-name">Technologies</div>
                         <div class="skill-tags">
-                            {% for skill in resume_data.skills.technologies %}
+                            {% for skill in resume_data.skills.technologies[:6] %}
                             <span class="skill-tag">{{ skill }}</span>
                             {% endfor %}
                         </div>
@@ -720,9 +710,9 @@
                     
                     {% if resume_data.skills.tools %}
                     <div class="skill-category">
-                        <div class="skill-category-name">Tools & Platforms</div>
+                        <div class="skill-category-name">Tools</div>
                         <div class="skill-tags">
-                            {% for skill in resume_data.skills.tools %}
+                            {% for skill in resume_data.skills.tools[:5] %}
                             <span class="skill-tag">{{ skill }}</span>
                             {% endfor %}
                         </div>
@@ -733,7 +723,7 @@
                     <div class="skill-category">
                         <div class="skill-category-name">Soft Skills</div>
                         <div class="skill-tags">
-                            {% for skill in resume_data.skills.soft_skills %}
+                            {% for skill in resume_data.skills.soft_skills[:4] %}
                             <span class="skill-tag">{{ skill }}</span>
                             {% endfor %}
                         </div>
@@ -747,11 +737,11 @@
             {% if resume_data.projects %}
             <div class="resume-section">
                 <div class="section-title">Projects</div>
-                {% for project in resume_data.projects %}
+                {% for project in resume_data.projects[:2] %}
                 <div class="project-item">
                     <div class="project-name">{{ project.name }}</div>
-                    <div class="project-desc">{{ project.description }}</div>
-                    <div class="project-tech"><strong>Technologies:</strong> {{ project.technologies|join(', ') }}</div>
+                    <div class="project-desc">{{ project.description[:150] }}{% if project.description|length > 150 %}...{% endif %}</div>
+                    <div class="project-tech"><strong>Tech:</strong> {{ project.technologies[:4]|join(', ') }}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -761,7 +751,7 @@
             {% if resume_data.achievements %}
             <div class="resume-section">
                 <div class="section-title">Achievements</div>
-                {% for achievement in resume_data.achievements %}
+                {% for achievement in resume_data.achievements[:4] %}
                 <div class="achievement-item">{{ achievement }}</div>
                 {% endfor %}
             </div>
@@ -784,14 +774,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 function downloadPDF() {
-    // Hide UI elements
     const topNav = document.querySelector('.top-nav');
     const actionBar = document.querySelector('.action-bar');
     
     topNav.style.display = 'none';
     actionBar.style.display = 'none';
     
-    const element = document.querySelector('.resume-container');
+    const element = document.querySelector('.resume-page');
     const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
     
     const opt = {
@@ -799,18 +788,19 @@ function downloadPDF() {
         filename: `${name}_Resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 3,
+            scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            windowWidth: 850,
+            windowHeight: 1100
         },
         jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
+            unit: 'px',
+            format: [850, 1100],
             orientation: 'portrait',
-            compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            hotfixes: ['px_scaling']
+        }
     };
     
     html2pdf()
@@ -822,7 +812,7 @@ function downloadPDF() {
             actionBar.style.display = 'flex';
         })
         .catch(err => {
-            console.error('PDF generation error:', err);
+            console.error('PDF error:', err);
             topNav.style.display = 'flex';
             actionBar.style.display = 'flex';
             alert('Error generating PDF. Please try again.');
@@ -833,18 +823,15 @@ function changeStyle(style, btnElement) {
     const container = document.querySelector('.resume-container');
     const page = document.querySelector('.resume-page');
     
-    // Remove all style classes
     container.classList.remove('style-classic', 'style-modern', 'style-twocol', 'style-creative', 'style-ats');
     container.classList.add('style-' + style);
     
-    // Handle two-column layout
     if (style === 'twocol') {
         restructureTwoColumn();
     } else {
         restoreOriginalLayout();
     }
     
-    // Update active button
     document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
     btnElement.classList.add('active');
 }
@@ -852,7 +839,6 @@ function changeStyle(style, btnElement) {
 function restructureTwoColumn() {
     const page = document.querySelector('.resume-page');
     
-    // Check if already restructured
     if (page.querySelector('.resume-sidebar')) {
         return;
     }
@@ -861,7 +847,6 @@ function restructureTwoColumn() {
     const wrapper = page.querySelector('.resume-content-wrapper');
     const sections = Array.from(wrapper.querySelectorAll('.resume-section'));
     
-    // Determine which sections go in sidebar
     const sidebarSections = [];
     const mainSections = [];
     
@@ -874,7 +859,6 @@ function restructureTwoColumn() {
         }
     });
     
-    // Create sidebar and main containers
     const sidebar = document.createElement('div');
     sidebar.className = 'resume-sidebar';
     sidebarSections.forEach(s => sidebar.appendChild(s));
@@ -883,7 +867,6 @@ function restructureTwoColumn() {
     main.className = 'resume-main';
     mainSections.forEach(s => main.appendChild(s));
     
-    // Rebuild page
     page.innerHTML = '';
     page.appendChild(header);
     page.appendChild(sidebar);
@@ -895,7 +878,6 @@ function restoreOriginalLayout() {
     const sidebar = page.querySelector('.resume-sidebar');
     const main = page.querySelector('.resume-main');
     
-    // Only restore if currently in two-column layout
     if (!sidebar || !main) {
         return;
     }
@@ -906,24 +888,20 @@ function restoreOriginalLayout() {
         ...Array.from(main.querySelectorAll('.resume-section'))
     ];
     
-    // Create wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'resume-content-wrapper';
     allSections.forEach(s => wrapper.appendChild(s.cloneNode(true)));
     
-    // Rebuild page
     page.innerHTML = '';
     page.appendChild(header);
     page.appendChild(wrapper);
 }
 
-// Initialize with classic style
 document.addEventListener('DOMContentLoaded', function() {
     const page = document.querySelector('.resume-page');
     const header = page.querySelector('.resume-header');
     const sections = Array.from(page.querySelectorAll('.resume-section'));
     
-    // Wrap sections in content wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'resume-content-wrapper';
     sections.forEach(s => wrapper.appendChild(s));
