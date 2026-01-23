@@ -230,6 +230,10 @@ def dashboard():
     user_result = supabase.table('users').select('*').eq('email', user_email).execute()
     user_profile = user_result.data[0] if user_result.data else None
     
+    # Get branch and topics
+    branch_key = get_user_branch()
+    branch_topics = BRANCH_TOPICS.get(branch_key, BRANCH_TOPICS['DEFAULT'])
+    
     # Get quiz data
     result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
     
@@ -268,7 +272,10 @@ def dashboard():
                          user_profile=user_profile,
                          total_quizzes=total_quizzes,
                          average_score=average_score,
-                         streak_days=streak_days)
+                         streak_days=streak_days,
+                         branch_key=branch_key,
+                         branch_topics=branch_topics)  # <-- PASS TOPICS
+
 # 2. Update Grand Test to use AI questions (around line 500)
 @app.route('/grand_test', methods=['GET', 'POST'])
 def grand_test():

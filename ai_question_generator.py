@@ -3,7 +3,7 @@
 import os
 import json
 from dotenv import load_dotenv
-
+import random
 load_dotenv()
 
 # Try to import Google GenAI (optional)
@@ -278,7 +278,100 @@ FALLBACK_QUESTIONS = {
              "answer": "Dynamic size"}
         ]
     },
+    'Digital Electronics': {
+        'Logic Gates': [
+            {"q": "Which gate gives HIGH output only when all inputs are HIGH?", "options": ["AND", "OR", "NAND", "XOR"], "answer": "AND"},
+            {"q": "What is the output of a NOT gate when input is 1?", "options": ["0", "1", "Undefined", "High Impedance"], "answer": "0"},
+            {"q": "Which gate is called a universal gate?", "options": ["NAND", "AND", "OR", "XOR"], "answer": "NAND"},
+            {"q": "XOR gate gives HIGH when inputs are:", "options": ["Different", "Same", "All HIGH", "All LOW"], "answer": "Different"},
+            {"q": "De Morgan's theorem converts AND to:", "options": ["OR with inverted inputs", "NAND", "NOR", "XOR"], "answer": "OR with inverted inputs"}
+        ],
+        'Boolean Algebra': [
+            {"q": "A + A' = ?", "options": ["1", "0", "A", "A'"], "answer": "1"},
+            {"q": "A . A' = ?", "options": ["0", "1", "A", "A'"], "answer": "0"},
+            {"q": "A + AB = ?", "options": ["A", "B", "AB", "A+B"], "answer": "A"},
+            {"q": "A(A+B) = ?", "options": ["A", "B", "AB", "A+B"], "answer": "A"},
+            {"q": "(A+B)(A+C) = ?", "options": ["A+BC", "AC+BC", "A", "ABC"], "answer": "A+BC"}
+        ]
+    },
+    'Signal Processing': {
+        'Fourier Transform': [
+            {"q": "Fourier Transform converts time domain to:", "options": ["Frequency domain", "Space domain", "Z-domain", "Laplace domain"], "answer": "Frequency domain"},
+            {"q": "Inverse Fourier Transform converts back to:", "options": ["Time domain", "Frequency domain", "Both", "Neither"], "answer": "Time domain"},
+            {"q": "DFT stands for:", "options": ["Discrete Fourier Transform", "Digital Fourier Transform", "Direct Fourier Transform", "None"], "answer": "Discrete Fourier Transform"},
+            {"q": "FFT is faster version of:", "options": ["DFT", "DTFT", "Z-Transform", "Laplace"], "answer": "DFT"},
+            {"q": "Convolution in time domain equals:", "options": ["Multiplication in frequency", "Addition in frequency", "Division in frequency", "None"], "answer": "Multiplication in frequency"}
+        ]
+    },
     
+    # EEE Topics
+    'Circuit Theory': {
+        'Ohms Law': [
+            {"q": "Ohm's Law: V = ?", "options": ["IR", "I/R", "R/I", "I+R"], "answer": "IR"},
+            {"q": "If V=10V, R=5Ω, then I=?", "options": ["2A", "5A", "50A", "0.5A"], "answer": "2A"},
+            {"q": "Unit of resistance is:", "options": ["Ohm", "Ampere", "Volt", "Watt"], "answer": "Ohm"},
+            {"q": "Resistance increases with:", "options": ["Length increase", "Area increase", "Both", "Neither"], "answer": "Length increase"},
+            {"q": "Conductance G = ?", "options": ["1/R", "R", "IR", "V/I"], "answer": "1/R"}
+        ],
+        'Kirchhoff Laws': [
+            {"q": "KCL states sum of currents at node:", "options": ["Zero", "Maximum", "Minimum", "Variable"], "answer": "Zero"},
+            {"q": "KVL states sum of voltages in loop:", "options": ["Zero", "Maximum", "Minimum", "Variable"], "answer": "Zero"},
+            {"q": "KCL is based on:", "options": ["Charge conservation", "Energy conservation", "Both", "Neither"], "answer": "Charge conservation"},
+            {"q": "KVL is based on:", "options": ["Energy conservation", "Charge conservation", "Both", "Neither"], "answer": "Energy conservation"},
+            {"q": "Node analysis uses:", "options": ["KCL", "KVL", "Both", "Neither"], "answer": "KCL"}
+        ]
+    },
+    'Power Systems': {
+        'Generation': [
+            {"q": "Most common frequency in power systems:", "options": ["50/60 Hz", "100 Hz", "200 Hz", "25 Hz"], "answer": "50/60 Hz"},
+            {"q": "Thermal power plant uses:", "options": ["Steam", "Water", "Wind", "Solar"], "answer": "Steam"},
+            {"q": "Hydroelectric plant converts:", "options": ["Potential to electrical", "Kinetic to electrical", "Chemical to electrical", "None"], "answer": "Potential to electrical"},
+            {"q": "Nuclear plant uses:", "options": ["Uranium/Plutonium", "Coal", "Gas", "Oil"], "answer": "Uranium/Plutonium"},
+            {"q": "Renewable energy includes:", "options": ["Solar, Wind, Hydro", "Coal", "Nuclear", "Gas"], "answer": "Solar, Wind, Hydro"}
+        ]
+    },
+    
+    # MECH Topics
+    'Thermodynamics': {
+        'Laws': [
+            {"q": "Zeroth law defines:", "options": ["Temperature", "Energy", "Entropy", "Enthalpy"], "answer": "Temperature"},
+            {"q": "First law is:", "options": ["Energy conservation", "Entropy increase", "Temperature equilibrium", "None"], "answer": "Energy conservation"},
+            {"q": "Second law states entropy:", "options": ["Increases", "Decreases", "Constant", "Zero"], "answer": "Increases"},
+            {"q": "Carnot cycle has:", "options": ["Maximum efficiency", "Minimum efficiency", "50% efficiency", "100% efficiency"], "answer": "Maximum efficiency"},
+            {"q": "Isentropic process has constant:", "options": ["Entropy", "Temperature", "Pressure", "Volume"], "answer": "Entropy"}
+        ]
+    },
+    'Mechanics': {
+        'Statics': [
+            {"q": "Sum of forces in equilibrium:", "options": ["Zero", "Maximum", "Minimum", "One"], "answer": "Zero"},
+            {"q": "Sum of moments in equilibrium:", "options": ["Zero", "Maximum", "Minimum", "One"], "answer": "Zero"},
+            {"q": "Free body diagram shows:", "options": ["All forces", "Only reactions", "Only loads", "None"], "answer": "All forces"},
+            {"q": "Moment = ?", "options": ["Force × Distance", "Force / Distance", "Force + Distance", "None"], "answer": "Force × Distance"},
+            {"q": "Centre of gravity is point where:", "options": ["Weight acts", "Force acts", "Moment acts", "None"], "answer": "Weight acts"}
+        ]
+    },
+    
+    # CIVIL Topics
+    'Structural Analysis': {
+        'Beams': [
+            {"q": "Simply supported beam has:", "options": ["2 supports", "1 support", "3 supports", "No support"], "answer": "2 supports"},
+            {"q": "Cantilever beam is fixed at:", "options": ["One end", "Both ends", "Middle", "Nowhere"], "answer": "One end"},
+            {"q": "Bending moment causes:", "options": ["Bending", "Twisting", "Shearing", "Tension"], "answer": "Bending"},
+            {"q": "Shear force is:", "options": ["Transverse force", "Axial force", "Bending force", "None"], "answer": "Transverse force"},
+            {"q": "Maximum bending moment in cantilever with point load at free end:", "options": ["At fixed end", "At free end", "At center", "Uniform"], "answer": "At fixed end"}
+        ]
+    },
+    
+    # CHEM Topics
+    'Chemical Thermodynamics': {
+        'Laws of Thermodynamics': [
+            {"q": "Enthalpy H = ?", "options": ["U + PV", "U - PV", "U × PV", "U / PV"], "answer": "U + PV"},
+            {"q": "Gibbs free energy determines:", "options": ["Spontaneity", "Temperature", "Pressure", "Volume"], "answer": "Spontaneity"},
+            {"q": "Exothermic reaction has ΔH:", "options": ["Negative", "Positive", "Zero", "Infinite"], "answer": "Negative"},
+            {"q": "Endothermic reaction absorbs:", "options": ["Heat", "Work", "Light", "Sound"], "answer": "Heat"},
+            {"q": "Standard conditions: T=?", "options": ["298K", "273K", "373K", "0K"], "answer": "298K"}
+        ]
+    },
     # APTITUDE
     'Quantitative Aptitude': [
         {"q": "If 20% of x is 50, what is x?", 
@@ -376,22 +469,35 @@ GENERIC_FALLBACK = [
 # ==================== HELPER FUNCTIONS ====================
 
 def get_fallback_questions(topic, subtopic, num_questions=5):
-    """Get fallback questions from the comprehensive question bank"""
+    """Get randomized fallback questions - NEVER repeat same questions"""
     questions = []
     
-    # Try to find specific topic questions
+    # Try topic-subtopic
     if topic in FALLBACK_QUESTIONS:
         if isinstance(FALLBACK_QUESTIONS[topic], dict) and subtopic in FALLBACK_QUESTIONS[topic]:
-            questions = FALLBACK_QUESTIONS[topic][subtopic][:num_questions]
+            pool = FALLBACK_QUESTIONS[topic][subtopic][:]  # Copy
+            random.shuffle(pool)  # Randomize
+            questions = pool[:num_questions]
         elif isinstance(FALLBACK_QUESTIONS[topic], list):
-            questions = FALLBACK_QUESTIONS[topic][:num_questions]
+            pool = FALLBACK_QUESTIONS[topic][:]
+            random.shuffle(pool)
+            questions = pool[:num_questions]
     
-    # If not enough questions, add generic ones
-    while len(questions) < num_questions:
-        questions.append(GENERIC_FALLBACK[len(questions) % len(GENERIC_FALLBACK)])
+    # If not enough, add from DEFAULT pool
+    if len(questions) < num_questions:
+        default_pool = FALLBACK_QUESTIONS['DEFAULT'][:]
+        random.shuffle(default_pool)
+        questions.extend(default_pool[:num_questions - len(questions)])
+    
+    # CRITICAL: Shuffle options for each question to vary placement
+    for q in questions:
+        opts = q['options'][:]
+        correct = q['answer']
+        random.shuffle(opts)
+        q['options'] = opts
+        # Answer remains same text, position changes
     
     return questions[:num_questions]
-
 def determine_difficulty_level(user_scores, topic, subtopic):
     """Determine difficulty level based on past performance"""
     if not user_scores:
