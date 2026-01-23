@@ -350,44 +350,7 @@ FALLBACK_QUESTIONS = {
             {"q": "Centre of gravity is point where:", "options": ["Weight acts", "Force acts", "Moment acts", "None"], "answer": "Weight acts"}
         ]
     },
-    # MECHANICAL ENGINEERING
-'Manufacturing': [
-    {"q": "Which process is used to join metals permanently?", 
-     "options": ["Welding", "Bolting", "Riveting", "Gluing"], 
-     "answer": "Welding"},
-    {"q": "Lathe machine is primarily used for:", 
-     "options": ["Turning operations", "Drilling", "Milling", "Grinding"], 
-     "answer": "Turning operations"},
-    {"q": "What is CNC?", 
-     "options": ["Computer Numerical Control", "Central Numeric Code", "Cutting New Components", "None"], 
-     "answer": "Computer Numerical Control"},
-    {"q": "Casting process uses:", 
-     "options": ["Molten metal in mold", "Solid metal", "Plastic", "Wood"], 
-     "answer": "Molten metal in mold"},
-    {"q": "Which is a cutting tool material?", 
-     "options": ["High Speed Steel", "Aluminum", "Copper", "Brass"], 
-     "answer": "High Speed Steel"}
-],
-
-# CIVIL ENGINEERING
-'Surveying': [
-    {"q": "Theodolite is used to measure:", 
-     "options": ["Horizontal and vertical angles", "Only distance", "Only height", "Temperature"], 
-     "answer": "Horizontal and vertical angles"},
-    {"q": "Benchmark in surveying indicates:", 
-     "options": ["Reference point for elevation", "Starting point", "End point", "Center point"], 
-     "answer": "Reference point for elevation"},
-    {"q": "Contour lines join points of:", 
-     "options": ["Equal elevation", "Equal distance", "Equal temperature", "Equal pressure"], 
-     "answer": "Equal elevation"},
-    {"q": "Leveling is done to find:", 
-     "options": ["Difference in elevation", "Horizontal distance", "Angles", "Areas"], 
-     "answer": "Difference in elevation"},
-    {"q": "Total Station combines:", 
-     "options": ["Theodolite and EDM", "Compass and level", "GPS and radar", "None"], 
-     "answer": "Theodolite and EDM"}
-]
-,
+    
     # CIVIL Topics
     'Structural Analysis': {
         'Beams': [
@@ -484,7 +447,24 @@ FALLBACK_QUESTIONS = {
     ]
 }
 
-
+# Generic fallback for any topic
+GENERIC_FALLBACK = [
+    {"q": "What is a key concept in this topic?", 
+     "options": ["Understanding core principles", "Memorizing facts", "Ignoring details", "Guessing answers"], 
+     "answer": "Understanding core principles"},
+    {"q": "Why is practice important?", 
+     "options": ["Builds expertise and confidence", "Wastes time", "Not necessary", "Only for beginners"], 
+     "answer": "Builds expertise and confidence"},
+    {"q": "What is the best learning approach?", 
+     "options": ["Consistent practice and review", "Last-minute cramming", "Passive reading", "Avoiding challenges"], 
+     "answer": "Consistent practice and review"},
+    {"q": "How should you handle difficult concepts?", 
+     "options": ["Break them down into smaller parts", "Skip them", "Give up", "Memorize without understanding"], 
+     "answer": "Break them down into smaller parts"},
+    {"q": "What indicates mastery of a subject?", 
+     "options": ["Ability to explain to others", "Completing one quiz", "Reading textbook once", "Watching videos only"], 
+     "answer": "Ability to explain to others"}
+]
 
 # ==================== HELPER FUNCTIONS ====================
 
