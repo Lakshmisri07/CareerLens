@@ -105,8 +105,8 @@
             color: var(--primary);
         }
 
-        /* Template Selector */
-        .template-selector {
+        /* Style Selector */
+        .style-selector {
             display: flex;
             gap: 10px;
             align-items: center;
@@ -119,13 +119,13 @@
             box-shadow: var(--glass-shadow);
         }
 
-        .template-selector span {
+        .style-selector span {
             font-weight: 700;
             color: var(--text-main);
             white-space: nowrap;
         }
 
-        .template-btn {
+        .style-btn {
             padding: 8px 16px;
             border: 2px solid var(--glass-border);
             background: white;
@@ -137,13 +137,13 @@
             font-size: 0.9rem;
         }
 
-        .template-btn:hover {
+        .style-btn:hover {
             border-color: var(--primary);
             color: var(--primary);
             transform: translateY(-2px);
         }
 
-        .template-btn.active {
+        .style-btn.active {
             background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
             border-color: var(--primary);
@@ -393,25 +393,27 @@
             color: white;
         }
 
-        /* Template Variations */
-        .template-modern .resume-name {
+        /* ========== STYLE VARIATIONS ========== */
+
+        /* Modern Minimalist */
+        .style-modern .resume-name {
             font-size: 2.5rem;
             font-weight: 300;
             letter-spacing: 8px;
         }
 
-        .template-modern .resume-header {
+        .style-modern .resume-header {
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .template-modern .section-title {
+        .style-modern .section-title {
             font-size: 1.1rem;
             font-weight: 600;
             letter-spacing: 3px;
             border-bottom: none;
         }
 
-        .template-modern .section-title::before {
+        .style-modern .section-title::before {
             content: '';
             display: inline-block;
             width: 4px;
@@ -421,44 +423,100 @@
             vertical-align: middle;
         }
 
-        .template-twocol .resume-header {
-            background: #2563eb;  /* Blue instead of dark */
+        /* Two Column Layout */
+        .style-twocol .resume-page {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+            padding: 0;
         }
 
-        .template-twocol .resume-sidebar {
-            background: #475569;  /* Lighter gray */
+        .style-twocol .resume-header {
+            grid-column: 1 / -1;
+            background: #2563eb;
+            color: white;
+            padding: 40px;
+            margin: 0;
+            border: none;
+            border-radius: 0;
         }
 
-        .template-twocol .resume-name {
+        .style-twocol .resume-name {
             color: white;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .template-twocol .resume-contact {
-            color: #e0f2fe;  /* Much lighter */
+        .style-twocol .resume-contact {
+            color: #e0f2fe;
         }
 
-        .template-twocol .resume-contact i {
-            color: #fbbf24;  /* Gold icons */
+        .style-twocol .resume-contact i {
+            color: #fbbf24;
         }
 
-        .template-creative .resume-header {
+        .style-twocol .resume-sidebar {
+            background: #475569;
+            color: white;
+            padding: 30px 25px;
+        }
+
+        .style-twocol .resume-sidebar .section-title {
+            color: #fbbf24;
+            border-bottom-color: rgba(255,255,255,0.2);
+        }
+
+        .style-twocol .resume-sidebar .section-content {
+            color: #e2e8f0;
+        }
+
+        .style-twocol .resume-sidebar .skill-category-name {
+            color: white;
+        }
+
+        .style-twocol .resume-sidebar .skill-tag {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .style-twocol .resume-sidebar .education-degree {
+            color: white;
+        }
+
+        .style-twocol .resume-sidebar .education-details {
+            color: #cbd5e1;
+        }
+
+        .style-twocol .resume-sidebar .cert-name {
+            color: white;
+        }
+
+        .style-twocol .resume-sidebar .cert-issuer {
+            color: #cbd5e1;
+        }
+
+        .style-twocol .resume-main {
+            padding: 40px 35px;
+        }
+
+        /* Creative Gradient */
+        .style-creative .resume-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 40px;
-            margin-bottom: 35px;
+            margin: -60px -70px 35px;
             border-radius: 0;
         }
 
-        .template-creative .resume-name {
+        .style-creative .resume-name {
             color: white;
         }
 
-        .template-creative .resume-contact {
+        .style-creative .resume-contact {
             color: #f0e7ff;
         }
 
-        .template-creative .section-title {
+        .style-creative .section-title {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 10px 20px;
@@ -466,11 +524,12 @@
             border: none;
         }
 
-        .template-ats .resume-page {
+        /* ATS-Friendly Simple */
+        .style-ats .resume-page {
             font-family: 'Times New Roman', Times, serif;
         }
 
-        .template-ats .resume-name {
+        .style-ats .resume-name {
             font-size: 2rem;
             font-weight: 700;
             color: #000;
@@ -478,16 +537,20 @@
             text-transform: none;
         }
 
-        .template-ats .resume-header {
+        .style-ats .resume-header {
             border-bottom: 2px solid #000;
         }
 
-        .template-ats .section-title {
+        .style-ats .section-title {
             color: #000;
             font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: 0;
             border-bottom: 1px solid #000;
+        }
+
+        .style-ats .resume-contact i {
+            color: #000;
         }
 
         @media (max-width: 768px) {
@@ -503,9 +566,21 @@
                 flex-direction: column;
             }
 
-            .template-selector {
+            .style-selector {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .style-twocol .resume-page {
+                grid-template-columns: 1fr;
+            }
+
+            .style-twocol .resume-sidebar {
+                order: 2;
+            }
+
+            .style-twocol .resume-main {
+                order: 3;
             }
         }
 
@@ -514,15 +589,30 @@
                 background: white;
             }
 
-            .top-nav,
-            .template-selector,
-            .action-bar {
+            body::before,
+            body::after {
                 display: none;
+            }
+
+            .top-nav,
+            .style-selector,
+            .action-bar {
+                display: none !important;
             }
 
             .resume-container {
                 box-shadow: none;
                 margin: 0;
+                border-radius: 0;
+            }
+
+            .resume-page {
+                min-height: auto;
+            }
+
+            .style-twocol .resume-page {
+                display: grid;
+                grid-template-columns: 280px 1fr;
             }
         }
     </style>
@@ -534,13 +624,13 @@
         <i class="fas fa-arrow-left"></i> Dashboard
     </a>
 
-    <div class="template-selector">
-        <span>Template:</span>
-        <button class="template-btn active" onclick="changeTemplate('classic', this)">Classic</button>
-        <button class="template-btn" onclick="changeTemplate('modern', this)">Modern</button>
-        <button class="template-btn" onclick="changeTemplate('twocol', this)">Two-Column</button>
-        <button class="template-btn" onclick="changeTemplate('creative', this)">Creative</button>
-        <button class="template-btn" onclick="changeTemplate('ats', this)">ATS Simple</button>
+    <div class="style-selector">
+        <span>Style:</span>
+        <button class="style-btn active" onclick="changeStyle('classic', this)">Classic</button>
+        <button class="style-btn" onclick="changeStyle('modern', this)">Modern</button>
+        <button class="style-btn" onclick="changeStyle('twocol', this)">Two-Column</button>
+        <button class="style-btn" onclick="changeStyle('creative', this)">Creative</button>
+        <button class="style-btn" onclick="changeStyle('ats', this)">ATS-Friendly</button>
     </div>
 </div>
 
@@ -564,117 +654,119 @@
             </div>
         </div>
         
-        <!-- Professional Summary -->
-        {% if resume_data.summary %}
-        <div class="resume-section">
-            <div class="section-title">Professional Summary</div>
-            <div class="section-content">{{ resume_data.summary }}</div>
-        </div>
-        {% endif %}
-        
-        <!-- Education -->
-        <div class="resume-section">
-            <div class="section-title">Education</div>
-            <div class="education-item">
-                <div class="education-degree">{{ resume_data.education.degree }}</div>
-                <div class="education-details">
-                    <span>Expected Graduation: {{ resume_data.education.year }}</span>
-                    <span class="education-cgpa">CGPA: {{ resume_data.education.cgpa }}</span>
-                </div>
+        <div class="resume-content-wrapper">
+            <!-- Professional Summary -->
+            {% if resume_data.summary %}
+            <div class="resume-section">
+                <div class="section-title">Professional Summary</div>
+                <div class="section-content">{{ resume_data.summary }}</div>
             </div>
-        </div>
-        
-        <!-- Certifications -->
-        {% if resume_data.certificates %}
-        <div class="resume-section">
-            <div class="section-title">Certifications</div>
-            {% for cert in resume_data.certificates %}
-            <div class="cert-item">
-                <div class="cert-name">{{ cert.name }}</div>
-                <div class="cert-issuer">{{ cert.issuer }}</div>
-                {% if cert.date %}
-                <div class="cert-date">{{ cert.date }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        
-        <!-- Technical Skills -->
-        {% if resume_data.skills %}
-        <div class="resume-section">
-            <div class="section-title">Technical Skills</div>
-            <div class="skills-grid">
-                {% if resume_data.skills.programming %}
-                <div class="skill-category">
-                    <div class="skill-category-name">Programming Languages</div>
-                    <div class="skill-tags">
-                        {% for skill in resume_data.skills.programming %}
-                        <span class="skill-tag">{{ skill }}</span>
-                        {% endfor %}
+            {% endif %}
+            
+            <!-- Education -->
+            <div class="resume-section">
+                <div class="section-title">Education</div>
+                <div class="education-item">
+                    <div class="education-degree">{{ resume_data.education.degree }}</div>
+                    <div class="education-details">
+                        <span>Expected Graduation: {{ resume_data.education.year }}</span>
+                        <span class="education-cgpa">CGPA: {{ resume_data.education.cgpa }}</span>
                     </div>
                 </div>
-                {% endif %}
-                
-                {% if resume_data.skills.technologies %}
-                <div class="skill-category">
-                    <div class="skill-category-name">Technologies & Frameworks</div>
-                    <div class="skill-tags">
-                        {% for skill in resume_data.skills.technologies %}
-                        <span class="skill-tag">{{ skill }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if resume_data.skills.tools %}
-                <div class="skill-category">
-                    <div class="skill-category-name">Tools & Platforms</div>
-                    <div class="skill-tags">
-                        {% for skill in resume_data.skills.tools %}
-                        <span class="skill-tag">{{ skill }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if resume_data.skills.soft_skills %}
-                <div class="skill-category">
-                    <div class="skill-category-name">Soft Skills</div>
-                    <div class="skill-tags">
-                        {% for skill in resume_data.skills.soft_skills %}
-                        <span class="skill-tag">{{ skill }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
             </div>
-        </div>
-        {% endif %}
-        
-        <!-- Projects -->
-        {% if resume_data.projects %}
-        <div class="resume-section">
-            <div class="section-title">Projects</div>
-            {% for project in resume_data.projects %}
-            <div class="project-item">
-                <div class="project-name">{{ project.name }}</div>
-                <div class="project-desc">{{ project.description }}</div>
-                <div class="project-tech"><strong>Technologies:</strong> {{ project.technologies|join(', ') }}</div>
+            
+            <!-- Certifications -->
+            {% if resume_data.certificates %}
+            <div class="resume-section">
+                <div class="section-title">Certifications</div>
+                {% for cert in resume_data.certificates %}
+                <div class="cert-item">
+                    <div class="cert-name">{{ cert.name }}</div>
+                    <div class="cert-issuer">{{ cert.issuer }}</div>
+                    {% if cert.date %}
+                    <div class="cert-date">{{ cert.date }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% endif %}
+            
+            <!-- Technical Skills -->
+            {% if resume_data.skills %}
+            <div class="resume-section">
+                <div class="section-title">Technical Skills</div>
+                <div class="skills-grid">
+                    {% if resume_data.skills.programming %}
+                    <div class="skill-category">
+                        <div class="skill-category-name">Programming Languages</div>
+                        <div class="skill-tags">
+                            {% for skill in resume_data.skills.programming %}
+                            <span class="skill-tag">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if resume_data.skills.technologies %}
+                    <div class="skill-category">
+                        <div class="skill-category-name">Technologies & Frameworks</div>
+                        <div class="skill-tags">
+                            {% for skill in resume_data.skills.technologies %}
+                            <span class="skill-tag">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if resume_data.skills.tools %}
+                    <div class="skill-category">
+                        <div class="skill-category-name">Tools & Platforms</div>
+                        <div class="skill-tags">
+                            {% for skill in resume_data.skills.tools %}
+                            <span class="skill-tag">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if resume_data.skills.soft_skills %}
+                    <div class="skill-category">
+                        <div class="skill-category-name">Soft Skills</div>
+                        <div class="skill-tags">
+                            {% for skill in resume_data.skills.soft_skills %}
+                            <span class="skill-tag">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Projects -->
+            {% if resume_data.projects %}
+            <div class="resume-section">
+                <div class="section-title">Projects</div>
+                {% for project in resume_data.projects %}
+                <div class="project-item">
+                    <div class="project-name">{{ project.name }}</div>
+                    <div class="project-desc">{{ project.description }}</div>
+                    <div class="project-tech"><strong>Technologies:</strong> {{ project.technologies|join(', ') }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Achievements -->
+            {% if resume_data.achievements %}
+            <div class="resume-section">
+                <div class="section-title">Achievements</div>
+                {% for achievement in resume_data.achievements %}
+                <div class="achievement-item">{{ achievement }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-        
-        <!-- Achievements -->
-        {% if resume_data.achievements %}
-        <div class="resume-section">
-            <div class="section-title">Achievements</div>
-            {% for achievement in resume_data.achievements %}
-            <div class="achievement-item">{{ achievement }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
         
     </div>
 </div>
@@ -692,67 +784,97 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 function downloadPDF() {
-    // Hide UI
-    document.querySelector('.top-nav').style.display = 'none';
-    document.querySelector('.action-bar').style.display = 'none';
+    // Hide UI elements
+    const topNav = document.querySelector('.top-nav');
+    const actionBar = document.querySelector('.action-bar');
+    
+    topNav.style.display = 'none';
+    actionBar.style.display = 'none';
     
     const element = document.querySelector('.resume-container');
     const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
     
+    const opt = {
+        margin: 0,
+        filename: `${name}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 3,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
     html2pdf()
-        .set({
-            margin: 0,
-            filename: `${name}_Resume.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2.5, backgroundColor: '#ffffff' },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: 'avoid-all' }
-        })
+        .set(opt)
         .from(element)
         .save()
         .then(() => {
-            document.querySelector('.top-nav').style.display = 'flex';
-            document.querySelector('.action-bar').style.display = 'flex';
+            topNav.style.display = 'flex';
+            actionBar.style.display = 'flex';
+        })
+        .catch(err => {
+            console.error('PDF generation error:', err);
+            topNav.style.display = 'flex';
+            actionBar.style.display = 'flex';
+            alert('Error generating PDF. Please try again.');
         });
 }
-function changeTemplate(template, btnElement) {
+
+function changeStyle(style, btnElement) {
     const container = document.querySelector('.resume-container');
     const page = document.querySelector('.resume-page');
     
-    container.classList.remove('template-classic', 'template-modern', 'template-twocol', 'template-creative', 'template-ats');
-    container.classList.add('template-' + template);
+    // Remove all style classes
+    container.classList.remove('style-classic', 'style-modern', 'style-twocol', 'style-creative', 'style-ats');
+    container.classList.add('style-' + style);
     
-    if (template === 'twocol') {
-        if (!page.querySelector('.resume-sidebar')) {
-            restructureTwoColumn();
-        }
+    // Handle two-column layout
+    if (style === 'twocol') {
+        restructureTwoColumn();
     } else {
-        if (page.querySelector('.resume-sidebar')) {
-            restoreOriginalLayout();
-        }
+        restoreOriginalLayout();
     }
     
-    document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+    // Update active button
+    document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
     btnElement.classList.add('active');
 }
 
 function restructureTwoColumn() {
     const page = document.querySelector('.resume-page');
-    const header = page.querySelector('.resume-header');
-    const sections = Array.from(page.querySelectorAll('.resume-section'));
     
+    // Check if already restructured
+    if (page.querySelector('.resume-sidebar')) {
+        return;
+    }
+    
+    const header = page.querySelector('.resume-header');
+    const wrapper = page.querySelector('.resume-content-wrapper');
+    const sections = Array.from(wrapper.querySelectorAll('.resume-section'));
+    
+    // Determine which sections go in sidebar
     const sidebarSections = [];
     const mainSections = [];
     
     sections.forEach(section => {
         const title = section.querySelector('.section-title').textContent.toLowerCase();
         if (title.includes('skill') || title.includes('education') || title.includes('certification')) {
-            sidebarSections.push(section);
+            sidebarSections.push(section.cloneNode(true));
         } else {
-            mainSections.push(section);
+            mainSections.push(section.cloneNode(true));
         }
     });
     
+    // Create sidebar and main containers
     const sidebar = document.createElement('div');
     sidebar.className = 'resume-sidebar';
     sidebarSections.forEach(s => sidebar.appendChild(s));
@@ -761,6 +883,7 @@ function restructureTwoColumn() {
     main.className = 'resume-main';
     mainSections.forEach(s => main.appendChild(s));
     
+    // Rebuild page
     page.innerHTML = '';
     page.appendChild(header);
     page.appendChild(sidebar);
@@ -769,20 +892,47 @@ function restructureTwoColumn() {
 
 function restoreOriginalLayout() {
     const page = document.querySelector('.resume-page');
-    const header = page.querySelector('.resume-header');
     const sidebar = page.querySelector('.resume-sidebar');
     const main = page.querySelector('.resume-main');
     
-    if (sidebar && main) {
-        const allSections = [...sidebar.querySelectorAll('.resume-section'), ...main.querySelectorAll('.resume-section')];
-        page.innerHTML = '';
-        page.appendChild(header);
-        allSections.forEach(s => page.appendChild(s));
+    // Only restore if currently in two-column layout
+    if (!sidebar || !main) {
+        return;
     }
+    
+    const header = page.querySelector('.resume-header');
+    const allSections = [
+        ...Array.from(sidebar.querySelectorAll('.resume-section')),
+        ...Array.from(main.querySelectorAll('.resume-section'))
+    ];
+    
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'resume-content-wrapper';
+    allSections.forEach(s => wrapper.appendChild(s.cloneNode(true)));
+    
+    // Rebuild page
+    page.innerHTML = '';
+    page.appendChild(header);
+    page.appendChild(wrapper);
 }
 
+// Initialize with classic style
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('.resume-container').classList.add('template-classic');
+    const page = document.querySelector('.resume-page');
+    const header = page.querySelector('.resume-header');
+    const sections = Array.from(page.querySelectorAll('.resume-section'));
+    
+    // Wrap sections in content wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'resume-content-wrapper';
+    sections.forEach(s => wrapper.appendChild(s));
+    
+    page.innerHTML = '';
+    page.appendChild(header);
+    page.appendChild(wrapper);
+    
+    document.querySelector('.resume-container').classList.add('style-classic');
 });
 </script>
 </body>
