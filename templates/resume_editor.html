@@ -4,24 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Resume - CareerLens</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #8b5cf6;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-            --glass-blur: blur(12px);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -30,152 +15,134 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background:
-                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
-            background-color: #0f172a;
-            background-attachment: fixed;
-            min-height: 100vh;
-            padding: 30px 15px;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 20px;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 20%;
-            left: 20%;
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            filter: blur(100px);
-            opacity: 0.2;
-            z-index: -1;
-            animation: float 20s infinite alternate;
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+            margin: -20px -20px 30px -20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        body::after {
-            content: '';
-            position: fixed;
-            bottom: 20%;
-            right: 20%;
-            width: 300px;
-            height: 300px;
-            background: var(--secondary);
-            filter: blur(80px);
-            opacity: 0.2;
-            z-index: -1;
-            animation: float 15s infinite alternate-reverse;
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(30px, 50px); }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
         }
 
         .editor-container {
             max-width: 1000px;
             margin: 0 auto;
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             padding: 40px;
-            box-shadow: var(--glass-shadow);
         }
 
         .editor-header {
-            text-align: center;
             margin-bottom: 40px;
-            position: relative;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
         }
 
-        .editor-header h2 {
-            color: white;
-            font-weight: 800;
-            font-size: 2.5rem;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            margin-bottom: 0.5rem;
+        .editor-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
         }
 
         .editor-header p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1.1rem;
+            color: #64748b;
+            font-size: 1rem;
         }
 
         .btn-back {
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--text-main);
-            padding: 12px 24px;
-            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 6px;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
+            font-weight: 500;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
         }
 
         .btn-back:hover {
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            color: var(--primary);
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .section-box {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 25px;
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: all 0.3s;
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .section-box:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        .section-box:last-of-type {
+            border-bottom: none;
         }
 
         .section-title {
-            color: var(--primary);
-            font-size: 1.4rem;
-            font-weight: 700;
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 600;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        .section-title i {
+            color: #2563eb;
+            margin-right: 8px;
+        }
+
         .form-label {
             display: block;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
         }
 
         .form-control,
         .form-select {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 1rem;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
             font-family: inherit;
-            transition: all 0.3s;
+            transition: all 0.2s;
             background: white;
         }
 
         .form-control:focus,
         .form-select:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         textarea.form-control {
@@ -185,7 +152,7 @@
 
         .row {
             display: grid;
-            gap: 15px;
+            gap: 16px;
         }
 
         .row.g-2 {
@@ -196,88 +163,73 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
 
-        /* Buttons */
         .btn-add {
-            background: linear-gradient(135deg, var(--success), #059669);
+            background: #2563eb;
             color: white;
             border: none;
-            padding: 10px 24px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 0.9rem;
         }
 
         .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            background: #1d4ed8;
         }
 
-        /* Item Cards */
         .item-card {
             background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
             padding: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             position: relative;
-            transition: all 0.3s;
-        }
-
-        .item-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.1);
         }
 
         .btn-remove {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: var(--danger);
+            top: 12px;
+            right: 12px;
+            background: #ef4444;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1rem;
+            transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
         .btn-remove:hover {
             background: #dc2626;
-            transform: scale(1.1);
         }
 
-        /* Skills */
         .skill-tag-input {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .skill-tag {
             background: #eff6ff;
             color: #1e40af;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .skill-tag:hover {
-            background: #dbeafe;
         }
 
         .skill-tag button {
@@ -285,19 +237,18 @@
             border: none;
             color: #1e40af;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1rem;
-            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1;
         }
 
         .skill-tag button:hover {
-            color: var(--danger);
-            transform: scale(1.2);
+            color: #ef4444;
         }
 
         .input-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 20px;
         }
 
@@ -305,142 +256,116 @@
             flex: 1;
         }
 
-        /* Certificate Upload */
         #certUploadModal {
             background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
             padding: 20px;
             margin-bottom: 20px;
         }
 
         .cert-upload-box {
             border: 2px dashed #cbd5e1;
-            border-radius: 10px;
+            border-radius: 6px;
             padding: 40px;
             text-align: center;
             background: white;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .cert-upload-box:hover {
-            border-color: var(--primary);
-            background: #eff6ff;
+            border-color: #2563eb;
+            background: #f8fafc;
         }
 
-        .cert-upload-box.dragging {
-            border-color: var(--success);
-            background: #d1fae5;
+        .cert-upload-box i {
+            font-size: 2.5rem;
+            color: #2563eb;
+            margin-bottom: 12px;
         }
 
         .upload-progress {
             display: none;
-            margin-top: 15px;
+            margin-top: 16px;
         }
 
         .progress {
-            height: 30px;
+            height: 8px;
             background: #e2e8f0;
-            border-radius: 15px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
+            background: #2563eb;
             transition: width 0.3s;
         }
 
         .cert-preview {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             background: white;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
             position: relative;
-            transition: all 0.3s;
-        }
-
-        .cert-preview:hover {
-            border-color: var(--primary);
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.1);
         }
 
         .cert-preview i {
-            font-size: 2rem;
-            color: var(--primary);
+            font-size: 1.5rem;
+            color: #2563eb;
         }
 
-        /* Action Buttons */
         .action-buttons {
             display: flex;
-            gap: 15px;
-            justify-content: center;
+            gap: 12px;
+            justify-content: flex-end;
             margin-top: 40px;
             padding-top: 30px;
             border-top: 2px solid #e2e8f0;
-            flex-wrap: wrap;
         }
 
         .btn-save,
         .btn-preview {
-            padding: 16px 40px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 12px;
+            padding: 12px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
             border: none;
-            transition: all 0.3s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
             text-decoration: none;
         }
 
         .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2563eb;
             color: white;
+        }
+
+        .btn-save:hover {
+            background: #1d4ed8;
         }
 
         .btn-preview {
-            background: linear-gradient(135deg, var(--success), #059669);
-            color: white;
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
         }
 
-        .btn-save:hover,
         .btn-preview:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-            color: white;
+            background: #f8fafc;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .editor-container {
-                padding: 25px;
-            }
-
-            .editor-header h2 {
-                font-size: 2rem;
-                margin-top: 50px;
-            }
-
-            .btn-back {
-                position: static;
-                margin-bottom: 20px;
-            }
-
-            .section-box {
-                padding: 20px;
+                padding: 24px;
             }
 
             .row.g-2,
@@ -449,7 +374,7 @@
             }
 
             .action-buttons {
-                flex-direction: column;
+                flex-direction: column-reverse;
             }
 
             .btn-save,
@@ -462,12 +387,19 @@
 </head>
 <body>
 
+<div class="navbar">
+    <div class="navbar-content">
+        <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
+    </div>
+</div>
+
 <div class="editor-container">
+    <a href="/resume_draft" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Resume
+    </a>
+
     <div class="editor-header">
-        <a href="/resume_draft" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-        <h2><i class="fas fa-edit"></i> Edit Your Resume</h2>
+        <h1>Edit Resume</h1>
         <p>Customize your professional resume</p>
     </div>
 
@@ -488,7 +420,7 @@
                     <input type="email" class="form-control" id="email" value="{{ resume_data.personal_info.email }}" required>
                 </div>
             </div>
-            <div class="row g-3" style="margin-top: 15px;">
+            <div class="row g-3" style="margin-top: 16px;">
                 <div>
                     <label class="form-label">Phone</label>
                     <input type="tel" class="form-control" id="phone" value="{{ resume_data.personal_info.phone }}">
@@ -549,20 +481,20 @@
             
             <div id="certUploadModal" style="display:none;">
                 <div class="cert-upload-box" id="certUploadBox" onclick="document.getElementById('certFile').click()">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 10px;"></i>
-                    <p style="margin: 0; color: var(--text-muted);"><strong>Click or drag & drop to upload certificate</strong></p>
-                    <small style="color: var(--text-muted);">PDF, PNG, JPG (Max 5MB)</small>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p style="margin: 0; color: #64748b; font-weight: 500;">Click or drag & drop to upload</p>
+                    <small style="color: #94a3b8;">PDF, PNG, JPG (Max 5MB)</small>
                     <input type="file" id="certFile" accept=".pdf,.png,.jpg,.jpeg" style="display:none;" onchange="handleCertUpload(event)">
                 </div>
                 
                 <div class="upload-progress" id="uploadProgress">
                     <div class="progress">
-                        <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+                        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
                     </div>
-                    <small style="display: block; text-align: center; margin-top: 10px; color: var(--text-muted);" id="uploadStatus">Uploading...</small>
+                    <small style="display: block; text-align: center; margin-top: 8px; color: #64748b;" id="uploadStatus">Uploading...</small>
                 </div>
                 
-                <div class="row g-2" style="margin-top: 15px;">
+                <div class="row g-2" style="margin-top: 16px;">
                     <div>
                         <input type="text" class="form-control" id="certName" placeholder="Certificate Name *">
                     </div>
@@ -576,7 +508,7 @@
                         <input type="text" class="form-control" id="certId" placeholder="Credential ID (optional)">
                     </div>
                 </div>
-                <button type="button" class="btn-add" style="margin-top: 15px; width: 100%; justify-content: center;" onclick="saveCertificate()">
+                <button type="button" class="btn-add" style="margin-top: 16px; width: 100%; justify-content: center;" onclick="saveCertificate()">
                     <i class="fas fa-save"></i> Save Certificate
                 </button>
             </div>
@@ -587,7 +519,7 @@
                     <i class="fas fa-certificate"></i>
                     <div style="flex-grow: 1;">
                         <strong>{{ cert.name }}</strong><br>
-                        <small style="color: var(--text-muted);">{{ cert.issuer }}{% if cert.date %} • {{ cert.date }}{% endif %}</small>
+                        <small style="color: #64748b;">{{ cert.issuer }}{% if cert.date %} • {{ cert.date }}{% endif %}</small>
                     </div>
                     <button type="button" class="btn-remove" onclick="removeCertificate('{{ cert.get('id', '') }}', this)">
                         <i class="fas fa-times"></i>
@@ -667,9 +599,9 @@
             </div>
             <div id="achievementList">
                 {% for achievement in resume_data.achievements %}
-                <div class="input-group" style="margin-bottom: 10px;">
+                <div class="input-group" style="margin-bottom: 8px;">
                     <input type="text" class="form-control" value="{{ achievement }}">
-                    <button class="btn-remove" type="button" onclick="removeItem(this.parentElement)" style="position: static; border-radius: 10px; width: auto; height: auto; padding: 0 15px;">
+                    <button class="btn-remove" type="button" onclick="removeItem(this.parentElement)" style="position: static; border-radius: 4px; width: auto; height: auto; padding: 0 12px;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -679,19 +611,18 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
+            <a href="/resume_draft" class="btn-preview">
+                <i class="fas fa-eye"></i> Preview
+            </a>
             <button type="submit" class="btn-save">
                 <i class="fas fa-save"></i> Save Changes
             </button>
-            <a href="/resume_draft" class="btn-preview">
-                <i class="fas fa-eye"></i> Preview Resume
-            </a>
         </div>
 
     </form>
 </div>
 
 <script>
-// Certificate upload
 let certUploadVisible = false;
 let selectedFile = null;
 
@@ -699,16 +630,16 @@ const uploadBox = document.getElementById('certUploadBox');
 
 uploadBox.addEventListener('dragover', (e) => {
     e.preventDefault();
-    uploadBox.classList.add('dragging');
+    uploadBox.style.borderColor = '#2563eb';
 });
 
 uploadBox.addEventListener('dragleave', () => {
-    uploadBox.classList.remove('dragging');
+    uploadBox.style.borderColor = '#cbd5e1';
 });
 
 uploadBox.addEventListener('drop', (e) => {
     e.preventDefault();
-    uploadBox.classList.remove('dragging');
+    uploadBox.style.borderColor = '#cbd5e1';
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         document.getElementById('certFile').files = files;
@@ -736,7 +667,7 @@ function handleCertUpload(event) {
         selectedFile = file;
         const fileName = file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name;
         uploadBox.querySelector('p').innerHTML = `<strong>Selected: ${fileName}</strong>`;
-        uploadBox.style.borderColor = 'var(--success)';
+        uploadBox.style.borderColor = '#10b981';
     }
 }
 
@@ -764,17 +695,13 @@ async function saveCertificate() {
     
     progressDiv.style.display = 'block';
     progressBar.style.width = '0%';
-    progressBar.textContent = '0%';
-    statusText.textContent = 'Uploading certificate...';
+    statusText.textContent = 'Uploading...';
 
     try {
         let progress = 0;
         const interval = setInterval(() => {
             progress += 10;
-            if (progress <= 90) {
-                progressBar.style.width = progress + '%';
-                progressBar.textContent = progress + '%';
-            }
+            if (progress <= 90) progressBar.style.width = progress + '%';
         }, 100);
 
         const response = await fetch('/certificates/upload', {
@@ -787,28 +714,26 @@ async function saveCertificate() {
         
         if (result.success) {
             progressBar.style.width = '100%';
-            progressBar.textContent = '100%';
-            statusText.textContent = 'Upload complete!';
+            statusText.textContent = 'Complete!';
             setTimeout(() => {
-                alert('Certificate uploaded successfully!');
+                alert('Certificate uploaded!');
                 location.reload();
             }, 500);
         } else {
             throw new Error(result.error || 'Upload failed');
         }
     } catch (error) {
-        progressBar.style.width = '100%';
-        progressBar.style.background = 'var(--danger)';
-        statusText.textContent = 'Upload failed: ' + error.message;
+        progressBar.style.background = '#ef4444';
+        statusText.textContent = 'Failed: ' + error.message;
         setTimeout(() => {
             progressDiv.style.display = 'none';
-            progressBar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            progressBar.style.background = '#2563eb';
         }, 3000);
     }
 }
 
 async function removeCertificate(certId, btn) {
-    if (!confirm('Are you sure you want to delete this certificate?')) return;
+    if (!confirm('Delete this certificate?')) return;
     
     try {
         const response = await fetch(`/certificates/delete/${certId}`, { method: 'DELETE' });
@@ -816,17 +741,15 @@ async function removeCertificate(certId, btn) {
         
         if (result.success) {
             btn.closest('.cert-preview').remove();
-            alert('Certificate deleted successfully!');
+            alert('Deleted!');
         } else {
-            alert('Failed to delete: ' + result.error);
+            alert('Failed: ' + result.error);
         }
     } catch (error) {
-        alert('Error deleting certificate: ' + error);
+        alert('Error: ' + error);
     }
 }
 
-
-// Skills Management
 function addSkill(type) {
     const input = document.getElementById(type + 'Input');
     const skill = input.value.trim();
@@ -835,7 +758,7 @@ function addSkill(type) {
         const container = document.getElementById(type + 'Skills');
         const tag = document.createElement('span');
         tag.className = 'skill-tag';
-        tag.innerHTML = `${skill} <button onclick="removeSkill(this)">×</button>`;
+        tag.innerHTML = `${skill} <button type="button" onclick="removeSkill(this)">×</button>`;
         container.appendChild(tag);
         input.value = '';
     }
@@ -845,22 +768,15 @@ function removeSkill(btn) {
     btn.parentElement.remove();
 }
 
-// Add Items
 function addEducation() {
     const html = `
         <div class="item-card">
-            <button class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
-            <input type="text" class="form-control mb-2" placeholder="Degree">
+            <button type="button" class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
+            <input type="text" class="form-control" style="margin-bottom: 12px;" placeholder="Degree">
             <div class="row g-2">
-                <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="CGPA">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="Year">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="University/College">
-                </div>
+                <div><input type="text" class="form-control" placeholder="CGPA"></div>
+                <div><input type="text" class="form-control" placeholder="Year"></div>
+                <div><input type="text" class="form-control" placeholder="University/College"></div>
             </div>
         </div>
     `;
@@ -870,9 +786,9 @@ function addEducation() {
 function addProject() {
     const html = `
         <div class="item-card">
-            <button class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
-            <input type="text" class="form-control mb-2" placeholder="Project Name">
-            <textarea class="form-control mb-2" rows="3" placeholder="Description"></textarea>
+            <button type="button" class="btn-remove" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
+            <input type="text" class="form-control" style="margin-bottom: 12px;" placeholder="Project Name">
+            <textarea class="form-control" style="margin-bottom: 12px;" rows="3" placeholder="Description"></textarea>
             <input type="text" class="form-control" placeholder="Technologies (comma separated)">
         </div>
     `;
@@ -881,9 +797,11 @@ function addProject() {
 
 function addAchievement() {
     const html = `
-        <div class="input-group mb-2">
+        <div class="input-group" style="margin-bottom: 8px;">
             <input type="text" class="form-control" placeholder="Achievement">
-            <button class="btn btn-danger" type="button" onclick="removeItem(this.parentElement)"><i class="fas fa-trash"></i></button>
+            <button type="button" class="btn-remove" onclick="removeItem(this.parentElement)" style="position: static; border-radius: 4px; width: auto; height: auto; padding: 0 12px;">
+                <i class="fas fa-trash"></i>
+            </button>
         </div>
     `;
     document.getElementById('achievementList').insertAdjacentHTML('beforeend', html);
@@ -895,11 +813,9 @@ function removeItem(element) {
     }
 }
 
-// Form Submission
 document.getElementById('resumeForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Collect all data
     const resumeData = {
         personal_info: {
             name: document.getElementById('name').value,
@@ -908,11 +824,9 @@ document.getElementById('resumeForm').addEventListener('submit', function(e) {
             linkedin: document.getElementById('linkedin').value,
             github: document.getElementById('github').value
         },
-        summary: document.getElementById('summary').value,
-        // ... collect other sections
+        summary: document.getElementById('summary').value
     };
     
-    // Save to backend
     fetch('/resume/save', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -920,15 +834,12 @@ document.getElementById('resumeForm').addEventListener('submit', function(e) {
     })
     .then(response => response.json())
     .then(data => {
-        alert('Resume saved successfully!');
+        alert('Saved!');
         window.location.href = '/resume_draft';
     })
-    .catch(error => {
-        alert('Error saving resume: ' + error);
-    });
+    .catch(error => alert('Error: ' + error));
 });
 
-// Enter key to add skills
 ['prog', 'tech', 'tool'].forEach(type => {
     document.getElementById(type + 'Input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
