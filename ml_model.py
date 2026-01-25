@@ -75,103 +75,6 @@ class CareerLensMLModel:
         
         return df
     
-    def train(self, training_data_path='data/train_quiz_data.csv'):
-        """
-        Train ML models on historical quiz data
-        """
-        print("Loading training data...")
-        df = pd.read_csv(training_data_path)
-        
-        # Prepare features
-        print("Engineering features...")
-        df_processed = self.prepare_features(df.to_dict('records'))
-        
-        # Define feature columns
-        feature_cols = [
-            'score', 'total_questions', 'recent_avg_score',
-            'topic_avg_score', 'score_std', 'topic_attempts',
-            'overall_attempt', 'topic_encoded', 'subtopic_encoded'
-        ]
-        
-        if 'time_taken' in df.columns:
-            feature_cols.extend(['avg_time', 'time_efficiency'])
-        
-        # Remove rows with NaN
-        df_clean = df_processed[feature_cols + ['difficulty_encoded', 'readiness']].dropna()
-        
-        X = df_clean[feature_cols]
-        
-        # Model 1: Predict optimal difficulty level
-        print("Training difficulty prediction model...")
-        y_difficulty = df_clean['difficulty_encoded']
-        self.difficulty_predictor = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=10,
-            random_state=42
-        )
-        self.difficulty_predictor.fit(X, y_difficulty)
-        
-        # Model 2: Predict placement readiness
-        print("Training readiness prediction model...")
-        y_readiness = df_clean['readiness'].map({
-            'Needs Improvement': 0,
-            'Average': 1,
-            'Good': 2,
-            'Excellent': 3
-        })
-        self.readiness_predictor = GradientBoostingRegressor(
-            n_estimators=100,
-            max_depth=5,
-            random_state=42
-        )
-        self.readiness_predictor.fit(X, y_readiness)
-        
-        self.is_trained = True
-        print("✓ Models trained successfully!")
-        
-        # Calculate feature importance
-        feature_importance = pd.DataFrame({
-            'feature': feature_cols,
-            'importance': self.difficulty_predictor.feature_importances_
-        }).sort_values('importance', ascending=False)
-        
-        print("\nTop 5 Most Important Features:")
-        print(feature_importance.head().to_string())
-        
-        return feature_importance
-    
-    def predict_next_difficulty(self, user_attempts):
-        """
-        Predict optimal difficulty for next quiz
-        
-        Args:
-            user_attempts: List of user's quiz attempts
-        
-        Returns:
-            str: 'beginner', 'intermediate', or 'advanced'
-        """
-        if not self.is_trained:
-            # Fallback to rule-based
-            return self._rule_based_difficulty(user_attempts)
-        
-        # Prepare features
-        df = self.prepare_features(user_attempts)
-        
-        # Get features for last attempt
-        feature_cols = [
-            'score', 'total_questions', 'recent_avg_score',
-            'topic_avg_score', 'score_std', 'topic_attempts',
-            'overall_attempt', 'topic_encoded', 'subtopic_encoded'
-        ]
-        
-        X = df[feature_cols].iloc[-1:].fillna(0)
-        
-        # Predict
-        difficulty_encoded = self.difficulty_predictor.predict(X)[0]
-        difficulty = self.label_encoders['difficulty'].inverse_transform([int(difficulty_encoded)])[0]
-        
-        return difficulty
-    
     def _rule_based_difficulty(self, user_attempts):
         """
         Fallback rule-based difficulty determination
@@ -202,11 +105,10 @@ class CareerLensMLModel:
         topic_stats = df.groupby('topic').agg({
             'score': 'sum',
             'total_questions': 'sum',
-            'timestamp': 'count'  # number of attempts
         }).reset_index()
         
+        topic_stats['attempts'] = df.groupby('topic').size().values
         topic_stats['percentage'] = (topic_stats['score'] / topic_stats['total_questions'] * 100).round(1)
-        topic_stats['attempts'] = topic_stats['timestamp']
         
         # Calculate priority (lower score = higher priority)
         topic_stats['priority'] = topic_stats['percentage'].apply(lambda x: 
@@ -226,13 +128,13 @@ class CareerLensMLModel:
             
             # Personalized recommendation
             if row['priority'] == 3:
-                weakness['recommendation'] = f"Focus heavily on {row['topic']}. Practice more questions and review fundamental concepts."
+                weakness['recommendation'] = f"Focus heavily on {row['topic']}. Your score is {row['percentage']:.1f}%. Practice more questions and review fundamental concepts."
                 weakness['action'] = 'High Priority - Practice Daily'
             elif row['priority'] == 2:
-                weakness['recommendation'] = f"Good progress in {row['topic']}. Keep practicing to strengthen understanding."
+                weakness['recommendation'] = f"Good progress in {row['topic']} with {row['percentage']:.1f}%. Keep practicing to strengthen understanding."
                 weakness['action'] = 'Medium Priority - Regular Practice'
             else:
-                weakness['recommendation'] = f"Excellent work in {row['topic']}! Maintain level with periodic review."
+                weakness['recommendation'] = f"Excellent work in {row['topic']}! You scored {row['percentage']:.1f}%. Maintain level with periodic review."
                 weakness['action'] = 'Low Priority - Periodic Review'
             
             weaknesses.append(weakness)
@@ -254,7 +156,8 @@ class CareerLensMLModel:
                 'score': 0,
                 'status': 'Not Assessed',
                 'message': 'Take quizzes to assess readiness',
-                'confidence': 0
+                'confidence': 0,
+                'total_attempts': 0
             }
         
         # Calculate basic metrics
@@ -262,23 +165,7 @@ class CareerLensMLModel:
         total_questions = sum(a['total_questions'] for a in user_attempts)
         percentage = (total_score / total_questions * 100) if total_questions > 0 else 0
         
-        # If model is trained, use it for prediction
-        if self.is_trained:
-            df = self.prepare_features(user_attempts)
-            feature_cols = [
-                'score', 'total_questions', 'recent_avg_score',
-                'topic_avg_score', 'score_std', 'topic_attempts',
-                'overall_attempt', 'topic_encoded', 'subtopic_encoded'
-            ]
-            
-            X = df[feature_cols].fillna(0)
-            readiness_scores = self.readiness_predictor.predict(X)
-            ml_readiness = readiness_scores[-1]  # Most recent prediction
-            
-            # Blend ML prediction with actual percentage
-            final_score = (percentage * 0.6) + (ml_readiness * 25 * 0.4)
-        else:
-            final_score = percentage
+        final_score = percentage
         
         # Determine status
         if final_score >= 80:
@@ -304,43 +191,83 @@ class CareerLensMLModel:
             'confidence': round(confidence, 1),
             'total_attempts': len(user_attempts)
         }
-    
-    def save_model(self, path='models/careerlens_ml.pkl'):
-        """Save trained models"""
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        joblib.dump({
-            'difficulty_predictor': self.difficulty_predictor,
-            'readiness_predictor': self.readiness_predictor,
-            'label_encoders': self.label_encoders,
-            'is_trained': self.is_trained
-        }, path)
-        print(f"✓ Model saved to {path}")
-    
-    def load_model(self, path='models/careerlens_ml.pkl'):
-        """Load trained models"""
-        if os.path.exists(path):
-            data = joblib.load(path)
-            self.difficulty_predictor = data['difficulty_predictor']
-            self.readiness_predictor = data['readiness_predictor']
-            self.label_encoders = data['label_encoders']
-            self.is_trained = data['is_trained']
-            print(f"✓ Model loaded from {path}")
-        else:
-            print(f"⚠ Model file not found at {path}")
 
+
+# ============================================================================
+# HELPER FUNCTIONS FOR APP.PY COMPATIBILITY
+# ============================================================================
+
+def analyze_user_performance(scores_data):
+    """
+    Analyze user performance and provide suggestions
+    Compatible with app.py's expected format
+    
+    Args:
+        scores_data: List of dicts with 'topic', 'subtopic', 'score', 'total_questions'
+    
+    Returns:
+        List of suggestion dicts with topic analysis
+    """
+    if not scores_data:
+        return []
+    
+    model = CareerLensMLModel()
+    weaknesses = model.analyze_weaknesses(scores_data)
+    
+    return weaknesses
+
+
+def get_overall_readiness(scores_data):
+    """
+    Get overall placement readiness score and status
+    Compatible with app.py's expected format
+    
+    Args:
+        scores_data: List of dicts with 'topic', 'subtopic', 'score', 'total_questions'
+    
+    Returns:
+        Dict with 'score', 'status', 'message', 'confidence', 'total_attempts'
+    """
+    if not scores_data:
+        return {
+            'score': 0,
+            'status': 'Not Assessed',
+            'message': 'Take quizzes to assess your readiness',
+            'confidence': 0,
+            'total_attempts': 0
+        }
+    
+    model = CareerLensMLModel()
+    readiness = model.estimate_readiness(scores_data)
+    
+    return readiness
+def determine_difficulty_level(user_scores, topic, subtopic):
+    """Determine user's difficulty level for adaptive questions"""
+    if not user_scores:
+        return "intermediate"
+    
+    # Filter relevant attempts
+    relevant = [s for s in user_scores 
+                if s['topic'] == topic and (not subtopic or s.get('subtopic') == subtopic)]
+    
+    if not relevant:
+        return "intermediate"
+    
+    # Calculate average percentage
+    total_score = sum(s['score'] for s in relevant)
+    total_q = sum(s['total_questions'] for s in relevant)
+    percent = (total_score / total_q * 100) if total_q > 0 else 0
+    
+    # Determine level
+    if percent < 40:
+        return "beginner"
+    elif percent >= 75:
+        return "advanced"
+    else:
+        return "intermediate"
 
 # Example usage
 if __name__ == "__main__":
-    # Initialize model
-    model = CareerLensMLModel()
-    
-    # Train on generated data
-    try:
-        feature_importance = model.train('data/train_quiz_data.csv')
-        model.save_model()
-    except FileNotFoundError:
-        print("⚠ Training data not found. Run dataset generator first!")
-    
     # Example: Analyze a user
     sample_attempts = [
         {'topic': 'C', 'subtopic': 'Arrays', 'score': 3, 'total_questions': 5, 
@@ -355,17 +282,13 @@ if __name__ == "__main__":
     print("ANALYSIS EXAMPLE")
     print("="*60)
     
-    # Predict next difficulty
-    next_diff = model._rule_based_difficulty(sample_attempts)
-    print(f"\nRecommended Next Difficulty: {next_diff}")
-    
     # Analyze weaknesses
-    weaknesses = model.analyze_weaknesses(sample_attempts)
+    weaknesses = analyze_user_performance(sample_attempts)
     print(f"\nWeak Topics:")
     for w in weaknesses:
         print(f"  - {w['topic']}: {w['percentage']}% ({w['level']})")
     
     # Estimate readiness
-    readiness = model.estimate_readiness(sample_attempts)
+    readiness = get_overall_readiness(sample_attempts)
     print(f"\nPlacement Readiness: {readiness['score']}% - {readiness['status']}")
     print(f"Confidence: {readiness['confidence']}%")

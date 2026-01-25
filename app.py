@@ -284,48 +284,40 @@ def grand_test():
 
     if request.method == 'POST':
         all_questions = session.get('grand_test_questions', [])
-        
+    
         if not all_questions:
             flash("Grand Test session expired. Please start again.")
             return redirect(url_for('grand_test'))
 
         score = 0
         user_answers = request.form
-        
+    
         for i, q in enumerate(all_questions):
             user_answer = user_answers.get(f'q{i}', '')
             correct_answer = str(q['answer'])
-            
+        
             if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
 
-        # Save to database
+        # ⬇️ ADD THIS BLOCK HERE ⬇️
+        # Get user's score history
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
+        user_scores = [{'topic': row['topic'], 'subtopic': row['subtopic'], 
+                        'score': row['score'], 'total_questions': row['total_questions']} 
+                       for row in result.data]
+    
+        from ai_question_generator import determine_difficulty_level
+        difficulty = determine_difficulty_level(user_scores, 'Grand Test', '')
+    
+    # Save to database WITH DIFFICULTY
         supabase.table('user_scores').insert({
             'user_email': session['user_email'],
             'topic': 'Grand Test',
             'subtopic': '',
             'score': score,
-            'total_questions': len(all_questions)
+            'total_questions': len(all_questions),
+            'difficulty': difficulty  # ADD THIS LINE
         }).execute()
-
-        session.pop('grand_test_questions', None)
-
-        percent = (score / len(all_questions)) * 100
-        
-        if percent < 40:
-            suggestion = f"Your overall score is {percent:.1f}%. Focus on all core areas."
-        elif percent < 60:
-            suggestion = f"Your overall score is {percent:.1f}%. You're on the right track."
-        elif percent < 80:
-            suggestion = f"Your overall score is {percent:.1f}%. Good performance!"
-        else:
-            suggestion = f"Your overall score is {percent:.1f}%. Outstanding!"
-
-        return render_template('grand_test.html', 
-                             all_questions=all_questions, 
-                             submitted=True, 
-                             score=score, 
-                             suggestion=suggestion)
 
     try:
         print("\n" + "="*80)
@@ -695,63 +687,45 @@ def quiz(topic, subtopic=None):
         except:
             pass
     
+    
     # POST - Submit quiz
     if request.method == 'POST':
         # Get questions from session
         topic_questions = session.get('quiz_questions', [])
-        
+    
         if not topic_questions:
             flash("Quiz session expired. Please start again.")
             return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
-        
+    
         score = 0
         user_answers = request.form
-        
+    
         for i, q in enumerate(topic_questions):
             user_answer = user_answers.get(f'q{i}', '')
             correct_answer = str(q['answer'])
-            
+        
             if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
-        
-        # Save score
+    
+        # ⬇️ ADD THIS BLOCK HERE ⬇️
+        # Get user's score history for difficulty calculation
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
+        user_scores = [{'topic': row['topic'], 'subtopic': row['subtopic'], 
+                        'score': row['score'], 'total_questions': row['total_questions']} 
+                       for row in result.data]
+    
+        from ai_question_generator import determine_difficulty_level
+        difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
+    
+        # Save score WITH DIFFICULTY
         supabase.table('user_scores').insert({
             'user_email': user_email,
             'topic': topic,
             'subtopic': subtopic or '',
             'score': score,
-            'total_questions': len(topic_questions)
+            'total_questions': len(topic_questions),
+            'difficulty': difficulty  # ADD THIS LINE
         }).execute()
-        
-        # Delete saved progress
-        try:
-            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
-        except:
-            pass
-        
-        # Clear session
-        session.pop('quiz_questions', None)
-        
-        percent = (score / len(topic_questions)) * 100
-        
-        # Generate feedback
-        if percent < 40:
-            suggestion = f"Your score is {percent:.1f}%. Focus on fundamentals."
-        elif percent < 60:
-            suggestion = f"Your score is {percent:.1f}%. Keep practicing!"
-        elif percent < 80:
-            suggestion = f"Your score is {percent:.1f}%. Good work!"
-        else:
-            suggestion = f"Your score is {percent:.1f}%. Excellent!"
-        
-        return render_template('quiz.html',
-                             topic=topic,
-                             subtopic=subtopic,
-                             questions=topic_questions,
-                             submitted=True,
-                             score=score,
-                             suggestion=suggestion)
-    
     # GET - Load quiz
     if saved_progress:
         # Resume from saved
