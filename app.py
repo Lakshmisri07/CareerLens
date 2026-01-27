@@ -276,18 +276,70 @@ def dashboard():
                          branch_key=branch_key,
                          branch_topics=branch_topics)  # <-- PASS TOPICS
 
-# 2. Update Grand Test to use AI questions (around line 500)
+# Add this to your app.py
+
+# Update the grand_test_details route
+@app.route('/grand_test/details')
+def grand_test_details():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    user_email = session['user_email']
+    
+    # Check for saved progress
+    saved_progress = None
+    has_saved = False
+    saved_question = 0
+    saved_time_left = "20:00"
+    
+    try:
+        result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
+        
+        if result.data:
+            saved_progress = result.data[0]
+            has_saved = True
+            saved_question = saved_progress['current_question']
+            time_left_seconds = saved_progress['time_left']
+            
+            # Format time
+            mins = time_left_seconds // 60
+            secs = time_left_seconds % 60
+            saved_time_left = f"{mins}:{secs:02d}"
+    except Exception as e:
+        print(f"Error checking saved progress: {e}")
+    
+    return render_template('grand_test_details.html',
+                         has_saved_progress=has_saved,
+                         saved_question=saved_question,
+                         saved_time_left=saved_time_left)
+
+
+# Update the grand_test route to handle resume/restart
 @app.route('/grand_test', methods=['GET', 'POST'])
 def grand_test():
     if 'user' not in session:
         return redirect(url_for('index'))
 
+    user_email = session['user_email']
+    
+    # Handle resume or restart
+    resume = request.args.get('resume') == 'true'
+    restart = request.args.get('restart') == 'true'
+    
+    if restart:
+        # Delete saved progress
+        try:
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
+        except:
+            pass
+    
+    # POST - Submit quiz
     if request.method == 'POST':
         all_questions = session.get('grand_test_questions', [])
     
         if not all_questions:
             flash("Grand Test session expired. Please start again.")
-            return redirect(url_for('grand_test'))
+            return redirect(url_for('grand_test_details'))
 
         score = 0
         user_answers = request.form
@@ -299,9 +351,8 @@ def grand_test():
             if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
 
-        # ⬇️ ADD THIS BLOCK HERE ⬇️
-        # Get user's score history
-        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
+        # Get user's score history for difficulty calculation
+        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
         user_scores = [{'topic': row['topic'], 'subtopic': row['subtopic'], 
                         'score': row['score'], 'total_questions': row['total_questions']} 
                        for row in result.data]
@@ -309,94 +360,135 @@ def grand_test():
         from ai_question_generator import determine_difficulty_level
         difficulty = determine_difficulty_level(user_scores, 'Grand Test', '')
     
-    # Save to database WITH DIFFICULTY
+        # Save score WITH DIFFICULTY
         supabase.table('user_scores').insert({
-            'user_email': session['user_email'],
+            'user_email': user_email,
             'topic': 'Grand Test',
             'subtopic': '',
             'score': score,
             'total_questions': len(all_questions),
-            'difficulty': difficulty  # ADD THIS LINE
+            'difficulty': difficulty
         }).execute()
-
-    try:
-        print("\n" + "="*80)
-        print("🎯 GENERATING GRAND TEST - ALL AI QUESTIONS")
-        print("="*80)
-
-        # Get user scores for adaptive difficulty
-        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).execute()
-
-        user_scores = []
-        for row in result.data:
-            user_scores.append({
-                'topic': row['topic'],
-                'subtopic': row['subtopic'],
-                'score': row['score'],
-                'total_questions': row['total_questions']
-            })
-
-        all_questions = []
-
-        from ai_question_generator import generate_quiz_questions, determine_difficulty_level
         
-        # Technical Questions (5 questions)
-        print("\n[1/3] Generating Technical Questions...")
-        tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
-        tech_questions = generate_quiz_questions(
-            'Technical', 
-            'Programming & CS Fundamentals', 
-            tech_difficulty, 
-            5
-        )
-        all_questions.extend(tech_questions)
-        print(f"✅ Added {len(tech_questions)} technical questions")
+        # Delete saved progress after submission
+        try:
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
+        except:
+            pass
 
-        # Aptitude Questions (5 questions)
-        print("\n[2/3] Generating Aptitude Questions...")
-        apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
-        apt_questions = generate_quiz_questions(
-            'Quantitative Aptitude', 
-            'Quantitative & Logical Reasoning', 
-            apt_difficulty, 
-            5
-        )
-        all_questions.extend(apt_questions)
-        print(f"✅ Added {len(apt_questions)} aptitude questions")
+        percent = (score / len(all_questions) * 100)
+        
+        if percent >= 80:
+            suggestion = "Excellent! You're well-prepared for placements."
+        elif percent >= 60:
+            suggestion = "Good work! Review weak areas and practice more."
+        else:
+            suggestion = "Keep practicing. Focus on improving your fundamentals."
 
-        # English Questions (5 questions)
-        print("\n[3/3] Generating English Questions...")
-        eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
-        eng_questions = generate_quiz_questions(
-            'Grammar', 
-            'Grammar & Communication', 
-            eng_difficulty, 
-            5
-        )
-        all_questions.extend(eng_questions)
-        print(f"✅ Added {len(eng_questions)} English questions")
+        return render_template('grand_test.html',
+                             all_questions=all_questions,
+                             submitted=True,
+                             score=score,
+                             suggestion=suggestion)
 
-        print(f"\n✅ TOTAL: {len(all_questions)} AI-generated questions")
-        print("="*80)
+    # GET - Load or generate quiz
+    saved_progress = None
+    if resume and not restart:
+        try:
+            result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
+            if result.data:
+                saved_progress = result.data[0]
+        except:
+            pass
+    
+    if saved_progress:
+        # Resume from saved
+        all_questions = json.loads(saved_progress['questions'])
+        current_question = saved_progress['current_question']
+        time_left = saved_progress['time_left']
+        saved_answers = json.loads(saved_progress['answers']) if saved_progress['answers'] else {}
+    else:
+        # Generate new questions
+        try:
+            print("\n" + "="*80)
+            print("🎯 GENERATING GRAND TEST - ALL AI QUESTIONS")
+            print("="*80)
 
-        # Store in session
-        session['grand_test_questions'] = all_questions
+            result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
 
-        return render_template('grand_test.html', 
-                             all_questions=all_questions, 
-                             submitted=False)
+            user_scores = []
+            for row in result.data:
+                user_scores.append({
+                    'topic': row['topic'],
+                    'subtopic': row['subtopic'],
+                    'score': row['score'],
+                    'total_questions': row['total_questions']
+                })
 
-    except Exception as e:
-        print(f"❌ Error generating Grand Test: {e}")
-        import traceback
-        traceback.print_exc()
-        flash("Failed to generate Grand Test. Please try again.")
-        return redirect(url_for('dashboard'))
-@app.route('/grand_test/details')
-def grand_test_details():
-    if 'user' not in session:
-        return redirect(url_for('index'))
-    return render_template('grand_test_details.html')
+            all_questions = []
+
+            from ai_question_generator import generate_quiz_questions, determine_difficulty_level
+            
+            # Technical Questions (5 questions)
+            print("\n[1/3] Generating Technical Questions...")
+            tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
+            tech_questions = generate_quiz_questions(
+                'Technical', 
+                'Programming & CS Fundamentals', 
+                tech_difficulty, 
+                5
+            )
+            all_questions.extend(tech_questions)
+            print(f"✅ Added {len(tech_questions)} technical questions")
+
+            # Aptitude Questions (5 questions)
+            print("\n[2/3] Generating Aptitude Questions...")
+            apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
+            apt_questions = generate_quiz_questions(
+                'Quantitative Aptitude', 
+                'Quantitative & Logical Reasoning', 
+                apt_difficulty, 
+                5
+            )
+            all_questions.extend(apt_questions)
+            print(f"✅ Added {len(apt_questions)} aptitude questions")
+
+            # English Questions (5 questions)
+            print("\n[3/3] Generating English Questions...")
+            eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
+            eng_questions = generate_quiz_questions(
+                'Grammar', 
+                'Grammar & Communication', 
+                eng_difficulty, 
+                5
+            )
+            all_questions.extend(eng_questions)
+            print(f"✅ Added {len(eng_questions)} English questions")
+
+            print(f"\n✅ TOTAL: {len(all_questions)} AI-generated questions")
+            print("="*80)
+
+            # Initialize variables for new test
+            current_question = 0
+            time_left = 1200  # 20 minutes
+            saved_answers = {}
+
+        except Exception as e:
+            print(f"❌ Error generating Grand Test: {e}")
+            import traceback
+            traceback.print_exc()
+            flash("Failed to generate Grand Test. Please try again.")
+            return redirect(url_for('grand_test_details'))
+    
+    # Store in session
+    session['grand_test_questions'] = all_questions
+    
+    return render_template('grand_test.html',
+                         all_questions=all_questions,
+                         submitted=False,
+                         time_left=time_left,
+                         current_question=current_question,
+                         saved_answers=saved_answers)
 @app.route('/suggestions')
 def suggestions():
     if 'user' not in session:

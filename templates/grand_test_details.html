@@ -1,4 +1,3 @@
-<!-- templates/grand_test_details.html - CORRECTED VERSION -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,9 +146,34 @@
             font-weight: 600;
         }
 
+        /* Saved Progress Alert */
+        .saved-progress-alert {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .saved-progress-alert p {
+            margin: 0;
+        }
+
+        .saved-progress-alert strong {
+            color: var(--text-primary);
+        }
+
+        .saved-progress-alert .text-muted {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
         .action-buttons {
-            display: grid;
+            display: flex;
+            justify-content: center;
             gap: 1rem;
+            flex-wrap: wrap;
             margin-top: 2rem;
         }
 
@@ -162,18 +186,31 @@
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             transition: all 0.3s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
         }
 
         .btn:hover {
             background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
             transform: translateY(-2px);
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
         }
 
         .instructions {
@@ -200,7 +237,11 @@
 
         @media (max-width: 768px) {
             .action-buttons {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -215,7 +256,7 @@
 
     <div class="container">
         <a href="/dashboard" class="btn-back">
-             Back to Dashboard
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
 
         <div class="quiz-info">
@@ -245,13 +286,36 @@
                 </div>
             </div>
 
+            <!-- Saved Progress Alert -->
+            {% if has_saved_progress %}
+            <div class="saved-progress-alert">
+                <p><i class="fas fa-info-circle"></i> <strong>You have a saved test in progress</strong></p>
+                <p class="text-muted">Question {{ saved_question }}/15 • {{ saved_time_left }} remaining</p>
+            </div>
+            {% endif %}
+
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <form action="/grand_test" method="GET">
-                    <button type="submit" class="btn" style="width: 100%;">
+                {% if has_saved_progress %}
+                <form action="/grand_test" method="GET" style="margin: 0;">
+                    <input type="hidden" name="resume" value="true">
+                    <button type="submit" class="btn">
+                        <i class="fas fa-play"></i> Resume Test
+                    </button>
+                </form>
+                <form action="/grand_test" method="GET" style="margin: 0;">
+                    <input type="hidden" name="restart" value="true">
+                    <button type="submit" class="btn btn-outline">
+                        <i class="fas fa-redo"></i> Start Fresh
+                    </button>
+                </form>
+                {% else %}
+                <form action="/grand_test" method="GET" style="margin: 0;">
+                    <button type="submit" class="btn">
                         <i class="fas fa-play"></i> Start Grand Test
                     </button>
                 </form>
+                {% endif %}
             </div>
 
             <!-- Instructions -->
@@ -261,7 +325,8 @@
                     <li>Covers all major topics: Technical (5Q), Aptitude (5Q), English (5Q)</li>
                     <li>Questions are AI-generated based on your performance</li>
                     <li>Timer will start once you begin the test</li>
-                    <li>Your score will be calculated instantly after submission</li>
+                    <li>You can save and resume the test anytime</li>
+                    <li>Timer will pause when you save progress</li>
                     <li>All questions must be answered before submission</li>
                 </ul>
             </div>
