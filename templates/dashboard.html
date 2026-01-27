@@ -231,6 +231,13 @@
             padding-left: 1.5rem;
         }
 
+        .no-results-msg {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -574,20 +581,41 @@
             }
         }
 
+        // FIXED SEARCH FILTER FUNCTION
         function filterTopics(inputId, listId) {
             const input = document.getElementById(inputId);
             const searchTerm = input.value.toLowerCase().trim();
             const listContainer = document.getElementById(listId);
-            const items = listContainer.querySelectorAll('.dropdown-item, a.dropdown-item, div.dropdown-item');
+            
+            // Get all items - both links and divs
+            const items = listContainer.querySelectorAll('.dropdown-item');
+            
+            let visibleCount = 0;
             
             items.forEach(item => {
-                const text = item.textContent.toLowerCase();
+                // Get text content, removing extra whitespace and icons
+                const text = item.textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+                
                 if (searchTerm === '' || text.includes(searchTerm)) {
                     item.style.display = 'flex';
+                    visibleCount++;
                 } else {
                     item.style.display = 'none';
                 }
             });
+            
+            // Show "No results" message if needed
+            const existingMsg = listContainer.querySelector('.no-results-msg');
+            if (existingMsg) {
+                existingMsg.remove();
+            }
+            
+            if (visibleCount === 0 && searchTerm !== '') {
+                const noResultsMsg = document.createElement('div');
+                noResultsMsg.className = 'no-results-msg';
+                noResultsMsg.innerHTML = '<i class="fas fa-search"></i> No topics found';
+                listContainer.appendChild(noResultsMsg);
+            }
         }
 
         function showSubtopics(topic) {
