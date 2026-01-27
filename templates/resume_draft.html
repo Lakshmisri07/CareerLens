@@ -76,44 +76,50 @@
         /* Top Navigation */
         .top-nav {
             max-width: 850px;
-            margin: 0 auto 20px;
+            margin: 0 auto 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
         .btn-back-dash {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            padding: 12px 24px;
-            border-radius: 12px;
+            background: transparent;
+            border: none;
+            padding: 0;
             text-decoration: none;
-            color: var(--text-main);
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
-            box-shadow: var(--glass-shadow);
             transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-back-dash i {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
         }
 
         .btn-back-dash:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
-            color: var(--primary);
+            color: white;
+        }
+
+        .btn-back-dash:hover i {
+            transform: translateX(-4px);
         }
 
         /* Style Selector */
         .style-selector {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             flex-wrap: wrap;
             background: var(--glass-bg);
             backdrop-filter: var(--glass-blur);
-            padding: 15px 20px;
+            padding: 12px 18px;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             box-shadow: var(--glass-shadow);
@@ -123,23 +129,25 @@
             font-weight: 700;
             color: var(--text-main);
             white-space: nowrap;
+            margin-right: 4px;
         }
 
         .style-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--glass-border);
-            background: white;
+            padding: 8px 14px;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             color: var(--text-muted);
             transition: all 0.3s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .style-btn:hover {
             border-color: var(--primary);
             color: var(--primary);
+            background: white;
             transform: translateY(-2px);
         }
 
@@ -147,6 +155,7 @@
             background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
             border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         /* Resume Container - SINGLE PAGE A4 */
@@ -558,11 +567,16 @@
 
             .top-nav {
                 flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-back-dash {
+                justify-content: flex-start;
             }
 
             .style-selector {
                 width: 100%;
-                justify-content: center;
+                justify-content: flex-start;
             }
 
             .style-twocol .resume-page {
@@ -613,7 +627,9 @@
 <body>
 
 <div class="top-nav">
-    <a href="/dashboard" class="btn-back-dash">Back to Dashboard</a>
+    <a href="/dashboard" class="btn-back-dash">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
     <div class="style-selector">
         <span>Style:</span>
         <button class="style-btn active" onclick="changeStyle('classic', this)">Classic</button>
@@ -768,8 +784,6 @@
     </button>
 </div>
 
-<!-- Replace the entire <script> section in resume_draft.html with this -->
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -778,7 +792,6 @@ async function downloadPDF() {
     const actionBar = document.querySelector('.action-bar');
     const styleSelector = document.querySelector('.style-selector');
     
-    // Hide UI elements
     topNav.style.display = 'none';
     actionBar.style.display = 'none';
     if (styleSelector) styleSelector.style.display = 'none';
@@ -787,33 +800,28 @@ async function downloadPDF() {
     const container = document.querySelector('.resume-container');
     const name = '{{ resume_data.personal_info.name }}'.replace(/\s+/g, '_');
     
-    // Store original styles
     const originalPadding = element.style.padding;
     const originalHeight = element.style.height;
     const originalOverflow = element.style.overflow;
     const originalBoxShadow = container.style.boxShadow;
     const originalBorderRadius = container.style.borderRadius;
     
-    // Optimize for PDF
     element.style.padding = '40px 50px';
     element.style.height = 'auto';
     element.style.overflow = 'visible';
     container.style.boxShadow = 'none';
     container.style.borderRadius = '0';
     
-    // Show loading message
     const loadingMsg = document.createElement('div');
     loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px 40px; border-radius: 10px; z-index: 10000; font-size: 18px;';
     loadingMsg.textContent = 'Generating PDF...';
     document.body.appendChild(loadingMsg);
     
     try {
-        // Wait a bit for layout to settle
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Capture the element as canvas with high quality
         const canvas = await html2canvas(element, {
-            scale: 3, // High quality
+            scale: 3,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
@@ -822,18 +830,14 @@ async function downloadPDF() {
             height: element.scrollHeight,
             windowWidth: 850,
             windowHeight: element.scrollHeight,
-            x: 0,
-            y: 0,
             scrollY: -window.scrollY,
             scrollX: -window.scrollX
         });
         
-        // Calculate dimensions for Letter size (8.5 x 11 inches)
         const imgWidth = 8.5;
         const pageHeight = 11;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Create PDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -844,15 +848,12 @@ async function downloadPDF() {
         
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
-        // Calculate if we need multiple pages
         let heightLeft = imgHeight;
         let position = 0;
         
-        // Add first page
         pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
         
-        // Add additional pages if content exceeds one page
         while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
@@ -860,13 +861,10 @@ async function downloadPDF() {
             heightLeft -= pageHeight;
         }
         
-        // Save PDF
         pdf.save(`${name}_Resume.pdf`);
         
-        // Remove loading message
         loadingMsg.remove();
         
-        // Show success
         const successMsg = document.createElement('div');
         successMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #10b981; color: white; padding: 20px 40px; border-radius: 10px; z-index: 10000; font-size: 18px;';
         successMsg.innerHTML = '<i class="fas fa-check-circle"></i> PDF downloaded successfully!';
@@ -877,7 +875,6 @@ async function downloadPDF() {
         console.error('PDF generation error:', error);
         loadingMsg.remove();
         
-        // Show error
         const errorMsg = document.createElement('div');
         errorMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ef4444; color: white; padding: 20px 40px; border-radius: 10px; z-index: 10000; font-size: 18px;';
         errorMsg.textContent = 'Error generating PDF. Try using browser Print (Ctrl+P) instead.';
@@ -885,14 +882,12 @@ async function downloadPDF() {
         setTimeout(() => errorMsg.remove(), 4000);
         
     } finally {
-        // Restore original styles
         element.style.padding = originalPadding;
         element.style.height = originalHeight;
         element.style.overflow = originalOverflow;
         container.style.boxShadow = originalBoxShadow;
         container.style.borderRadius = originalBorderRadius;
         
-        // Show UI elements
         topNav.style.display = 'flex';
         actionBar.style.display = 'flex';
         if (styleSelector) styleSelector.style.display = 'flex';
