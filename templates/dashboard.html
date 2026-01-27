@@ -6,7 +6,6 @@
     <title>Dashboard - CareerLens</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* ... (keep all existing CSS - same as before) ... */
         :root {
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
@@ -171,14 +170,12 @@
             color: var(--text-primary) !important;
             font-size: 0.95rem !important;
             font-family: inherit !important;
-            cursor: text !important;
         }
 
         .search-input input:focus {
             outline: none !important;
             border-color: var(--accent) !important;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-            cursor: text !important;
         }
 
         .search-input input::placeholder {
@@ -313,27 +310,6 @@
             margin-bottom: 1.5rem;
         }
 
-        @media (max-width: 768px) {
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card, .dropdown-item, a {
-            -webkit-tap-highlight-color: transparent;
-            outline: none !important;
-        }
-
-        .card:focus, .dropdown-item:focus, a:focus {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Branch Badge */
         .branch-badge {
             background: rgba(99, 102, 241, 0.2);
             color: var(--accent);
@@ -342,6 +318,12 @@
             font-size: 0.85rem;
             font-weight: 600;
             margin-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -585,7 +567,7 @@
                         const listId = dropdown.querySelector('.topic-list').id;
                         const items = document.getElementById(listId).querySelectorAll('.dropdown-item');
                         items.forEach(item => {
-                            item.style.display = 'block';
+                            item.style.display = 'flex';
                         });
                     }
                 }, 100);
@@ -596,12 +578,12 @@
             const input = document.getElementById(inputId);
             const searchTerm = input.value.toLowerCase().trim();
             const listContainer = document.getElementById(listId);
-            const items = listContainer.querySelectorAll('.dropdown-item');
+            const items = listContainer.querySelectorAll('.dropdown-item, a.dropdown-item, div.dropdown-item');
             
             items.forEach(item => {
                 const text = item.textContent.toLowerCase();
                 if (searchTerm === '' || text.includes(searchTerm)) {
-                    item.style.display = 'block';
+                    item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
                 }
@@ -623,7 +605,6 @@
                     </a>`
                 ).join('');
             } else {
-                // No subtopics, go directly to quiz
                 window.location.href = `/quiz/${encodeURIComponent(topic)}/details`;
                 return;
             }
