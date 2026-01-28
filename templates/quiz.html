@@ -482,8 +482,7 @@
         let timeLeft = {{ time_left or 900 }};
         let timerInterval;
         const topic = "{{ topic }}";
-        const subtopic = "{{ subtopic or '' }}";
-
+        const subtopic = "{{ subtopic if subtopic else '' }}";
         function startTimer() {
             updateTimerDisplay();
             
@@ -537,26 +536,26 @@
         async function confirmSave() {
             clearInterval(timerInterval);
             closeModal();
-            
+    
             const questions = {{ questions | tojson }};
             const answers = getCurrentAnswers();
             const answeredCount = Object.keys(answers).length;
-            
+    
             try {
                 const response = await fetch('/quiz/save', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        topic: topic,
-                        subtopic: subtopic,
-                        questions: questions,
-                        current_question: answeredCount,
-                        answers: answers,
-                        time_left: timeLeft
-                    })
-                });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    subtopic: subtopic || '',  // <-- FORCE EMPTY STRING
+                    questions: questions,
+                    current_question: answeredCount,
+                    answers: answers,
+                    time_left: timeLeft
+                })
+            });
                 
                 const result = await response.json();
                 

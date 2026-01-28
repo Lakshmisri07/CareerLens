@@ -162,24 +162,24 @@
         }
 
         .search-input input {
-            width: 100% !important;
-            padding: 0.75rem 1rem 0.75rem 2.5rem !important;
-            background: var(--bg-tertiary) !important;
-            border: 1px solid var(--border) !important;
-            border-radius: 8px !important;
-            color: var(--text-primary) !important;
-            font-size: 0.95rem !important;
-            font-family: inherit !important;
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
         }
 
         .search-input input:focus {
-            outline: none !important;
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .search-input input::placeholder {
-            color: var(--text-muted) !important;
+            color: var(--text-muted);
         }
 
         .search-input::before {
@@ -212,7 +212,7 @@
         }
 
         .dropdown-item {
-            display: flex !important;
+            display: flex;
             gap: 0.75rem;
             padding: 0.875rem 1rem;
             cursor: pointer;
@@ -220,6 +220,7 @@
             transition: all 0.2s;
             color: var(--text-primary);
             text-decoration: none;
+            align-items: center;
         }
 
         .dropdown-item:last-child {
@@ -263,9 +264,9 @@
         }
 
         .modal-overlay .search-input input {
-            background: var(--bg-tertiary) !important;
-            color: var(--text-primary) !important;
-            border-color: var(--border) !important;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border);
         }
 
         .modal-overlay .dropdown-item {
@@ -339,39 +340,31 @@
         <div class="navbar-content">
             <div class="logo">
                 <i class="fas fa-graduation-cap"></i> CareerLens
-                <span class="branch-badge">{{ branch_key }}</span>
+                <span class="branch-badge">CSE</span>
             </div>
             <div style="display: flex; gap: 1rem; align-items: center;">
                 <div style="position: relative;">
                     <button onclick="toggleProfile()" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 0.5rem 1rem; border-radius: 8px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
-                        <i class="fas fa-user-circle"></i> {{ session.user }}
+                        <i class="fas fa-user-circle"></i> Demo User
                     </button>
         
                     <div id="profileDropdown" style="display: none; position: absolute; top: 110%; right: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; min-width: 280px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 1000; padding: 1.5rem;">
                         <div style="text-align: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
                             <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--accent); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white;">
-                                {{ session.user[0].upper() }}
+                                D
                             </div>
-                            <h3 style="color: var(--text-primary); margin-bottom: 0.25rem;">{{ session.user }}</h3>
-                            <p style="color: var(--text-muted); font-size: 0.85rem;">{{ user_profile.email if user_profile else '' }}</p>
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.25rem;">Demo User</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">demo@example.com</p>
                         </div>
         
                         <div style="margin-bottom: 1rem;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <span style="color: var(--text-muted);">Branch:</span>
-                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.branch if user_profile else 'N/A' }}</span>
+                                <span style="color: var(--text-primary); font-weight: 600;">CSE</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <span style="color: var(--text-muted);">CGPA:</span>
-                                <span style="color: var(--accent); font-weight: 600;">{{ user_profile.cgpa if user_profile else 'N/A' }}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="color: var(--text-muted);">Backlogs:</span>
-                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.backlogs if user_profile else 'N/A' }}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-muted);">Internships:</span>
-                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.internships if user_profile else 'N/A' }}</span>
+                                <span style="color: var(--accent); font-weight: 600;">8.5</span>
                             </div>
                         </div>
         
@@ -387,15 +380,15 @@
     <div class="container">
         <div class="grid grid-3 mb-2">
             <div class="stat-card">
-                <div class="stat-value">{{ total_quizzes }}</div>
+                <div class="stat-value">15</div>
                 <div class="stat-label">Quizzes Taken</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">{{ average_score }}%</div>
+                <div class="stat-value">78%</div>
                 <div class="stat-label">Average Score</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">{{ streak_days }}</div>
+                <div class="stat-value">5</div>
                 <div class="stat-label">Day Streak</div>
             </div>
         </div>
@@ -420,11 +413,24 @@
                                autocomplete="off">
                     </div>
                     <div class="topic-list" id="techList">
-                        {% for topic in branch_topics %}
-                        <div class="dropdown-item" onclick="showSubtopics('{{ topic }}')">
-                            <i class="fas fa-code"></i> {{ topic }}
+                        <div class="dropdown-item" onclick="showSubtopics('C')">
+                            <i class="fas fa-code"></i> C
                         </div>
-                        {% endfor %}
+                        <div class="dropdown-item" onclick="showSubtopics('Java')">
+                            <i class="fas fa-coffee"></i> Java
+                        </div>
+                        <div class="dropdown-item" onclick="showSubtopics('Python')">
+                            <i class="fab fa-python"></i> Python
+                        </div>
+                        <div class="dropdown-item" onclick="showSubtopics('DBMS')">
+                            <i class="fas fa-database"></i> DBMS
+                        </div>
+                        <div class="dropdown-item" onclick="showSubtopics('OS')">
+                            <i class="fas fa-desktop"></i> OS
+                        </div>
+                        <div class="dropdown-item" onclick="showSubtopics('Data Structures')">
+                            <i class="fas fa-project-diagram"></i> Data Structures
+                        </div>
                     </div>
                 </div>
             </div>
@@ -532,28 +538,19 @@
 
     <script>
         const SUBTOPICS = {
-    'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
-    'Java': ['OOPs', 'Inheritance', 'Exceptions'],
-    'Python': ['Lists', 'Dictionaries', 'File Handling'],
-    'DBMS': ['SQL', 'Normalization', 'Transactions'],
-    'OS': ['Processes', 'Threads', 'Memory Management'],
-    'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
-    'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
-    'Digital Electronics': ['Logic Gates', 'Boolean Algebra', 'Combinational Circuits'],
-    'Signal Processing': ['Fourier Transform', 'Filters', 'Sampling'],
-    'Embedded Systems': ['Microcontrollers', '8051', 'ARM', 'Interfacing'],
-    'Circuit Theory': ['Ohms Law', 'Kirchhoff Laws', 'AC Circuits'],
-    'Power Systems': ['Generation', 'Transmission', 'Distribution'],
-    'Thermodynamics': ['Laws', 'Heat Transfer', 'Entropy'],
-    'Mechanics': ['Statics', 'Dynamics', 'Kinematics'],
-    'Structural Analysis': ['Beams', 'Trusses', 'Frames'],
-    'Chemical Thermodynamics': ['Laws of Thermodynamics', 'Phase Equilibrium']
-};
+            'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
+            'Java': ['OOPs', 'Inheritance', 'Exceptions'],
+            'Python': ['Lists', 'Dictionaries', 'File Handling'],
+            'DBMS': ['SQL', 'Normalization', 'Transactions'],
+            'OS': ['Processes', 'Threads', 'Memory Management'],
+            'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees']
+        };
 
         function toggleDropdown(id, buttonElement) {
             const dropdown = document.getElementById(id);
             const isActive = dropdown.classList.contains('active');
             
+            // Close all dropdowns
             document.querySelectorAll('.dropdown-section').forEach(d => {
                 d.classList.remove('active');
             });
@@ -561,16 +558,19 @@
                 b.classList.remove('active');
             });
             
+            // Open clicked dropdown if it wasn't active
             if (!isActive) {
                 dropdown.classList.add('active');
                 buttonElement.classList.add('active');
                 
+                // Focus search input after animation
                 setTimeout(() => {
                     const searchInput = dropdown.querySelector('input[type="text"]');
                     if (searchInput) {
                         searchInput.value = '';
                         searchInput.focus();
                         
+                        // Reset filter to show all items
                         const listId = dropdown.querySelector('.topic-list').id;
                         const items = document.getElementById(listId).querySelectorAll('.dropdown-item');
                         items.forEach(item => {
@@ -593,9 +593,25 @@
             let visibleCount = 0;
             
             items.forEach(item => {
-                // Get text content, removing extra whitespace and icons
-                const text = item.textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+                // Get text content from the item
+                let text = '';
                 
+                // If it's a link, get the text after the icon
+                if (item.tagName === 'A') {
+                    // Remove icon and get just the text
+                    const clone = item.cloneNode(true);
+                    const icon = clone.querySelector('i');
+                    if (icon) icon.remove();
+                    text = clone.textContent.trim().toLowerCase();
+                } else {
+                    // For divs (onclick items), same approach
+                    const clone = item.cloneNode(true);
+                    const icon = clone.querySelector('i');
+                    if (icon) icon.remove();
+                    text = clone.textContent.trim().toLowerCase();
+                }
+                
+                // Check if search term matches
                 if (searchTerm === '' || text.includes(searchTerm)) {
                     item.style.display = 'flex';
                     visibleCount++;
@@ -647,6 +663,7 @@
             }
         }
 
+        // Close dropdown and modal on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeModal();
@@ -659,6 +676,7 @@
             }
         });
 
+        // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
             const isCard = e.target.closest('.card');
             const isButton = e.target.closest('.browse-btn');
@@ -679,6 +697,7 @@
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         }
 
+        // Close profile dropdown when clicking outside
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('profileDropdown');
             const button = e.target.closest('button');

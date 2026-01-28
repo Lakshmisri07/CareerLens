@@ -243,7 +243,31 @@
             .btn {
                 width: 100%;
             }
+
         }
+
+        /* Add this to the <style> section: */
+.saved-progress-alert {
+    background: var(--bg-tertiary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--accent);
+}
+
+.saved-progress-alert p {
+    margin: 0;
+}
+
+.saved-progress-alert strong {
+    color: var(--text-primary);
+}
+
+.saved-progress-alert .text-muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
     </style>
 </head>
 <body>
@@ -281,6 +305,7 @@
                     </span>
                 </div>
             </div>
+            <!-- ADD THIS SECTION IF MISSING (after quiz info details): -->
 
             <!-- Saved Progress Alert -->
             {% if has_saved_progress %}
@@ -313,6 +338,7 @@
                 </form>
                 {% endif %}
             </div>
+           
 
             <!-- Instructions -->
             <div class="instructions">

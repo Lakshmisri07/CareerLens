@@ -680,7 +680,6 @@ def list_certificates():
     except Exception as e:
         return {'error': f'Error fetching certificates: {str(e)}'}, 500
 
-# UPDATED: Quiz details page for ALL topics (Technical, Aptitude, English)
 @app.route('/quiz/<path:topic>/details')
 @app.route('/quiz/<path:topic>/<path:subtopic>/details')
 def quiz_details(topic, subtopic=None):
@@ -699,8 +698,8 @@ def quiz_details(topic, subtopic=None):
     
     # Check for saved progress
     try:
-        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
-        
+        search_subtopic = subtopic if subtopic else ''
+        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
         has_saved = bool(saved.data)
         saved_question = saved.data[0]['current_question'] if has_saved else 0
         saved_time = saved.data[0]['time_left'] if has_saved else 900
@@ -742,8 +741,6 @@ def quiz_details(topic, subtopic=None):
                          has_saved_progress=has_saved,
                          saved_question=saved_question,
                          saved_time_left=saved_time_left)
-# ============================================================================
-# UPDATED QUIZ ROUTE (with resume/save)
 
 @app.route('/quiz/<path:topic>', methods=['GET', 'POST'])
 @app.route('/quiz/<path:topic>/<path:subtopic>', methods=['GET', 'POST'])
@@ -765,7 +762,8 @@ def quiz(topic, subtopic=None):
     if restart:
         # Delete saved progress
         try:
-            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+            search_subtopic = subtopic if subtopic else ''
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
         except:
             pass
     
@@ -773,7 +771,8 @@ def quiz(topic, subtopic=None):
     saved_progress = None
     if resume and not restart:
         try:
-            result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+            search_subtopic = subtopic if subtopic else ''
+            result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
             if result.data:
                 saved_progress = result.data[0]
         except:
@@ -885,13 +884,13 @@ def save_quiz():
     
     try:
         # Delete existing progress
-        supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', data['topic']).eq('subtopic', data.get('subtopic', '')).execute()
-        
+        search_subtopic = data.get('subtopic') if data.get('subtopic') else ''
+        supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', data['topic']).eq('subtopic', search_subtopic).execute()
         # Save new progress
         supabase.table('quiz_progress').insert({
             'user_email': user_email,
             'topic': data['topic'],
-            'subtopic': data.get('subtopic', ''),
+            'subtopic': search_subtopic,
             'questions': json.dumps(data['questions']),
             'current_question': data['current_question'],
             'answers': json.dumps(data['answers']),
