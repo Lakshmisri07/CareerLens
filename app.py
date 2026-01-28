@@ -725,7 +725,7 @@ def quiz_details(topic, subtopic=None):
                 'topic': topic,
                 'subtopic': subtopic or '',
                 'score': row['score'],
-                'total_questions': row['total_questions']
+                'total_questions': row['total_questions'],
             })
         
         from ai_question_generator import determine_difficulty_level
