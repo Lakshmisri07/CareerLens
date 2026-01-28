@@ -144,7 +144,7 @@
         }
 
         .btn-secondary {
-            background: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--primary);
             border: 2px solid var(--primary);
         }
@@ -522,8 +522,8 @@
 
         {% else %}
         <!-- Results -->
-        <a href="/dashboard" class="btn btn-secondary" style="margin-bottom: 2rem; display: inline-flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+             Back to Dashboard
         </a>
 
         <div class="result-card">
@@ -540,14 +540,11 @@
             </div>
 
             <div class="action-buttons">
-                <a href="/suggestions" class="btn btn-primary" style="background: linear-gradient(145deg, #8b5cf6, #7c3aed);">
-                    <i class="fas fa-lightbulb"></i> View AI Suggestions
-                </a>
-                <a href="/grand_test/details" class="btn btn-secondary">
+                <a href="/grand_test/details" class="btn btn-primary" style="background: linear-gradient(145deg, #8b5cf6, #7c3aed);">
                     <i class="fas fa-redo"></i> Retake Test
                 </a>
-                <a href="/resume_draft" class="btn btn-success">
-                    <i class="fas fa-file-alt"></i> Generate Resume
+                <a href="/suggestions" class="btn btn-primary" style="background: linear-gradient(145deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-lightbulb"></i> View AI Suggestions
                 </a>
             </div>
         </div>
@@ -584,11 +581,6 @@
             <div class="modal-title">Progress Saved!</div>
             <div class="modal-message">
                 Your test progress has been saved successfully.
-            </div>
-            <div class="modal-buttons">
-                <button type="button" class="btn-modal btn-modal-primary" onclick="window.location.href='/dashboard'">
-                    <i class="fas fa-home"></i> Go to Dashboard
-                </button>
             </div>
         </div>
     </div>

@@ -752,22 +752,94 @@ def quiz(topic, subtopic=None):
     from urllib.parse import unquote
     topic = unquote(topic).strip().rstrip('/')
     if subtopic:
-        subtopic = unquote(subtopic).strip().rstrip('/')  # ← ADD .rstrip('/')
+        subtopic = unquote(subtopic).strip().rstrip('/')
     
     user_email = session['user_email']
-        # Handle resume or restart
+    
+    # Handle resume or restart
     resume = request.args.get('resume') == 'true'
     restart = request.args.get('restart') == 'true'
     
     if restart:
-        # Delete saved progress
         try:
             search_subtopic = subtopic if subtopic else ''
             supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
         except:
             pass
     
-    # Check for saved progress
+    # POST - Submit quiz
+    if request.method == 'POST':
+        topic_questions = session.get('quiz_questions', [])
+        
+        if not topic_questions:
+            flash("Quiz session expired. Please start again.")
+            return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
+        
+        # Calculate score
+        score = 0
+        user_answers = request.form
+        
+        for i, q in enumerate(topic_questions):
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
+            if user_answer.strip().lower() == correct_answer.strip().lower():
+                score += 1
+        
+        # Get difficulty
+        try:
+            result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
+            user_scores = [{'topic': row['topic'], 'subtopic': row.get('subtopic', ''), 
+                            'score': row['score'], 'total_questions': row['total_questions']} 
+                           for row in result.data]
+            from ai_question_generator import determine_difficulty_level
+            difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
+        except:
+            difficulty = 'intermediate'
+        
+        # Save score
+        try:
+            supabase.table('user_scores').insert({
+                'user_email': user_email,
+                'topic': topic,
+                'subtopic': subtopic or '',
+                'score': score,
+                'total_questions': len(topic_questions),
+                'difficulty': difficulty
+            }).execute()
+            
+            # Delete saved progress
+            try:
+                search_subtopic = subtopic if subtopic else ''
+                supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"Error saving score: {e}")
+            flash("Error saving quiz results")
+            return redirect(url_for('dashboard'))
+        
+        # Generate suggestions
+        percent = (score / len(topic_questions) * 100)
+        
+        if percent < 40:
+            suggestion = f"Keep practicing {topic}. Focus on understanding basic concepts."
+        elif percent < 60:
+            suggestion = f"Good effort! Review the questions you missed in {topic}."
+        elif percent < 80:
+            suggestion = f"Well done! You're getting better at {topic}."
+        else:
+            suggestion = f"Excellent! You've mastered {topic}."
+        
+        return render_template('quiz.html',
+                             topic=topic,
+                             subtopic=subtopic,
+                             questions=topic_questions,
+                             submitted=True,
+                             score=score,
+                             suggestion=suggestion)
+    
+    # GET - Check for saved progress
     saved_progress = None
     if resume and not restart:
         try:
@@ -778,46 +850,6 @@ def quiz(topic, subtopic=None):
         except:
             pass
     
-    
-    # POST - Submit quiz
-    if request.method == 'POST':
-        # Get questions from session
-        topic_questions = session.get('quiz_questions', [])
-    
-        if not topic_questions:
-            flash("Quiz session expired. Please start again.")
-            return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
-    
-        score = 0
-        user_answers = request.form
-    
-        for i, q in enumerate(topic_questions):
-            user_answer = user_answers.get(f'q{i}', '')
-            correct_answer = str(q['answer'])
-        
-            if user_answer.strip().lower() == correct_answer.strip().lower():
-                score += 1
-    
-        # ⬇️ ADD THIS BLOCK HERE ⬇️
-        # Get user's score history for difficulty calculation
-        result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
-        user_scores = [{'topic': row['topic'], 'subtopic': row['subtopic'], 
-                        'score': row['score'], 'total_questions': row['total_questions']} 
-                       for row in result.data]
-    
-        from ai_question_generator import determine_difficulty_level
-        difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
-    
-        # Save score WITH DIFFICULTY
-        supabase.table('user_scores').insert({
-            'user_email': user_email,
-            'topic': topic,
-            'subtopic': subtopic or '',
-            'score': score,
-            'total_questions': len(topic_questions),
-            'difficulty': difficulty  # ADD THIS LINE
-        }).execute()
-    # GET - Load quiz
     if saved_progress:
         # Resume from saved
         topic_questions = json.loads(saved_progress['questions'])
@@ -850,7 +882,7 @@ def quiz(topic, subtopic=None):
             topic_questions = ai_result['questions']
             difficulty = ai_result['difficulty']
             current_question = 0
-            time_left = 900  # 15 minutes
+            time_left = 900
             saved_answers = {}
             
         except Exception as e:
@@ -869,8 +901,6 @@ def quiz(topic, subtopic=None):
                          time_left=time_left,
                          current_question=current_question,
                          saved_answers=saved_answers)
-
-
 # ============================================================================
 # SAVE QUIZ PROGRESS (AJAX)
 # ============================================================================
