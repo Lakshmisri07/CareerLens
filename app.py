@@ -690,9 +690,9 @@ def quiz_details(topic, subtopic=None):
     
     # Decode URL encoding
     from urllib.parse import unquote
-    topic = unquote(topic)
+    topic = unquote(topic).strip().rstrip('/')  # ← ADD .rstrip('/')
     if subtopic:
-        subtopic = unquote(subtopic)
+        subtopic = unquote(subtopic).strip().rstrip('/')  # ← ADD .rstrip('/')
     
     print(f"Quiz Details: topic={topic}, subtopic={subtopic}")
     
@@ -750,9 +750,9 @@ def quiz(topic, subtopic=None):
     
     # Decode URL encoding
     from urllib.parse import unquote
-    topic = unquote(topic)
+    topic = unquote(topic).strip().rstrip('/')
     if subtopic:
-        subtopic = unquote(subtopic)
+        subtopic = unquote(subtopic).strip().rstrip('/')  # ← ADD .rstrip('/')
     
     user_email = session['user_email']
         # Handle resume or restart
@@ -890,7 +890,7 @@ def save_quiz():
         supabase.table('quiz_progress').insert({
             'user_email': user_email,
             'topic': data['topic'],
-            'subtopic': search_subtopic,
+            'subtopic': data.get('subtopic', ''),
             'questions': json.dumps(data['questions']),
             'current_question': data['current_question'],
             'answers': json.dumps(data['answers']),
