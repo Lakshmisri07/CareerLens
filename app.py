@@ -432,36 +432,24 @@ def grand_test():
             # Technical Questions (5 questions)
             print("\n[1/3] Generating Technical Questions...")
             tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
-            tech_questions = generate_quiz_questions(
-                'Technical', 
-                'Programming & CS Fundamentals', 
-                tech_difficulty, 
-                5
-            )
+            tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 15)
+
             all_questions.extend(tech_questions)
             print(f"✅ Added {len(tech_questions)} technical questions")
 
             # Aptitude Questions (5 questions)
             print("\n[2/3] Generating Aptitude Questions...")
             apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
-            apt_questions = generate_quiz_questions(
-                'Quantitative Aptitude', 
-                'Quantitative & Logical Reasoning', 
-                apt_difficulty, 
-                5
-            )
+            apt_questions = generate_quiz_questions('Quantitative Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 15)
+
             all_questions.extend(apt_questions)
             print(f"✅ Added {len(apt_questions)} aptitude questions")
 
             # English Questions (5 questions)
             print("\n[3/3] Generating English Questions...")
             eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
-            eng_questions = generate_quiz_questions(
-                'Grammar', 
-                'Grammar & Communication', 
-                eng_difficulty, 
-                5
-            )
+            eng_questions = generate_quiz_questions('Grammar', 'Grammar & Communication', eng_difficulty, 10)
+
             all_questions.extend(eng_questions)
             print(f"✅ Added {len(eng_questions)} English questions")
 
