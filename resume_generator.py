@@ -12,7 +12,7 @@ from datetime import datetime
 load_dotenv()
 
 # Initialize GenAI client
-API_KEY = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+API_KEY = os.getenv('GEMINI_API_KEY_1') or os.getenv('GOOGLE_API_KEY')
 try:
     client = genai.Client(api_key=API_KEY)
 except Exception as e:

@@ -428,12 +428,7 @@
                     {% set outer_loop = loop %}
                     {% for opt in q.options %}
                     <label class="option-label">
-                        <input type="radio" 
-                               class="option-radio"
-                               name="q{{ outer_loop.index0 }}" 
-                               value="{{ opt }}" 
-                               {% if saved_answers and saved_answers.get('q' ~ outer_loop.index0) == opt %}checked{% endif %}
-                               required>
+                        <input type="radio" name="q{{ outer_loop.index0 }}" value="{{ opt }}">
                         <span class="option-text">{{ opt }}</span>
                     </label>
                     {% endfor %}
