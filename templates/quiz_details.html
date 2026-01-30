@@ -307,16 +307,200 @@
             </div>
             <!-- Add this script at the end of quiz_details.html, before </body> -->
 
-<div id="loadingModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center;">
-    <div style="text-align:center; color:white; max-width:400px; padding:40px;">
-        <div style="width:80px; height:80px; border:8px solid rgba(99,102,241,0.3); border-top-color:#6366f1; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 30px;"></div>
-        <h2 id="loadingStep" style="margin-bottom:15px; font-size:1.5rem;">Analyzing performance...</h2>
-        <p id="loadingDesc" style="color:#94a3b8; font-size:1rem;">Please wait</p>
-        <div style="margin-top:20px; width:100%; height:4px; background:rgba(99,102,241,0.2); border-radius:2px; overflow:hidden;">
-            <div id="progressBar" style="height:100%; width:0%; background:#6366f1; transition:width 0.5s;"></div>
+<!-- REPLACE quiz_details.html loading modal with this enhanced version -->
+
+<div id="loadingModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center; flex-direction:column;">
+    <div style="text-align:center; color:white; max-width:500px; padding:40px;">
+        
+        <!-- Animated spinner -->
+        <div style="position:relative; width:120px; height:120px; margin:0 auto 40px;">
+            <div style="position:absolute; width:120px; height:120px; border:8px solid rgba(99,102,241,0.2); border-radius:50%;"></div>
+            <div style="position:absolute; width:120px; height:120px; border:8px solid transparent; border-top-color:#6366f1; border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-brain" style="font-size:2.5rem; color:#6366f1;"></i>
+            </div>
+        </div>
+        
+        <!-- Step indicator -->
+        <h2 id="loadingStep" style="margin-bottom:20px; font-size:1.8rem; font-weight:700;">Initializing...</h2>
+        <p id="loadingDesc" style="color:#94a3b8; font-size:1.1rem; margin-bottom:30px; min-height:60px;">Please wait while we prepare your personalized quiz</p>
+        
+        <!-- Stats preview (shows during analysis) -->
+        <div id="statsPreview" style="display:none; background:rgba(30,41,59,0.8); border-radius:12px; padding:20px; margin-bottom:30px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <div style="color:#94a3b8; font-size:0.9rem;">Your Average</div>
+                    <div id="userAvg" style="color:#6366f1; font-size:2rem; font-weight:700;">--</div>
+                </div>
+                <div>
+                    <div style="color:#94a3b8; font-size:0.9rem;">Total Attempts</div>
+                    <div id="userAttempts" style="color:#6366f1; font-size:2rem; font-weight:700;">--</div>
+                </div>
+            </div>
+            <div style="margin-top:15px; padding-top:15px; border-top:1px solid rgba(148,163,184,0.2);">
+                <div style="color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">Performance Trend</div>
+                <div id="trendIndicator" style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                    <i class="fas fa-chart-line" style="color:#10b981;"></i>
+                    <span style="color:#10b981; font-weight:600;">Analyzing...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress bar -->
+        <div style="width:100%; height:6px; background:rgba(99,102,241,0.2); border-radius:3px; overflow:hidden; margin-bottom:20px;">
+            <div id="progressBar" style="height:100%; width:0%; background:linear-gradient(90deg, #6366f1, #8b5cf6); transition:width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 0 10px rgba(99,102,241,0.5);"></div>
+        </div>
+        
+        <!-- Progress percentage -->
+        <div id="progressPercent" style="color:#6366f1; font-weight:600; font-size:1.1rem;">0%</div>
+        
+        <!-- Tips carousel -->
+        <div id="tipsCarousel" style="margin-top:30px; min-height:60px; color:#cbd5e1; font-size:0.95rem; font-style:italic;">
+            💡 Tip: Read each question carefully before selecting your answer
         </div>
     </div>
 </div>
+
+<style>
+    @keyframes spin { 
+        to { transform: rotate(360deg); } 
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+    
+    #tipsCarousel {
+        animation: fadeInOut 3s infinite;
+    }
+</style>
+
+<script>
+// Enhanced quiz loading with performance analysis
+async function startQuizWithLoading() {
+    const modal = document.getElementById('loadingModal');
+    const step = document.getElementById('loadingStep');
+    const desc = document.getElementById('loadingDesc');
+    const progress = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const statsPreview = document.getElementById('statsPreview');
+    const tipsCarousel = document.getElementById('tipsCarousel');
+    
+    modal.style.display = 'flex';
+    
+    const tips = [
+        "💡 Tip: Read each question carefully before selecting",
+        "⏰ Tip: Don't spend too long on any single question",
+        "🎯 Tip: Eliminate obviously wrong answers first",
+        "📝 Tip: Make sure to answer all questions before submitting",
+        "🔄 Tip: You can save and resume anytime",
+        "💪 Tip: Trust your first instinct if you're unsure"
+    ];
+    
+    let tipIndex = 0;
+    const tipInterval = setInterval(() => {
+        tipIndex = (tipIndex + 1) % tips.length;
+        tipsCarousel.textContent = tips[tipIndex];
+    }, 3000);
+    
+    const steps = [
+        {
+            title: '📊 Analyzing your performance...',
+            desc: 'Reviewing your quiz history and calculating your strengths',
+            progress: 20,
+            action: async () => {
+                // Simulate fetching user stats (replace with actual API call if needed)
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Show stats preview
+                statsPreview.style.display = 'block';
+                document.getElementById('userAvg').textContent = '72%'; // Replace with actual data
+                document.getElementById('userAttempts').textContent = '8'; // Replace with actual data
+                
+                const trendIcon = document.querySelector('#trendIndicator i');
+                const trendText = document.querySelector('#trendIndicator span');
+                
+                // Simulate trend analysis
+                await new Promise(resolve => setTimeout(resolve, 500));
+                trendIcon.className = 'fas fa-arrow-trend-up';
+                trendIcon.style.color = '#10b981';
+                trendText.textContent = 'Improving!';
+                trendText.style.color = '#10b981';
+            }
+        },
+        {
+            title: '🎯 Determining optimal difficulty...',
+            desc: 'Calculating the perfect challenge level for maximum learning',
+            progress: 40,
+            action: async () => {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        },
+        {
+            title: '🤖 Generating personalized questions...',
+            desc: 'Creating AI-powered questions tailored to your skill level',
+            progress: 70,
+            action: async () => {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        },
+        {
+            title: '✨ Finalizing your quiz...',
+            desc: 'Almost ready! Preparing your personalized assessment',
+            progress: 90,
+            action: async () => {
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+    ];
+    
+    try {
+        for (let i = 0; i < steps.length; i++) {
+            const currentStep = steps[i];
+            
+            step.textContent = currentStep.title;
+            desc.textContent = currentStep.desc;
+            progress.style.width = currentStep.progress + '%';
+            progressPercent.textContent = currentStep.progress + '%';
+            
+            if (currentStep.action) {
+                await currentStep.action();
+            }
+        }
+        
+        // Final step
+        step.textContent = '🎉 Quiz Ready!';
+        desc.textContent = 'Loading your personalized questions now...';
+        progress.style.width = '100%';
+        progressPercent.textContent = '100%';
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        clearInterval(tipInterval);
+        
+        // Navigate to quiz
+        window.location.href = "{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}";
+        
+    } catch (error) {
+        console.error('Error during quiz loading:', error);
+        clearInterval(tipInterval);
+        step.textContent = '❌ Error';
+        desc.textContent = 'Failed to generate quiz. Redirecting...';
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        window.location.href = "{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}";
+    }
+}
+
+// Update the "Start Quiz" button to use this function
+document.addEventListener('DOMContentLoaded', function() {
+    const startButtons = document.querySelectorAll('form[action*="quiz"] button[type="submit"]');
+    startButtons.forEach(btn => {
+        btn.type = 'button';
+        btn.onclick = startQuizWithLoading;
+    });
+});
+</script>
 
 <style>
     @keyframes spin { to { transform: rotate(360deg); } }

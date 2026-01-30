@@ -528,8 +528,8 @@
 
         <div class="result-card">
             <div class="result-message">Test Completed!</div>
-            <div class="score-display">{{ score }}/{{ all_questions|length }}</div>
-            <div class="percentage">{{ (score / all_questions|length * 100)|round(1) }}%</div>
+            <div class="score-display">{{ score }}/{{ total if total else all_questions|length }}</div>
+            <div class="percentage">{{ percentage if percentage else ((score / all_questions|length * 100)|round(1)) }}%</div>            <div class="percentage">{{ (score / all_questions|length * 100)|round(1) }}%</div>
             <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
                 You answered <strong style="color: var(--text-primary);">{{ score }}</strong> questions correctly out of <strong style="color: var(--text-primary);">{{ all_questions|length }}</strong> total questions.
             </p>
