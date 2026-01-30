@@ -894,7 +894,7 @@ def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questio
         'difficulty': difficulty
     }
 
-def generate_quiz_questions(topic, context, difficulty, num_questions=0):
+def generate_quiz_questions(topic, context, difficulty, num_questions=40):
     """
     For grand test / general quiz generation without user history
     
@@ -1458,7 +1458,7 @@ def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questio
         'difficulty': difficulty
     }
 
-def generate_quiz_questions(topic, context, difficulty, num_questions=0):
+def generate_quiz_questions(topic, context, difficulty, num_questions=40):
     """For grand test / general quiz generation without user history"""
     print(f"\n🎓 QUIZ GENERATION: {topic} ({difficulty}) - {num_questions} questions")
     
