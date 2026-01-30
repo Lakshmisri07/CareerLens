@@ -347,10 +347,13 @@ def grand_test():
         user_answers = request.form
     
         for i, q in enumerate(all_questions):
-            user_answer = user_answers.get(f'q{i}', '')
-            correct_answer = str(q['answer'])
-        
-            if user_answer.strip().lower() == correct_answer.strip().lower():
+            user_answer = user_answers.get(f'q{i}', '').strip()
+            correct_answer = str(q['answer']).strip()
+    
+             # Debug logging
+            print(f"Q{i+1}: User='{user_answer}' | Correct='{correct_answer}' | Match={user_answer.lower() == correct_answer.lower()}")
+    
+            if user_answer.lower() == correct_answer.lower():
                 score += 1
 
         # Get user's score history for difficulty calculation
