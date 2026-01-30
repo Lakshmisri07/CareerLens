@@ -333,9 +333,79 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Welcome Overlay Styles */
+        .welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .welcome-overlay.hidden {
+            animation: fadeOut 0.3s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .welcome-box {
+            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .welcome-icon { font-size: 3.5rem; margin-bottom: 1.5rem; }
+        .welcome-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .welcome-subtitle { font-size: 1rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .welcome-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .welcome-stat { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2); }
+        .welcome-stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+        .welcome-stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .welcome-btn { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
+        .welcome-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6); }
+        body.welcome-active .navbar, body.welcome-active .container { filter: blur(5px); }
     </style>
 </head>
-<body>
+<body class="welcome-active">
+    <!-- Welcome Overlay -->
+    <div class="welcome-overlay" id="welcomeOverlay">
+        <div class="welcome-box">
+            <h1 class="welcome-title">Welcome back, {{ user }}!</h1>
+            <p class="welcome-subtitle">Ready to continue your placement preparation</p>
+            
+            <button class="welcome-btn" onclick="closeWelcome()">
+                <i class="fas fa-rocket"></i> Continue Learning
+            </button>
+        </div>
+    </div>
+
+
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo">
@@ -368,7 +438,7 @@
                             </div>
                         </div>
 
-                        <a href="/logout" style="display: block; width: 100%; background: #ef4444; color: white; padding: 0.75rem; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600;">
+                        <a href="/logout" onclick="sessionStorage.clear()" style="display: block; width: 100%; background: #ef4444; color: white; padding: 0.75rem; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600;">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     </div>
@@ -486,7 +556,7 @@
 
             <!-- Verbal Ability -->
             <div class="card">
-                <h3><i class="fas fa-language"></i> Verbal Ability & English</h3>
+                <h3><i class="fas fa-language"></i> Verbal Ability</h3>
                 <button class="browse-btn" type="button" onclick="toggleDropdown('verbalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
@@ -579,54 +649,654 @@
     </div>
 
     <script>
-        const SUBTOPICS = {
-            // CSE/IT topics
-            'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
-            'Java': ['OOPs', 'Inheritance', 'Exceptions'],
-            'Python': ['Lists', 'Dictionaries', 'File Handling'],
-            'DBMS': ['SQL', 'Normalization', 'Transactions'],
-            'OS': ['Processes', 'Threads', 'Memory Management'],
-            'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
-            'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
-            'Computer Networks': ['OSI Model', 'TCP/IP', 'Routing'],
-            'OOP': ['Classes', 'Inheritance', 'Polymorphism'],
-            'Web Development': ['HTML/CSS', 'JavaScript', 'React'],
-            'Cloud Computing': ['AWS', 'Azure', 'Docker'],
+        // COMPREHENSIVE PLACEMENT-READY TOPICS & SUBTOPICS
+// Replace lines 652-699 in dashboard.html with this
+
+const SUBTOPICS = {
+    // ============ CSE/IT TOPICS ============
     
-            // ECE topics
-            'Digital Electronics': ['Logic Gates', 'Boolean Algebra', 'Flip Flops'],
-            'Signal Processing': ['Fourier Transform', 'Filters', 'Sampling'],
-            'Embedded Systems': ['Microcontrollers', 'ARM', 'RTOS'],
-            'VLSI': ['CMOS', 'FPGA', 'Verilog'],
-            'Microprocessors': ['8085', '8086', 'Assembly'],
-            'Communication Systems': ['Modulation', 'Antennas', 'Wireless'],
+    // Programming Languages
+    'C': [
+        'Data Types & Operators',
+        'Control Structures',
+        'Arrays & Strings',
+        'Pointers & References',
+        'Functions',
+        'Structures & Unions',
+        'File Handling',
+        'Memory Management',
+        'Preprocessor Directives'
+    ],
     
-            // EEE topics
-            'Circuit Theory': ['KCL/KVL', 'Network Theorems', 'AC Circuits'],
-            'Power Systems': ['Generation', 'Transmission', 'Distribution'],
-            'Control Systems': ['Transfer Functions', 'PID', 'Stability'],
-            'Electrical Machines': ['DC Motors', 'Transformers', 'Induction Motors'],
-            'Power Electronics': ['Rectifiers', 'Inverters', 'Converters'],
+    'Java': [
+        'OOP Concepts',
+        'Classes & Objects',
+        'Inheritance',
+        'Polymorphism',
+        'Abstraction & Encapsulation',
+        'Exception Handling',
+        'Collections Framework',
+        'Multithreading',
+        'Java 8 Features',
+        'JDBC & Servlets'
+    ],
     
-            // MECH topics
-            'Thermodynamics': ['Laws of Thermodynamics', 'Entropy', 'Carnot Cycle'],
-            'Mechanics': ['Statics', 'Dynamics', 'Kinematics'],
-            'Manufacturing': ['Casting', 'Welding', 'Machining'],
-            'CAD/CAM': ['AutoCAD', 'SolidWorks', 'CNC'],
-            'Fluid Mechanics': ['Fluid Properties', 'Bernoulli', 'Flow'],
+    'Python': [
+        'Data Types & Variables',
+        'Lists & Tuples',
+        'Dictionaries & Sets',
+        'Functions & Lambda',
+        'File Handling',
+        'OOP in Python',
+        'Modules & Packages',
+        'Exception Handling',
+        'Decorators',
+        'NumPy & Pandas Basics'
+    ],
     
-            // CIVIL topics
-            'AutoCAD': ['2D Drawing', '3D Modeling', 'Layout'],
-            'Structural Analysis': ['Beams', 'Trusses', 'Frames'],
-            'Surveying': ['Leveling', 'Theodolite', 'Total Station'],
-            'Geotechnical Engineering': ['Soil Mechanics', 'Foundations', 'Slope Stability'],
+    'C++': [
+        'Classes & Objects',
+        'Constructors & Destructors',
+        'Inheritance',
+        'Polymorphism',
+        'Operator Overloading',
+        'Templates',
+        'STL Containers',
+        'Exception Handling',
+        'Virtual Functions'
+    ],
     
-            // CHEM topics
-            'Chemical Thermodynamics': ['Laws', 'Phase Equilibrium', 'Chemical Equilibrium'],
-            'Process Control': ['Feedback Control', 'PID', 'Advanced Control'],
-            'Reaction Engineering': ['Kinetics', 'Reactor Design', 'Catalysis'],
-            'Mass Transfer': ['Distillation', 'Absorption', 'Extraction']
-        };
+    // Core CS Subjects
+    'Data Structures': [
+        'Arrays',
+        'Linked Lists',
+        'Stacks',
+        'Queues',
+        'Trees (Binary, BST)',
+        'Graphs',
+        'Hashing',
+        'Heaps',
+        'Tries'
+    ],
+    
+    'Algorithms': [
+        'Sorting Algorithms',
+        'Searching Algorithms',
+        'Recursion',
+        'Dynamic Programming',
+        'Greedy Algorithms',
+        'Backtracking',
+        'Divide & Conquer',
+        'Graph Algorithms',
+        'Time Complexity Analysis'
+    ],
+    
+    'DBMS': [
+        'ER Model',
+        'Relational Model',
+        'SQL Queries',
+        'Normalization',
+        'Transactions & ACID',
+        'Indexing',
+        'Joins',
+        'Views & Triggers',
+        'PL/SQL Basics'
+    ],
+    
+    'OS': [
+        'Process Management',
+        'Threads',
+        'CPU Scheduling',
+        'Deadlock',
+        'Memory Management',
+        'Virtual Memory',
+        'File Systems',
+        'Disk Scheduling',
+        'Synchronization'
+    ],
+    
+    'Computer Networks': [
+        'OSI Model',
+        'TCP/IP Model',
+        'IP Addressing',
+        'Subnetting',
+        'Routing Protocols',
+        'Transport Layer',
+        'Application Layer',
+        'Network Security',
+        'Socket Programming'
+    ],
+    
+    'OOP': [
+        'Classes & Objects',
+        'Encapsulation',
+        'Inheritance',
+        'Polymorphism',
+        'Abstraction',
+        'Interfaces',
+        'Design Patterns',
+        'SOLID Principles'
+    ],
+    
+    // Web & Modern Tech
+    'Web Development': [
+        'HTML5 & Semantic HTML',
+        'CSS3 & Flexbox',
+        'JavaScript ES6+',
+        'DOM Manipulation',
+        'React Basics',
+        'REST APIs',
+        'Node.js Basics',
+        'Git & Version Control'
+    ],
+    
+    'Cloud Computing': [
+        'Cloud Models (IaaS, PaaS, SaaS)',
+        'AWS EC2 & S3',
+        'Azure Fundamentals',
+        'Docker Basics',
+        'Kubernetes Basics',
+        'Serverless Computing',
+        'CI/CD Pipelines'
+    ],
+    
+    
+    // ============ ECE TOPICS ============
+    
+    'Digital Electronics': [
+        'Number Systems',
+        'Logic Gates',
+        'Boolean Algebra',
+        'Combinational Circuits',
+        'Sequential Circuits',
+        'Flip Flops',
+        'Counters & Registers',
+        'ADC & DAC',
+        'Multiplexers & Demultiplexers'
+    ],
+    
+    'Signal Processing': [
+        'Signals & Systems',
+        'Fourier Transform',
+        'Laplace Transform',
+        'Z-Transform',
+        'Digital Filters',
+        'Sampling Theorem',
+        'Convolution',
+        'DFT & FFT'
+    ],
+    
+    'Embedded Systems': [
+        'Microcontroller Basics',
+        '8051 Microcontroller',
+        'ARM Architecture',
+        'Timers & Interrupts',
+        'Serial Communication',
+        'RTOS Concepts',
+        'Embedded C',
+        'Sensors & Actuators'
+    ],
+    
+    'VLSI': [
+        'CMOS Technology',
+        'MOSFET Characteristics',
+        'Combinational Logic Design',
+        'Sequential Logic Design',
+        'FPGA Basics',
+        'Verilog HDL',
+        'VHDL',
+        'Design for Testability'
+    ],
+    
+    'Microprocessors': [
+        '8085 Architecture',
+        '8086 Architecture',
+        'Assembly Language',
+        'Addressing Modes',
+        'Instruction Set',
+        'Memory Interfacing',
+        'I/O Interfacing',
+        'Interrupts'
+    ],
+    
+    'Communication Systems': [
+        'Analog Modulation (AM, FM)',
+        'Digital Modulation (ASK, FSK, PSK)',
+        'Multiplexing (TDM, FDM)',
+        'Antennas & Propagation',
+        'Wireless Communication',
+        'Optical Fiber',
+        'Satellite Communication',
+        'Mobile Communication (GSM, CDMA)'
+    ],
+    
+    'Analog Electronics': [
+        'Diode Circuits',
+        'BJT Amplifiers',
+        'FET & MOSFET',
+        'Op-Amp Applications',
+        'Oscillators',
+        'Rectifiers',
+        'Voltage Regulators',
+        'Filters'
+    ],
+    
+    'Control Systems': [
+        'Transfer Functions',
+        'Block Diagrams',
+        'Signal Flow Graphs',
+        'Time Response',
+        'Stability Analysis',
+        'Root Locus',
+        'Frequency Response',
+        'PID Controllers'
+    ],
+    
+    
+    // ============ EEE TOPICS ============
+    
+    'Circuit Theory': [
+        'Ohm\'s Law & KCL/KVL',
+        'Network Theorems',
+        'AC Circuits',
+        'Resonance',
+        'Three Phase Circuits',
+        'Transient Analysis',
+        'Two Port Networks',
+        'Laplace Transform Applications'
+    ],
+    
+    'Power Systems': [
+        'Power Generation',
+        'Transmission Lines',
+        'Distribution Systems',
+        'Load Flow Analysis',
+        'Fault Analysis',
+        'Protection Schemes',
+        'FACTS Devices',
+        'Smart Grids'
+    ],
+    
+    'Electrical Machines': [
+        'DC Generators',
+        'DC Motors',
+        'Transformers',
+        'Induction Motors',
+        'Synchronous Machines',
+        'Starting & Speed Control',
+        'Testing of Machines',
+        'Special Machines'
+    ],
+    
+    'Power Electronics': [
+        'Power Diodes',
+        'Thyristors (SCR)',
+        'Rectifiers',
+        'Inverters',
+        'Choppers',
+        'AC Voltage Controllers',
+        'SMPS',
+        'PWM Techniques'
+    ],
+    
+    'Control Systems': [
+        'Transfer Functions',
+        'Block Diagrams',
+        'Time Response',
+        'Stability Analysis',
+        'Root Locus',
+        'Frequency Response',
+        'PID Controllers',
+        'State Space Analysis'
+    ],
+    
+    'Electromagnetic Theory': [
+        'Electrostatics',
+        'Magnetostatics',
+        'Maxwell\'s Equations',
+        'Electromagnetic Waves',
+        'Transmission Lines',
+        'Waveguides',
+        'Antennas Basics'
+    ],
+    
+    'Measurements': [
+        'Instrument Types',
+        'Voltmeters & Ammeters',
+        'Wattmeters',
+        'Energy Meters',
+        'Bridge Measurements',
+        'Oscilloscopes',
+        'Digital Instruments',
+        'Transducers'
+    ],
+    
+    
+    // ============ MECH TOPICS ============
+    
+    'Thermodynamics': [
+        'Zeroth & First Law',
+        'Second Law',
+        'Entropy',
+        'Carnot Cycle',
+        'Rankine Cycle',
+        'Otto & Diesel Cycles',
+        'Properties of Steam',
+        'Gas Power Cycles',
+        'Refrigeration Cycles'
+    ],
+    
+    'Mechanics': [
+        'Statics',
+        'Dynamics',
+        'Kinematics',
+        'Newton\'s Laws',
+        'Work & Energy',
+        'Momentum',
+        'Friction',
+        'Simple Machines',
+        'Rotational Motion'
+    ],
+    
+    'Strength of Materials': [
+        'Stress & Strain',
+        'Elastic Constants',
+        'Shear Force & Bending Moment',
+        'Torsion',
+        'Deflection of Beams',
+        'Columns',
+        'Springs',
+        'Strain Energy',
+        'Theories of Failure'
+    ],
+    
+    'Manufacturing': [
+        'Casting Processes',
+        'Welding Techniques',
+        'Machining Operations',
+        'Metal Forming',
+        'Powder Metallurgy',
+        'CNC Machining',
+        'Metrology',
+        'Inspection & Quality Control'
+    ],
+    
+    'CAD/CAM': [
+        'Engineering Drawing',
+        'AutoCAD 2D',
+        'AutoCAD 3D',
+        'SolidWorks Basics',
+        'CATIA Basics',
+        'CNC Programming',
+        'Rapid Prototyping',
+        'FEA Basics'
+    ],
+    
+    'Fluid Mechanics': [
+        'Fluid Properties',
+        'Fluid Statics',
+        'Fluid Kinematics',
+        'Bernoulli\'s Equation',
+        'Flow Through Pipes',
+        'Boundary Layer',
+        'Turbomachinery',
+        'Pumps & Turbines'
+    ],
+    
+    'Heat Transfer': [
+        'Conduction',
+        'Convection',
+        'Radiation',
+        'Heat Exchangers',
+        'Fins',
+        'Boiling & Condensation',
+        'Heat Transfer Applications'
+    ],
+    
+    'Machine Design': [
+        'Design Process',
+        'Failure Theories',
+        'Fasteners',
+        'Shafts & Keys',
+        'Bearings',
+        'Gears',
+        'Clutches & Brakes',
+        'Springs',
+        'Flywheels'
+    ],
+    
+    'Automobile Engineering': [
+        'Engine Components',
+        'IC Engine Types',
+        'Fuel Systems',
+        'Cooling & Lubrication',
+        'Transmission Systems',
+        'Braking Systems',
+        'Suspension',
+        'Steering Systems'
+    ],
+    
+    
+    // ============ CIVIL TOPICS ============
+    
+    'AutoCAD': [
+        '2D Drawing Commands',
+        '3D Modeling',
+        'Layers & Blocks',
+        'Dimensioning',
+        'Layouts & Plotting',
+        'Building Plans',
+        'Structural Drawings'
+    ],
+    
+    'Structural Analysis': [
+        'Types of Structures',
+        'Analysis of Beams',
+        'Trusses',
+        'Frames',
+        'Arches',
+        'Influence Lines',
+        'Slope Deflection Method',
+        'Moment Distribution',
+        'Matrix Methods'
+    ],
+    
+    'Surveying': [
+        'Chain Surveying',
+        'Compass Surveying',
+        'Leveling',
+        'Theodolite Surveying',
+        'Tacheometry',
+        'Contouring',
+        'Total Station',
+        'GPS Surveying'
+    ],
+    
+    'Geotechnical Engineering': [
+        'Soil Classification',
+        'Soil Mechanics',
+        'Compaction',
+        'Permeability',
+        'Consolidation',
+        'Shear Strength',
+        'Shallow Foundations',
+        'Deep Foundations',
+        'Slope Stability',
+        'Retaining Walls'
+    ],
+    
+    'Concrete Technology': [
+        'Cement Properties',
+        'Aggregates',
+        'Water for Concrete',
+        'Mix Design',
+        'Admixtures',
+        'Testing of Concrete',
+        'Workability',
+        'Durability',
+        'Special Concretes'
+    ],
+    
+    'RCC Design': [
+        'Working Stress Method',
+        'Limit State Method',
+        'Singly Reinforced Beams',
+        'Doubly Reinforced Beams',
+        'T-Beams',
+        'Slabs',
+        'Columns',
+        'Footings',
+        'Staircases'
+    ],
+    
+    'Transportation Engineering': [
+        'Highway Planning',
+        'Geometric Design',
+        'Pavement Design',
+        'Highway Materials',
+        'Traffic Engineering',
+        'Railway Engineering',
+        'Airport Engineering'
+    ],
+    
+    'Environmental Engineering': [
+        'Water Supply',
+        'Wastewater Treatment',
+        'Solid Waste Management',
+        'Air Pollution',
+        'Water Quality',
+        'Sewage Treatment',
+        'Environmental Impact Assessment'
+    ],
+    
+    
+    // ============ CHEM TOPICS ============
+    
+    'Chemical Thermodynamics': [
+        'First Law',
+        'Second Law',
+        'Third Law',
+        'Free Energy',
+        'Phase Equilibrium',
+        'Chemical Equilibrium',
+        'Fugacity & Activity',
+        'Thermodynamic Cycles'
+    ],
+    
+    'Process Control': [
+        'Control Systems Basics',
+        'Feedback Control',
+        'PID Controllers',
+        'Transfer Functions',
+        'Stability Analysis',
+        'Frequency Response',
+        'Advanced Control Strategies'
+    ],
+    
+    'Reaction Engineering': [
+        'Rate Equations',
+        'Batch Reactors',
+        'CSTR',
+        'Plug Flow Reactors',
+        'Multiple Reactions',
+        'Catalysis',
+        'Reactor Design',
+        'Non-Ideal Reactors'
+    ],
+    
+    'Mass Transfer': [
+        'Diffusion',
+        'Distillation',
+        'Absorption',
+        'Extraction',
+        'Adsorption',
+        'Drying',
+        'Crystallization',
+        'Membrane Separation'
+    ],
+    
+    'Fluid Mechanics': [
+        'Fluid Properties',
+        'Fluid Statics',
+        'Bernoulli Equation',
+        'Flow Through Pipes',
+        'Boundary Layer',
+        'Flow Measurement',
+        'Pumps & Compressors'
+    ],
+    
+    'Heat Transfer': [
+        'Conduction',
+        'Convection',
+        'Radiation',
+        'Heat Exchangers',
+        'Evaporators',
+        'Condensers',
+        'Boiling & Condensation'
+    ],
+    
+    'Chemical Engineering Thermodynamics': [
+        'P-V-T Behavior',
+        'Vapor-Liquid Equilibrium',
+        'Solution Thermodynamics',
+        'Phase Diagrams',
+        'Refrigeration',
+        'Power Cycles'
+    ],
+    
+    'Process Equipment Design': [
+        'Pressure Vessels',
+        'Heat Exchanger Design',
+        'Column Design',
+        'Reactor Design',
+        'Separator Design',
+        'Material Selection'
+    ],
+    
+    
+    // ============ APTITUDE (Common for All) ============
+    
+    'Quantitative Aptitude': [
+        'Number System',
+        'HCF & LCM',
+        'Percentages',
+        'Profit & Loss',
+        'Simple & Compound Interest',
+        'Time & Work',
+        'Time Speed Distance',
+        'Ratio & Proportion',
+        'Mixtures & Alligations',
+        'Permutations & Combinations',
+        'Probability',
+        'Sequences & Series'
+    ],
+    
+    'Logical Reasoning': [
+        'Analytical Reasoning',
+        'Verbal Reasoning',
+        'Non-Verbal Reasoning',
+        'Data Interpretation',
+        'Puzzles',
+        'Blood Relations',
+        'Coding-Decoding',
+        'Syllogisms',
+        'Seating Arrangements'
+    ],
+    
+    
+    // ============ ENGLISH (Common for All) ============
+    
+    'Verbal Ability': [
+        'Reading Comprehension',
+        'Sentence Completion',
+        'Para Jumbles',
+        'Error Spotting',
+        'Synonyms & Antonyms',
+        'Analogies',
+        'Idioms & Phrases',
+        'One Word Substitution'
+    ]
+};
 
         function toggleDropdown(id, buttonElement) {
             const dropdown = document.getElementById(id);
@@ -802,6 +1472,42 @@
                         <i class="${icon}"></i> ${topic}
                     </div>`;
             }).join('');
+        });
+
+        // Welcome overlay function - show only once per session
+        function closeWelcome() {
+            const overlay = document.getElementById('welcomeOverlay');
+            const body = document.body;
+            overlay.classList.add('hidden');
+            
+            // Mark as shown in this session
+            sessionStorage.setItem('welcomeShown', 'true');
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                body.classList.remove('welcome-active');
+            }, 300);
+        }
+
+        // Check if welcome should be shown
+        window.addEventListener('DOMContentLoaded', function() {
+            // Check if coming from fresh login
+            const urlParams = new URLSearchParams(window.location.search);
+            const justLoggedIn = urlParams.get('welcome');
+            
+            // Check if already shown in this session
+            const welcomeShown = sessionStorage.getItem('welcomeShown');
+            
+            if (welcomeShown === 'true' || justLoggedIn === 'false') {
+                // Already shown, hide immediately
+                const overlay = document.getElementById('welcomeOverlay');
+                const body = document.body;
+                overlay.style.display = 'none';
+                body.classList.remove('welcome-active');
+            } else if (justLoggedIn === 'true') {
+                // Fresh login, show welcome and mark as shown
+                sessionStorage.setItem('welcomeShown', 'true');
+            }
         });
     </script>
 </body>

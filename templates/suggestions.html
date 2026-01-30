@@ -15,56 +15,11 @@
         }
         .container { max-width: 900px; margin: 0 auto; }
         
-        /* Readiness Card */
-        .readiness {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 30px;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-        }
-        .score { font-size: 5rem; font-weight: 700; color: #6366f1; margin: 20px 0; }
-        .status { font-size: 1.5rem; margin-bottom: 10px; }
-        .message { color: #94a3b8; font-size: 1.1rem; }
-        .meta { color: #64748b; font-size: 0.9rem; margin-top: 15px; }
-        
-        /* Topic Cards */
-        .topic-card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-left: 4px solid #6366f1;
-        }
-        .topic-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .topic-name { font-size: 1.3rem; font-weight: 600; }
-        .badge {
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .badge.strong { background: #10b981; color: white; }
-        .badge.moderate { background: #f59e0b; color: white; }
-        .badge.weak { background: #ef4444; color: white; }
-        
-        .stats { display: flex; gap: 30px; margin-bottom: 15px; color: #94a3b8; }
-        .recommendation { color: #cbd5e1; line-height: 1.6; }
-        
-        .btn { 
-            display: inline-block;
-            background: #6366f1;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            margin-top: 20px;
-        }
+        /* Header */
         .btn-back {
             background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-primary);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            color: #f1f5f9;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
             font-weight: 600;
@@ -78,8 +33,181 @@
         }
 
         .btn-back:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
+            background: rgba(30, 41, 59, 0.5);
+            border-color: #6366f1;
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        /* Readiness Card */
+        .readiness {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .score { 
+            font-size: 5rem; 
+            font-weight: 700; 
+            color: #6366f1; 
+            margin: 20px 0; 
+        }
+        .status { 
+            font-size: 1.5rem; 
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .message { 
+            color: #94a3b8; 
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .meta { 
+            color: #64748b; 
+            font-size: 0.9rem; 
+            margin-top: 15px; 
+        }
+        
+        /* Recommendations Section */
+        .recommendations-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+        
+        .recommendation-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        
+        .recommendation-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .recommendation-card.high {
+            border-color: #ef4444;
+        }
+        
+        .recommendation-card.medium {
+            border-color: #f59e0b;
+        }
+        
+        .recommendation-card.low {
+            border-color: #10b981;
+        }
+        
+        .rec-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+        
+        .rec-message {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .rec-action {
+            color: #6366f1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        /* Topic Cards */
+        .topic-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #6366f1;
+            transition: transform 0.2s;
+        }
+        
+        .topic-card:hover {
+            transform: translateX(3px);
+        }
+        
+        .topic-card.weak {
+            border-color: #ef4444;
+        }
+        
+        .topic-card.moderate {
+            border-color: #f59e0b;
+        }
+        
+        .topic-card.strong {
+            border-color: #10b981;
+        }
+        
+        .topic-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
+        .topic-name { 
+            font-size: 1.3rem; 
+            font-weight: 600; 
+        }
+        .badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge.strong { background: #10b981; color: white; }
+        .badge.moderate { background: #f59e0b; color: white; }
+        .badge.weak { background: #ef4444; color: white; }
+        
+        .stats { 
+            display: flex; 
+            gap: 30px; 
+            margin-bottom: 15px; 
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        .recommendation { 
+            color: #cbd5e1; 
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        /* Empty State */
+        .btn { 
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #4f46e5;
             transform: translateY(-2px);
         }
     </style>
@@ -87,28 +215,56 @@
 <body>
     <div class="container">
         <div>
-            <a href="{{ url_for('dashboard') }}" class="btn-back" style="text-align:left;margin-left:5">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            <a href="{{ url_for('dashboard') }}" class="btn-back">
+                ← 
             </a>
-            <h1 style="margin-bottom: 30px;text-align:center">📊 Performance Insights</h1>
+            <h1>📊 Performance Insights</h1>
         </div>
+        
         {% if readiness.total_attempts > 0 %}
         
         <!-- Readiness Summary -->
         <div class="readiness">
             <div class="score">{{ readiness.score }}%</div>
             <div class="status">{{ readiness.status }}</div>
-            <p class="message">{{ readiness.message }}</p>
+            <p class="message">
+                {% if readiness.status == 'Ready' %}
+                    You're placement ready! Focus on interview preparation and mock tests.
+                {% elif readiness.status == 'Almost Ready' %}
+                    Great progress! Cover a few more topics to boost your readiness.
+                {% elif readiness.status == 'Needs Improvement' %}
+                    Keep practicing! Focus on fundamentals and weak areas.
+                {% else %}
+                    Take more quizzes to unlock detailed ML insights.
+                {% endif %}
+            </p>
             <p class="meta">
-                {{ readiness.topics_covered }}/{{ readiness.topics_required }} topics covered • 
-                {{ readiness.total_attempts }} quizzes taken • 
-                Confidence: {{ readiness.confidence }}%
+                {{ readiness.topics_covered }} topics covered • 
+                {{ readiness.total_attempts }} quizzes taken
+                {% if ml_powered and 'confidence' in readiness %}
+                 • ML Confidence: {{ (readiness.confidence * 100)|round(0)|int }}%
+                {% endif %}
             </p>
         </div>
         
+        <!-- Recommendations (if any) -->
+        {% if recommendations and recommendations|length > 0 %}
+        <div class="recommendations-section">
+            <h2 class="section-title">🎯 Your Action Plan</h2>
+            {% for rec in recommendations[:3] %}
+            <div class="recommendation-card {{ rec.priority }}">
+                <div class="rec-title">{{ rec.title }}</div>
+                <p class="rec-message">{{ rec.message }}</p>
+                <p class="rec-action">→ {{ rec.action }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
         <!-- Topic Breakdown -->
+        <h2 class="section-title">📚 Topic Performance</h2>
         {% for topic in suggestions %}
-        <div class="topic-card">
+        <div class="topic-card {{ topic.level|lower }}">
             <div class="topic-header">
                 <div class="topic-name">{{ topic.display_name }}</div>
                 <span class="badge {{ topic.level|lower }}">{{ topic.level }}</span>
@@ -116,18 +272,22 @@
             <div class="stats">
                 <span>📈 Score: {{ topic.percentage }}%</span>
                 <span>🔄 Attempts: {{ topic.attempts }}</span>
+                <span>⚡ Priority: {{ ['Low', 'Medium', 'High'][topic.priority - 1] }}</span>
             </div>
             <p class="recommendation">{{ topic.recommendation }}</p>
         </div>
         {% endfor %}
         
         {% else %}
+        
+        <!-- Empty State -->
         <div class="readiness">
             <div class="score">0%</div>
             <div class="status">No Data Yet</div>
-            <p class="message">Take quizzes to get personalized insights</p>
-            <a href="/dashboard" class="btn">Start Learning</a>
+            <p class="message">Take quizzes to get ML-powered personalized insights</p>
+            <a href="{{ url_for('dashboard') }}" class="btn">Start Learning</a>
         </div>
+        
         {% endif %}
     </div>
 </body>

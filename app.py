@@ -3,7 +3,7 @@ from supabase import create_client, Client
 from threading import Thread
 import os
 from dotenv import load_dotenv
-from ml_model import analyze_user_performance, get_overall_readiness
+from ml_model import analyze_user_performance, get_overall_readiness, get_ml_insights
 from ai_question_generator import get_adaptive_questions
 from resume_generator import generate_complete_resume 
 load_dotenv()
@@ -12,6 +12,7 @@ from certificate_manager import CertificateManager
 from datetime import datetime
 from validators import validate_email, validate_password
 import json
+from learning_resources import get_resources_for_topic
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -29,23 +30,62 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 # Branch-specific technical topics
+# Branch-specific technical topics (Placement-Ready Syllabus)
 BRANCH_TOPICS = {
-    'CSE': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures', 'Algorithms', 'Computer Networks', 'OOP', 'Web Development', 'Cloud Computing'],
+    'CSE': [
+        'C', 'C++', 'Java', 'Python', 
+        'Data Structures', 'Algorithms', 
+        'DBMS', 'OS', 'Computer Networks', 
+        'OOP', 'Web Development', 'Cloud Computing'
+    ],
     
-    'IT': ['C', 'Java', 'Python', 'DBMS', 'Web Development', 'Data Structures', 'Networking', 'Cloud Computing', 'Cybersecurity', 'Software Engineering'],
+    'IT': [
+        'C', 'C++', 'Java', 'Python', 
+        'Data Structures', 'Algorithms',
+        'DBMS', 'Web Development', 'Computer Networks', 
+        'OOP', 'Cloud Computing'
+    ],
     
-    'ECE': ['C', 'Python', 'Digital Electronics', 'Signal Processing', 'Embedded Systems', 'VLSI', 'Microprocessors', 'Communication Systems', 'Antenna Theory', 'Control Systems'],
+    'ECE': [
+        'C', 'Python',
+        'Digital Electronics', 'Analog Electronics',
+        'Signal Processing', 'Embedded Systems', 
+        'VLSI', 'Microprocessors', 
+        'Communication Systems', 'Control Systems'
+    ],
     
-    'EEE': ['C', 'Python', 'Circuit Theory', 'Power Systems', 'Control Systems', 'Electrical Machines', 'Power Electronics', 'Renewable Energy', 'Electrical Drives', 'Switchgear'],
+    'EEE': [
+        'C', 'Python',
+        'Circuit Theory', 'Power Systems', 
+        'Electrical Machines', 'Power Electronics',
+        'Control Systems', 'Electromagnetic Theory',
+        'Measurements'
+    ],
     
-    'MECH': ['C', 'Python', 'Thermodynamics', 'Mechanics', 'Manufacturing', 'CAD/CAM', 'Fluid Mechanics', 'Heat Transfer', 'Machine Design', 'Automobile Engineering'],
+    'MECH': [
+        'C', 'Python',
+        'Thermodynamics', 'Mechanics', 
+        'Strength of Materials', 'Manufacturing', 
+        'CAD/CAM', 'Fluid Mechanics', 
+        'Heat Transfer', 'Machine Design', 
+        'Automobile Engineering'
+    ],
     
-    'CIVIL': ['C', 'AutoCAD', 'Structural Analysis', 'Surveying', 'Construction Management', 'Geotechnical Engineering', 'Transportation Engineering', 'Environmental Engineering', 'Concrete Technology', 'Estimation & Costing'],
+    'CIVIL': [
+        'C', 'AutoCAD', 
+        'Structural Analysis', 'Surveying', 
+        'Geotechnical Engineering', 'Concrete Technology',
+        'RCC Design', 'Transportation Engineering', 
+        'Environmental Engineering'
+    ],
     
-    'CHEM': ['C', 'Python', 'Chemical Thermodynamics', 'Fluid Mechanics', 'Process Control', 'Reaction Engineering', 'Mass Transfer', 'Heat Transfer', 'Process Equipment Design', 'Chemical Plant Design'],
-    
-    'AI/ML': ['Python', 'Machine Learning', 'Deep Learning', 'Data Structures', 'Statistics', 'Neural Networks', 'NLP', 'Computer Vision', 'Data Science', 'TensorFlow'],
-    
+    'CHEM': [
+        'C', 'Python',
+        'Chemical Thermodynamics', 'Process Control',
+        'Reaction Engineering', 'Mass Transfer',
+        'Fluid Mechanics', 'Heat Transfer',
+        'Chemical Engineering Thermodynamics', 'Process Equipment Design'
+    ],    
     'DEFAULT': ['C', 'Java', 'Python', 'DBMS', 'OS', 'Data Structures']
 }
 
@@ -231,7 +271,7 @@ def login():
         session['user'] = user['name']
         session['user_email'] = user['email']
         session['user_branch'] = user['branch']
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard', welcome='true'))   
     else:
         flash("Invalid email or password.")
         return redirect(url_for('index'))
@@ -536,7 +576,12 @@ def suggestions():
     if 'user' not in session:
         return redirect(url_for('index'))
 
-    result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', session['user_email']).neq('topic', 'Grand Test').execute()
+    # Get user scores with timestamp for ML
+    result = supabase.table('user_scores')\
+        .select('topic, subtopic, score, total_questions, created_at')\
+        .eq('user_email', session['user_email'])\
+        .neq('topic', 'Grand Test')\
+        .execute()
 
     scores_data = []
     for row in result.data:
@@ -544,17 +589,178 @@ def suggestions():
             'topic': row['topic'],
             'subtopic': row['subtopic'],
             'score': row['score'],
-            'total_questions': row['total_questions']
+            'total_questions': row['total_questions'],
+            'timestamp': row.get('created_at')  # For ML time-series analysis
         })
 
-    ml_suggestions = analyze_user_performance(scores_data)
-    readiness = get_overall_readiness(scores_data)
-
+    # ML-POWERED ANALYSIS (ALL FROM ML MODEL)
+    ml_insights = get_ml_insights(scores_data)
+    
     return render_template('suggestions.html',
-                         suggestions=ml_suggestions,
-                         readiness=readiness)
-
-
+                         # ML-based analysis
+                         suggestions=ml_insights['weak_topics'],
+                         readiness=ml_insights['readiness'],
+                         recommendations=ml_insights['recommendations'],
+                         ml_features=ml_insights['features'],
+                         ml_powered=ml_insights['ml_powered'])
+@app.route('/topic_suggestions/<path:topic>')
+@app.route('/topic_suggestions/<path:topic>/<path:subtopic>')
+def topic_suggestions(topic, subtopic=None):
+    """ML-powered topic-specific analysis"""
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    from urllib.parse import unquote
+    topic = unquote(topic)
+    if subtopic:
+        subtopic = unquote(subtopic)
+    
+    user_email = session['user_email']
+    
+    # Get ALL attempts for this topic (for ML analysis)
+    try:
+        search_subtopic = subtopic if subtopic else ''
+        result = supabase.table('user_scores')\
+            .select('score, total_questions, created_at')\
+            .eq('user_email', user_email)\
+            .eq('topic', topic)\
+            .eq('subtopic', search_subtopic)\
+            .order('created_at', desc=True)\
+            .execute()
+        
+        if not result.data or len(result.data) == 0:
+            # No data - redirect to dashboard
+            flash("No quiz data found for this topic.")
+            return redirect(url_for('dashboard'))
+        
+        # Calculate metrics from ALL attempts
+        scores_data = []
+        for row in result.data:
+            percentage = (row['score'] / row['total_questions']) * 100
+            scores_data.append({
+                'score': row['score'],
+                'total': row['total_questions'],
+                'percentage': percentage,
+                'timestamp': row['created_at']
+            })
+        
+        # Latest attempt
+        latest = scores_data[0]
+        current_score = round(latest['percentage'], 1)
+        
+        # ML Analysis
+        total_attempts = len(scores_data)
+        avg_score = round(sum(s['percentage'] for s in scores_data) / total_attempts, 1)
+        best_score = round(max(s['percentage'] for s in scores_data), 1)
+        
+        # Calculate improvement (comparing recent vs old attempts)
+        if total_attempts >= 3:
+            recent_avg = sum(s['percentage'] for s in scores_data[:2]) / 2
+            old_avg = sum(s['percentage'] for s in scores_data[-2:]) / 2
+            improvement = round(recent_avg - old_avg, 1)
+        else:
+            improvement = 0
+        
+        # ML-based Status (considers ALL attempts, not just one)
+        if total_attempts >= 5 and avg_score >= 80:
+            status = "Mastered! 🎉"
+            performance_class = "excellent"
+        elif total_attempts >= 3 and avg_score >= 70:
+            status = "Strong Understanding 💪"
+            performance_class = "good"
+        elif avg_score >= 60:
+            status = "Good Progress 👍"
+            performance_class = "good"
+        elif avg_score >= 40:
+            status = "Keep Practicing 📚"
+            performance_class = "average"
+        else:
+            status = "Needs Focus 🎯"
+            performance_class = "weak"
+        
+        # Generate ML-based Insights
+        insights = []
+        
+        # Insight 1: Performance Level
+        if avg_score >= 80:
+            insights.append({
+                'icon': 'fas fa-trophy',
+                'title': 'Excellent Performance',
+                'text': f'You\'re performing exceptionally well in {topic} with an average of {avg_score}%. Continue practicing to maintain this level.'
+            })
+        elif avg_score >= 60:
+            insights.append({
+                'icon': 'fas fa-chart-line',
+                'title': 'Solid Foundation',
+                'text': f'You have a good grasp of {topic} fundamentals. Focus on advanced concepts and edge cases to reach mastery level.'
+            })
+        else:
+            insights.append({
+                'icon': 'fas fa-book-reader',
+                'title': 'Build Strong Foundation',
+                'text': f'Spend more time understanding {topic} basics. Use the resources below and practice regularly for at least 2-3 weeks.'
+            })
+        
+        # Insight 2: Improvement Trend
+        if improvement > 10:
+            insights.append({
+                'icon': 'fas fa-arrow-trend-up',
+                'title': 'Great Improvement!',
+                'text': f'You\'ve improved by {improvement}% in recent attempts! Your learning strategy is working well.'
+            })
+        elif improvement > 0:
+            insights.append({
+                'icon': 'fas fa-seedling',
+                'title': 'Steady Progress',
+                'text': f'You\'re improving gradually (+{improvement}%). Keep practicing consistently to see faster gains.'
+            })
+        elif total_attempts >= 3:
+            insights.append({
+                'icon': 'fas fa-exclamation-triangle',
+                'title': 'Need Different Approach',
+                'text': 'Your recent scores haven\'t improved. Try using the learning resources below or take a different approach to studying.'
+            })
+        
+        # Insight 3: Next Steps
+        if total_attempts < 3:
+            insights.append({
+                'icon': 'fas fa-redo',
+                'title': 'Practice More',
+                'text': f'You\'ve attempted only {total_attempts} quiz(s). Take at least 3-5 quizzes to get reliable insights on your {topic} proficiency.'
+            })
+        elif avg_score >= 80:
+            insights.append({
+                'icon': 'fas fa-forward',
+                'title': 'Ready for Next Topic',
+                'text': f'You\'ve mastered {topic}! Consider exploring related advanced topics or helping peers who are learning this.'
+            })
+        else:
+            insights.append({
+                'icon': 'fas fa-list-check',
+                'title': 'Recommended Action',
+                'text': f'Review questions you got wrong, practice daily for 30 minutes, and retake the quiz after 2-3 days of focused study.'
+            })
+        
+    except Exception as e:
+        print(f"Error in topic_suggestions: {e}")
+        flash("Error loading analysis.")
+        return redirect(url_for('dashboard'))
+    
+    # Get learning resources
+    resources = get_resources_for_topic(topic)
+    
+    return render_template('topic_suggestions.html',
+                         topic=topic,
+                         subtopic=subtopic,
+                         current_score=current_score,
+                         avg_score=avg_score,
+                         best_score=best_score,
+                         total_attempts=total_attempts,
+                         improvement=improvement,
+                         status=status,
+                         performance_class=performance_class,
+                         insights=insights,
+                         resources=resources)
 
 @app.route('/resume_draft')
 def resume_draft():
@@ -1026,25 +1232,20 @@ def quiz(topic, subtopic=None):
             flash("Error saving quiz results")
             return redirect(url_for('dashboard'))
         
-        # Generate suggestions
-        percent = (score / len(topic_questions) * 100)
+        # Redirect to topic-specific suggestions page
+        session['last_quiz_score'] = {
+            'topic': topic,
+            'subtopic': subtopic,
+            'score': score,
+            'total': len(topic_questions)
+        }
         
-        if percent < 40:
-            suggestion = f"Keep practicing {topic}. Focus on understanding basic concepts."
-        elif percent < 60:
-            suggestion = f"Good effort! Review the questions you missed in {topic}."
-        elif percent < 80:
-            suggestion = f"Well done! You're getting better at {topic}."
+        # Redirect to topic suggestions
+        if subtopic:
+            return redirect(url_for('topic_suggestions', topic=topic, subtopic=subtopic))
         else:
-            suggestion = f"Excellent! You've mastered {topic}."
-        
-        return render_template('quiz.html',
-                             topic=topic,
-                             subtopic=subtopic,
-                             questions=topic_questions,
-                             submitted=True,
-                             score=score,
-                             suggestion=suggestion)
+            return redirect(url_for('topic_suggestions', topic=topic))
+
     
     # GET - Check for saved progress
     saved_progress = None

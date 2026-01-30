@@ -404,6 +404,27 @@
             box-shadow: 0 6px 25px rgba(0,0,0,0.3);
             color: white;
         }
+            .btn-back {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-back:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
 
         /* ========== TWO COLUMN LAYOUT ========== */
         .style-twocol .resume-page {
@@ -627,9 +648,9 @@
 <body>
 
 <div class="top-nav">
-    <a href="/dashboard" class="btn-back-dash">
-         Back to Dashboard
-    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn-back">
+                ← 
+            </a>
     <div class="style-selector">
         <span>Style:</span>
         <button class="style-btn active" onclick="changeStyle('classic', this)">Classic</button>
