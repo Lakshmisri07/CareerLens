@@ -590,7 +590,7 @@
 
     {% if not submitted %}
     <script>
-        let timeLeft = {{ time_left or 1200 }};
+        let timeLeft = {{ time_left or 3600 }};  // 60 minutes for 40 questions
         let timerInterval;
 
         function startTimer() {

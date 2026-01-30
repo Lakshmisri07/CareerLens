@@ -1,4 +1,162 @@
-node_modules/
+# ============================================================================
+# ENVIRONMENT VARIABLES - NEVER COMMIT THESE!
+# ============================================================================
 .env
-*.pyc
+.env.local
+.env.production
+.env.test
+.env.development
+*.env
+!.env.example
+
+# ============================================================================
+# PYTHON
+# ============================================================================
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================================================
+# IDE / EDITORS
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# ============================================================================
+# OPERATING SYSTEM
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================================================
+# LOGS
+# ============================================================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+
+# ============================================================================
+# SECRETS & CREDENTIALS
+# ============================================================================
+secrets/
+credentials/
+keys/
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+
+# ============================================================================
+# CERTIFICATES (for your certificate upload feature)
+# ============================================================================
+static/certificates/*
+!static/certificates/.gitkeep
+
+# ============================================================================
+# MACHINE LEARNING MODELS
+# ============================================================================
+ml/model.pkl
+ml/label_encoder.pkl
+*.pkl
+*.h5
+*.onnx
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# ============================================================================
+# NODE.JS (if you add frontend build tools)
+# ============================================================================
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+.eslintcache
+
+# ============================================================================
+# PRODUCTION
+# ============================================================================
+.env.production
+config/production.py
