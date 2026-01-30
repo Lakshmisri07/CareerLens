@@ -21,15 +21,17 @@ except ImportError:
 # SMART API KEY ROTATION WITH QUOTA TRACKING
 # ============================================================================
 API_KEYS = []
-for i in range(1, 5):  # Support up to 5 keys
-    key = os.getenv(f"GEMINI_API_KEY_{i}") or (os.getenv("GEMINI_API_KEY") if i == 1 else None)
+for i in range(1, 10):  # Load 10 keys
+    key = os.getenv(f"GEMINI_API_KEY_{i}")
     if key and key.strip():
         API_KEYS.append(key.strip())
+
+print(f"✅ Loaded {len(API_KEYS)} API keys")
 
 # Track quota for each key
 key_usage = {i: {'calls': 0, 'reset_time': datetime.now(), 'failed': False} for i in range(len(API_KEYS))}
 current_key_index = 0
-MAX_CALLS_PER_MINUTE = 13  # Conservative limit (stay under 15/min)
+MAX_CALLS_PER_MINUTE = 20  # Conservative limit (stay under 15/min)
 QUOTA_RESET_SECONDS = 65   # Slightly longer reset to avoid edge cases
 
 # Question cache to reduce API calls
@@ -555,57 +557,6 @@ def determine_difficulty_level(user_scores, topic, subtopic):
     else:
         return "advanced"
 
-def get_available_key():
-    """Find a key that hasn't exceeded quota with smart waiting"""
-    global current_key_index, key_usage
-    
-    now = datetime.now()
-    
-    # First pass: check all keys
-    for attempt in range(len(API_KEYS)):
-        key_idx = (current_key_index + attempt) % len(API_KEYS)
-        usage = key_usage[key_idx]
-        
-        # Skip failed keys
-        if usage.get('failed', False):
-            continue
-        
-        # Reset counter if minute passed
-        if (now - usage['reset_time']).total_seconds() >= QUOTA_RESET_SECONDS:
-            usage['calls'] = 0
-            usage['reset_time'] = now
-            usage['failed'] = False
-        
-        # Check if key has quota available
-        if usage['calls'] < MAX_CALLS_PER_MINUTE:
-            current_key_index = key_idx
-            return key_idx, True
-    
-    # All keys exhausted - calculate wait time
-    available_keys = [k for k, u in key_usage.items() if not u.get('failed', False)]
-    
-    if not available_keys:
-        print("❌ All keys have failed. Please check API keys.")
-        return 0, False
-    
-    earliest_reset = min(
-        (key_usage[k] for k in available_keys),
-        key=lambda x: x['reset_time']
-    )
-    wait_seconds = QUOTA_RESET_SECONDS - (now - earliest_reset['reset_time']).total_seconds()
-    
-    if wait_seconds > 0:
-        print(f"⏰ All keys exhausted. Waiting {int(wait_seconds) + 1}s for quota reset...")
-        time.sleep(wait_seconds + 1)
-        
-        # Reset all non-failed keys
-        for k in available_keys:
-            key_usage[k]['calls'] = 0
-            key_usage[k]['reset_time'] = datetime.now()
-        
-        return available_keys[0], True
-    
-    return 0, False
 
 def clean_cache():
     """Remove old entries from cache"""
@@ -631,12 +582,43 @@ def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=20):
     try:
         print(f"🤖 AI Generation: {topic}/{subtopic} ({difficulty})...")
         
+        # Randomize model order to distribute load
+        import random
+        models_to_try = [
+            'gemini-2.0-flash-001',
+            'gemini-2.0-flash-lite-001',
+            'gemini-flash-latest',
+            'gemini-flash-lite-latest',
+            'gemini-pro-latest',
+        ]
+        random.shuffle(models_to_try)  # Different order each time
         # ✅ CORRECT Gemini model names (verified Jan 2025)
         models_to_try = [
-            'gemini-2.5-flash',  # Latest, fastest
-            'gemini-2.0-flash',  # Stable fallback
-            'gemini-pro'         # Legacy fallback
+            'gemini-flash-latest',
+            'gemini-flash-lite-latest',
+            'gemini-pro-latest',
+            'gemini-2.0-flash-001',
+            'gemini-2.0-flash-lite-001',
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.5-pro',
+            'gemini-exp-1206',
+            'gemini-3-flash-preview',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash-image',
+            'gemma-3-27b-it',
+            'gemma-3-12b-it',
+            'gemma-3-4b-it',
+            'gemini-2.5-flash-preview-09-2025',
+            'gemini-3-pro-preview',
+            'gemini-robotics-er-1.5-preview',
+            'deep-research-pro-preview-12-2025',
+            'gemini-2.5-computer-use-preview-10-2025',
         ]
+
+        # Randomize order each time
+        import random
+        random.shuffle(models_to_try)
         
         # Enhanced prompt engineering
         difficulty_guidelines = {
@@ -646,21 +628,15 @@ def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=20):
         }
         
         for model_name in models_to_try:
-            # Get available key with quota
-            key_idx, available = get_available_key()
-            
-            if not available:
-                print(f"❌ No API quota available across all keys")
-                return None
-            
+        # Pick random key for this model
+            key_idx = random.randint(0, len(API_KEYS) - 1)
+    
             try:
-                # Configure with available key
-                if key_idx != current_key_index or key_idx == 0:
-                    genai.configure(api_key=API_KEYS[key_idx])
-                    current_key_index = key_idx
-                
-                print(f"   🔑 Key {key_idx + 1}/{len(API_KEYS)} | Calls: {key_usage[key_idx]['calls']}/{MAX_CALLS_PER_MINUTE}")
-                
+                # Configure with selected key
+                genai.configure(api_key=API_KEYS[key_idx])
+        
+                print(f"   🔑 Key {key_idx + 1}/{len(API_KEYS)} | Model: {model_name[:30]}")
+        
                 model = genai.GenerativeModel(model_name)
                 
                 # Add randomization seed to prompt for variety
@@ -725,7 +701,6 @@ Generate {num_questions} questions now:"""
 
                 # Increment usage BEFORE call
                 key_usage[key_idx]['calls'] += 1
-                
                 # Make API call with timeout
                 response = model.generate_content(
                     prompt,
