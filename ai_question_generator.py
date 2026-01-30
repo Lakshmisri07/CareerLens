@@ -21,7 +21,7 @@ except ImportError:
 # SMART API KEY ROTATION WITH QUOTA TRACKING
 # ============================================================================
 API_KEYS = []
-for i in range(1, 6):  # Support up to 5 keys
+for i in range(1, 5):  # Support up to 5 keys
     key = os.getenv(f"GEMINI_API_KEY_{i}") or (os.getenv("GEMINI_API_KEY") if i == 1 else None)
     if key and key.strip():
         API_KEYS.append(key.strip())
@@ -480,7 +480,7 @@ GENERIC_FALLBACK = [
 # HELPER FUNCTIONS
 # ============================================================================
 
-def get_fallback_questions(topic, subtopic, num_questions=5):
+def get_fallback_questions(topic, subtopic, num_questions=20):
     """Get fallback questions when AI generation fails"""
     questions = []
     
@@ -618,7 +618,7 @@ def clean_cache():
 # ============================================================================
 # AI GENERATION WITH CORRECT MODEL NAMES & ROBUST ERROR HANDLING
 # ============================================================================
-def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=5):
+def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=20):
     """Generate questions with proper Gemini models and error handling"""
     global current_key_index, key_usage, question_cache
     
@@ -919,7 +919,7 @@ def get_adaptive_questions(user_email, topic, subtopic, user_scores, num_questio
         'difficulty': difficulty
     }
 
-def generate_quiz_questions(topic, context, difficulty, num_questions=20):
+def generate_quiz_questions(topic, context, difficulty, num_questions=0):
     """
     For grand test / general quiz generation without user history
     
