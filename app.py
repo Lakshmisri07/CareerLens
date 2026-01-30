@@ -432,7 +432,7 @@ def grand_test():
             # Technical Questions (5 questions)
             print("\n[1/3] Generating Technical Questions...")
             tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
-            tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 15)
+            tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 20)
 
             all_questions.extend(tech_questions)
             print(f"✅ Added {len(tech_questions)} technical questions")
@@ -458,7 +458,7 @@ def grand_test():
 
             # Initialize variables for new test
             current_question = 0
-            time_left = 1200  # 20 minutes
+            time_left = 3600  # 20 minutes
             saved_answers = {}
 
         except Exception as e:
@@ -864,13 +864,13 @@ def quiz(topic, subtopic=None):
                 topic=topic,
                 subtopic=subtopic or '',
                 user_scores=user_scores,
-                num_questions=5
+                num_questions=20
             )
             
             topic_questions = ai_result['questions']
             difficulty = ai_result['difficulty']
             current_question = 0
-            time_left = 900
+            time_left = 1800
             saved_answers = {}
             
         except Exception as e:
