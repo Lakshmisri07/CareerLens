@@ -402,100 +402,142 @@
                 <button class="browse-btn" type="button" onclick="toggleDropdown('technicalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-                
+    
                 <div id="technicalDropdown" class="dropdown-section">
                     <div class="search-input">
                         <input type="text" 
-                               id="techSearch" 
-                               placeholder="Search topics..." 
-                               onkeyup="filterTopics('techSearch', 'techList')"
-                               onclick="event.stopPropagation()"
-                               autocomplete="off">
+                            id="techSearch" 
+                            placeholder="Search topics..." 
+                            onkeyup="filterTopics('techSearch', 'techList')"
+                            onclick="event.stopPropagation()"
+                            autocomplete="off">
                     </div>
                     <div class="topic-list" id="techList">
-                        <div class="dropdown-item" onclick="showSubtopics('C')">
-                            <i class="fas fa-code"></i> C
-                        </div>
-                        <div class="dropdown-item" onclick="showSubtopics('Java')">
-                            <i class="fas fa-coffee"></i> Java
-                        </div>
-                        <div class="dropdown-item" onclick="showSubtopics('Python')">
-                            <i class="fab fa-python"></i> Python
-                        </div>
-                        <div class="dropdown-item" onclick="showSubtopics('DBMS')">
-                            <i class="fas fa-database"></i> DBMS
-                        </div>
-                        <div class="dropdown-item" onclick="showSubtopics('OS')">
-                            <i class="fas fa-desktop"></i> OS
-                        </div>
-                        <div class="dropdown-item" onclick="showSubtopics('Data Structures')">
-                            <i class="fas fa-project-diagram"></i> Data Structures
-                        </div>
+                    <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
 
             <!-- Aptitude -->
             <div class="card">
-                <h3><i class="fas fa-brain"></i> Aptitude</h3>
+                <h3><i class="fas fa-brain"></i> Quantitative Aptitude</h3>
                 <button class="browse-btn" type="button" onclick="toggleDropdown('aptitudeDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-                
+    
                 <div id="aptitudeDropdown" class="dropdown-section">
                     <div class="search-input">
                         <input type="text" 
-                               id="aptSearch" 
-                               placeholder="Search topics..." 
-                               onkeyup="filterTopics('aptSearch', 'aptList')"
-                               onclick="event.stopPropagation()"
-                               autocomplete="off">
+                            id="aptSearch" 
+                            placeholder="Search topics..." 
+                            onkeyup="filterTopics('aptSearch', 'aptList')"
+                            onclick="event.stopPropagation()"
+                            autocomplete="off">
                     </div>
                     <div class="topic-list" id="aptList">
                         <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-calculator"></i> Quantitative Aptitude
+                            <i class="fas fa-calculator"></i> Number System
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-percentage"></i> Percentage & Profit Loss
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-clock"></i> Time & Work
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i> Speed, Time & Distance
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-chart-line"></i> Simple & Compound Interest
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-fill-drip"></i> Mixtures & Alligations
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-square-root-alt"></i> Ratio & Proportion
+                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
+                            <i class="fas fa-divide"></i> Average
                         </a>
                         <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
-                            <i class="fas fa-brain"></i> Logical Reasoning
+                           <i class="fas fa-brain"></i> Logical Reasoning
+                        </a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
+                            <i class="fas fa-project-diagram"></i> Seating Arrangement
+                        </a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
+                            <i class="fas fa-puzzle-piece"></i> Blood Relations
+                        </a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
+                            <i class="fas fa-calendar-alt"></i> Calendar & Clocks
                         </a>
                         <a href="/quiz/Data Interpretation/details" class="dropdown-item">
                             <i class="fas fa-chart-bar"></i> Data Interpretation
                         </a>
+                        <a href="/quiz/Data Interpretation/details" class="dropdown-item">
+                            <i class="fas fa-table"></i> Tables & Graphs
+                        </a>
+                        <a href="/quiz/Data Interpretation/details" class="dropdown-item">
+                            <i class="fas fa-chart-pie"></i> Pie Charts
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- English -->
+            <!-- Verbal Ability -->
             <div class="card">
-                <h3><i class="fas fa-book"></i> English</h3>
-                <button class="browse-btn" type="button" onclick="toggleDropdown('englishDropdown', this)">
+                <h3><i class="fas fa-language"></i> Verbal Ability & English</h3>
+                <button class="browse-btn" type="button" onclick="toggleDropdown('verbalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-                
-                <div id="englishDropdown" class="dropdown-section">
+    
+                <div id="verbalDropdown" class="dropdown-section">
                     <div class="search-input">
                         <input type="text" 
-                               id="engSearch" 
+                               id="verbalSearch" 
                                placeholder="Search topics..." 
-                               onkeyup="filterTopics('engSearch', 'engList')"
+                               onkeyup="filterTopics('verbalSearch', 'verbalList')"
                                onclick="event.stopPropagation()"
                                autocomplete="off">
                     </div>
-                    <div class="topic-list" id="engList">
-                        <a href="/quiz/Grammar/details" class="dropdown-item">
-                            <i class="fas fa-spell-check"></i> Grammar
+                    <div class="topic-list" id="verbalList">
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-spell-check"></i> Synonyms & Antonyms
                         </a>
-                        <a href="/quiz/Reading Comprehension/details" class="dropdown-item">
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
                             <i class="fas fa-book-open"></i> Reading Comprehension
                         </a>
-                        <a href="/quiz/Synonyms and Antonyms/details" class="dropdown-item">
-                            <i class="fas fa-language"></i> Synonyms and Antonyms
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-fill"></i> Fill in the Blanks
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-times-circle"></i> Error Detection
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-exchange-alt"></i> Sentence Improvement
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-sort-amount-down"></i> Para Jumbles
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa text-width"></i> Idioms & Phrases
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-comment-dots"></i> One Word Substitution
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-align-left"></i> Sentence Completion
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-font"></i> Vocabulary
+                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
+                            <i class="fas fa-pen"></i> Grammar
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
-
+        </div>    
         <h2 class="mb-2">Quick Actions</h2>
         <div class="grid grid-3">
             <a href="/suggestions" class="card" style="text-decoration: none; cursor: pointer;">
@@ -538,12 +580,52 @@
 
     <script>
         const SUBTOPICS = {
+            // CSE/IT topics
             'C': ['Arrays', 'Pointers', 'Loops', 'Functions'],
             'Java': ['OOPs', 'Inheritance', 'Exceptions'],
             'Python': ['Lists', 'Dictionaries', 'File Handling'],
             'DBMS': ['SQL', 'Normalization', 'Transactions'],
             'OS': ['Processes', 'Threads', 'Memory Management'],
-            'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees']
+            'Data Structures': ['Linked List', 'Stacks', 'Queues', 'Trees'],
+            'Algorithms': ['Sorting', 'Searching', 'Dynamic Programming'],
+            'Computer Networks': ['OSI Model', 'TCP/IP', 'Routing'],
+            'OOP': ['Classes', 'Inheritance', 'Polymorphism'],
+            'Web Development': ['HTML/CSS', 'JavaScript', 'React'],
+            'Cloud Computing': ['AWS', 'Azure', 'Docker'],
+    
+            // ECE topics
+            'Digital Electronics': ['Logic Gates', 'Boolean Algebra', 'Flip Flops'],
+            'Signal Processing': ['Fourier Transform', 'Filters', 'Sampling'],
+            'Embedded Systems': ['Microcontrollers', 'ARM', 'RTOS'],
+            'VLSI': ['CMOS', 'FPGA', 'Verilog'],
+            'Microprocessors': ['8085', '8086', 'Assembly'],
+            'Communication Systems': ['Modulation', 'Antennas', 'Wireless'],
+    
+            // EEE topics
+            'Circuit Theory': ['KCL/KVL', 'Network Theorems', 'AC Circuits'],
+            'Power Systems': ['Generation', 'Transmission', 'Distribution'],
+            'Control Systems': ['Transfer Functions', 'PID', 'Stability'],
+            'Electrical Machines': ['DC Motors', 'Transformers', 'Induction Motors'],
+            'Power Electronics': ['Rectifiers', 'Inverters', 'Converters'],
+    
+            // MECH topics
+            'Thermodynamics': ['Laws of Thermodynamics', 'Entropy', 'Carnot Cycle'],
+            'Mechanics': ['Statics', 'Dynamics', 'Kinematics'],
+            'Manufacturing': ['Casting', 'Welding', 'Machining'],
+            'CAD/CAM': ['AutoCAD', 'SolidWorks', 'CNC'],
+            'Fluid Mechanics': ['Fluid Properties', 'Bernoulli', 'Flow'],
+    
+            // CIVIL topics
+            'AutoCAD': ['2D Drawing', '3D Modeling', 'Layout'],
+            'Structural Analysis': ['Beams', 'Trusses', 'Frames'],
+            'Surveying': ['Leveling', 'Theodolite', 'Total Station'],
+            'Geotechnical Engineering': ['Soil Mechanics', 'Foundations', 'Slope Stability'],
+    
+            // CHEM topics
+            'Chemical Thermodynamics': ['Laws', 'Phase Equilibrium', 'Chemical Equilibrium'],
+            'Process Control': ['Feedback Control', 'PID', 'Advanced Control'],
+            'Reaction Engineering': ['Kinetics', 'Reactor Design', 'Catalysis'],
+            'Mass Transfer': ['Distillation', 'Absorption', 'Extraction']
         };
 
         function toggleDropdown(id, buttonElement) {
@@ -704,6 +786,22 @@
             if (!button || !button.onclick) {
                 dropdown.style.display = 'none';
             }
+        });
+    
+        // Load branch-specific topics
+        fetch('/api/branch_topics')
+            .then(res => res.json())
+            .then(data => {
+                const topics = data.topics;
+                const techList = document.getElementById('techList');
+        
+                techList.innerHTML = topics.map(topic => {
+                    const icon = topic === 'Python' ? 'fab fa-python' : 
+                            topic === 'Java' ? 'fas fa-coffee' : 'fas fa-code';
+                    return `<div class="dropdown-item" onclick="showSubtopics('${topic}')">
+                        <i class="${icon}"></i> ${topic}
+                    </div>`;
+            }).join('');
         });
     </script>
 </body>

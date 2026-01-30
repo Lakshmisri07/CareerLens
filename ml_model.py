@@ -69,10 +69,16 @@ class CareerLensMLModel:
         
         df = pd.DataFrame(user_attempts)
         
-        # Group by topic and subtopic
+        # If timestamp exists, sort by it; otherwise use latest row
+        if 'timestamp' in df.columns:
+            df = df.sort_values('timestamp', ascending=False)
+            df = df.drop_duplicates(subset=['topic', 'subtopic'], keep='first')
+        else:
+            # Keep last occurrence (latest in database)
+            df = df.drop_duplicates(subset=['topic', 'subtopic'], keep='last')
         topic_stats = df.groupby(['topic', 'subtopic']).agg({
-            'score': 'sum',
-            'total_questions': 'sum',
+            'score': 'first',         # ✅ Use latest attempt only
+            'total_questions': 'first',
         }).reset_index()
         
         topic_stats['attempts'] = df.groupby(['topic', 'subtopic']).size().values
@@ -140,122 +146,90 @@ class CareerLensMLModel:
         return weaknesses
     
     def calculate_readiness_score(self, user_attempts):
-        """
-        Calculate overall placement readiness with detailed breakdown
-        """
+        """Calculate realistic placement readiness"""
         if not user_attempts:
             return {
-                'score': 0,
-                'status': 'Not Assessed',
-                'message': 'Take quizzes to assess your readiness',
-                'confidence': 0,
-                'total_attempts': 0,
-                'breakdown': {}
+                'score': 0, 'status': 'Not Assessed', 'message': 'Take quizzes to assess readiness',
+                'confidence': 0, 'total_attempts': 0, 'breakdown': {}
             }
-        
+    
         df = pd.DataFrame(user_attempts)
-        
-        # Calculate basic metrics
-        total_score = sum(a['score'] for a in user_attempts)
-        total_questions = sum(a['total_questions'] for a in user_attempts)
-        overall_percentage = (total_score / total_questions * 100) if total_questions > 0 else 0
-        
-        # Calculate topic-wise performance
+    
+        # ✅ CRITICAL: Need coverage across multiple topics
+        unique_topics = df['topic'].nunique()
+        total_attempts = len(user_attempts)
+    
+        # Calculate topic performance (latest attempt only)
+        if 'timestamp' in df.columns:
+            df = df.sort_values('timestamp', ascending=False)
+        df_latest = df.drop_duplicates(subset=['topic', 'subtopic'], keep='first')
+    
         topic_performance = {}
-        for topic in df['topic'].unique():
-            topic_data = df[df['topic'] == topic]
+        for topic in df_latest['topic'].unique():
+            topic_data = df_latest[df_latest['topic'] == topic]
             topic_score = topic_data['score'].sum()
             topic_total = topic_data['total_questions'].sum()
             topic_pct = (topic_score / topic_total * 100) if topic_total > 0 else 0
             topic_performance[topic] = round(topic_pct, 1)
-        
-        # Calculate weighted score
-        weighted_sum = 0
-        weight_total = 0
-        for topic, percentage in topic_performance.items():
-            weight = self.topic_weights.get(topic, 1.0)
-            weighted_sum += percentage * weight
-            weight_total += weight
-        
-        final_score = (weighted_sum / weight_total) if weight_total > 0 else overall_percentage
-        
-        # Determine status and message
-        if final_score >= 80:
-            status = 'Excellent - Ready for Placements'
-            message = '🎉 You are well-prepared! Focus on mock interviews and company-specific preparation.'
+    
+            # Calculate raw score
+        avg_score = sum(topic_performance.values()) / len(topic_performance) if topic_performance else 0
+    
+         # ✅ PENALIZE for insufficient coverage
+        REQUIRED_TOPICS = 6  # Need at least 6 topics
+        REQUIRED_ATTEMPTS = 10  # Need at least 10 attempts
+    
+        topic_penalty = max(0, (REQUIRED_TOPICS - unique_topics) * 15)  # -15% per missing topic
+        attempt_penalty = max(0, (REQUIRED_ATTEMPTS - total_attempts) * 3)  # -3% per missing attempt
+    
+        final_score = max(0, avg_score - topic_penalty - attempt_penalty)
+    
+        # Determine status
+        if final_score >= 75 and unique_topics >= 6 and total_attempts >= 10:
+            status = 'Ready for Placements'
+            message = '🎉 Well-prepared! Focus on mock interviews.'
             color = 'success'
-        elif final_score >= 70:
-            status = 'Good - Almost Ready'
-            message = '👍 You are on the right track. Focus on weak areas and take more practice tests.'
-            color = 'info'
-        elif final_score >= 60:
-            status = 'Average - Needs Work'
-            message = '📚 Keep practicing consistently. Focus on fundamentals and weak topics.'
+        elif final_score >= 60 and unique_topics >= 4:
+            status = 'Almost Ready'
+            message = '👍 Good progress. Cover more topics.'
             color = 'warning'
-        elif final_score >= 40:
-            status = 'Below Average - Significant Improvement Needed'
-            message = '⚡ You need more practice. Start with basics and build gradually.'
-            color = 'warning'
-        else:
-            status = 'Needs Substantial Improvement'
-            message = '💪 Focus on building strong fundamentals. Practice daily and review concepts regularly.'
+        elif unique_topics < 3 or total_attempts < 5:
+            status = 'Insufficient Data'
+            message = f'📊 Take quizzes in more topics ({unique_topics}/6 covered).'
             color = 'danger'
-        
-        # Calculate confidence (based on number of attempts)
-        confidence = min(len(user_attempts) / 20, 1.0) * 100
-        
-        # Identify strengths and weaknesses
-        strengths = [t for t, p in topic_performance.items() if p >= 75]
-        weaknesses = [t for t, p in topic_performance.items() if p < 50]
-        
+        else:
+            status = 'Needs Improvement'
+            message = '💪 Keep practicing. Focus on weak areas.'
+            color = 'warning'
+    
+        # Confidence based on coverage
+        confidence = min((total_attempts / REQUIRED_ATTEMPTS) * (unique_topics / REQUIRED_TOPICS) * 100, 100)
+    
         return {
             'score': round(final_score, 1),
             'status': status,
             'message': message,
             'confidence': round(confidence, 1),
-            'total_attempts': len(user_attempts),
+            'total_attempts': total_attempts,
+            'topics_covered': unique_topics,
+            'topics_required': REQUIRED_TOPICS,
             'breakdown': topic_performance,
-            'strengths': strengths,
-            'weaknesses': weaknesses,
             'color': color,
-            'recommendations': self._get_readiness_recommendations(final_score, weaknesses)
+            'recommendations': self._get_readiness_recommendations(final_score, unique_topics, total_attempts)
         }
-    
-    def _get_readiness_recommendations(self, score, weak_topics):
-        """Generate recommendations based on readiness score"""
-        recommendations = []
-        
-        if score >= 80:
-            recommendations = [
-                "Start applying to companies",
-                "Practice mock interviews",
-                "Prepare company-specific questions",
-                "Build confidence with more tests"
-            ]
-        elif score >= 70:
-            recommendations = [
-                "Focus on weak topics: " + ", ".join(weak_topics[:3]) if weak_topics else "Continue regular practice",
-                "Take more comprehensive tests",
-                "Practice coding problems daily",
-                "Aim for 80%+ in weak areas"
-            ]
-        elif score >= 60:
-            recommendations = [
-                "Create a structured study plan",
-                "Dedicate 2-3 hours daily to weak topics",
-                "Take quizzes regularly to track progress",
-                "Focus on fundamentals first"
-            ]
-        else:
-            recommendations = [
-                "Start with basic concepts",
-                "Set daily learning goals",
-                "Practice 1-2 topics thoroughly each week",
-                "Don't rush - focus on understanding"
-            ]
-        
-        return recommendations
 
+    def _get_readiness_recommendations(self, score, topics_covered, attempts):
+        """Generate smart recommendations"""
+        recs = []
+    
+        if topics_covered < 6:
+            recs.append(f"Cover {6 - topics_covered} more core topics")
+        if attempts < 10:
+            recs.append(f"Take {10 - attempts} more quizzes for accurate assessment")
+        if score < 60:
+            recs.append("Focus on fundamentals in weak topics")
+    
+        return recs if recs else ["Continue regular practice", "Try advanced topics"]
 
 # ============================================================================
 # HELPER FUNCTIONS FOR APP.PY

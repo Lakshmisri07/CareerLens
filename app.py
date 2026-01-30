@@ -57,9 +57,38 @@ def get_user_branch():
 
     if result.data:
         branch = result.data[0]['branch'].upper()
-        for key in BRANCH_TOPICS.keys():
+        
+        # Direct matching with branch mapping
+        branch_mapping = {
+            'COMPUTER SCIENCE': 'CSE',
+            'CSE': 'CSE',
+            'CS': 'CSE',
+            'INFORMATION TECHNOLOGY': 'IT',
+            'IT': 'IT',
+            'ELECTRONICS AND COMMUNICATION': 'ECE',
+            'ECE': 'ECE',
+            'ELECTRICAL AND ELECTRONICS': 'EEE',
+            'ELECTRICAL': 'EEE',
+            'EEE': 'EEE',
+            'MECHANICAL': 'MECH',
+            'MECH': 'MECH',
+            'CIVIL': 'CIVIL',
+            'CHEMICAL': 'CHEM',
+            'CHEM': 'CHEM',
+            'ARTIFICIAL INTELLIGENCE': 'AI/ML',
+            'AI/ML': 'AI/ML',
+            'AI': 'AI/ML',
+            'ML': 'AI/ML'
+        }
+        
+        # Try exact match first
+        if branch in branch_mapping:
+            return branch_mapping[branch]
+        
+        # Try partial match
+        for key, value in branch_mapping.items():
             if key in branch or branch in key:
-                return key
+                return value
 
     return 'DEFAULT'
 @app.route('/api/branch_topics')
@@ -337,7 +366,12 @@ def grand_test():
     
     # POST - Submit quiz
     if request.method == 'POST':
-        all_questions = session.get('grand_test_questions', [])
+        # Get questions from form data instead of session
+        questions_json = request.form.get('questions_data')
+        if questions_json:
+            all_questions = json.loads(questions_json)
+        else:
+            all_questions = session.get('grand_test_questions', [])
     
         if not all_questions:
             flash("Grand Test session expired. Please start again.")
@@ -970,14 +1004,15 @@ def quiz(topic, subtopic=None):
         
         # Save score
         try:
-            supabase.table('user_scores').insert({
+            # Check if exists, then upsert
+            supabase.table('user_scores').upsert({
                 'user_email': user_email,
                 'topic': topic,
                 'subtopic': subtopic or '',
                 'score': score,
                 'total_questions': len(topic_questions),
                 'difficulty': difficulty
-            }).execute()
+            }, on_conflict='user_email,topic,subtopic').execute()
             
             # Delete saved progress
             try:

@@ -490,6 +490,7 @@
         </div>
 
         <form method="POST" id="quizForm">
+            <input type="hidden" name="questions_data" id="questionsData" value='{{ all_questions | tojson }}'>
             {% for q in all_questions %}
             <div class="question-card">
                 <div style="display: flex; align-items: start; margin-bottom: 1.25rem;">
@@ -502,6 +503,8 @@
                     {% for opt in q.options %}
                     <label class="option-label" for="q{{ outer_loop.index0 }}_opt{{ loop.index0 }}">
                         <input type="radio" 
+                               class="option-radio"
+                               id="q{{ outer_loop.index0 }}_opt{{ loop.index0 }}"
                                name="q{{ outer_loop.index0 }}" 
                                value="{{ opt }}">
                         <span class="option-text">{{ opt }}</span>
@@ -681,6 +684,8 @@
         }
 
         document.getElementById('quizForm').addEventListener('submit', function(e) {
+            document.getElementById('questionsData').value = JSON.stringify({{ all_questions | tojson }});
+
             const questions = document.querySelectorAll('.question-card');
             
             for (let question of questions) {
