@@ -317,6 +317,10 @@ def grand_test_details():
 
 
 # Update the grand_test route to handle resume/restart
+# FIX FOR GRAND TEST SCORING
+
+# In app.py, find the grand_test POST handler (around line 340) and replace with:
+
 @app.route('/grand_test', methods=['GET', 'POST'])
 def grand_test():
     if 'user' not in session:
@@ -329,7 +333,6 @@ def grand_test():
     restart = request.args.get('restart') == 'true'
     
     if restart:
-        # Delete saved progress
         try:
             supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
         except:
@@ -343,15 +346,19 @@ def grand_test():
             flash("Grand Test session expired. Please start again.")
             return redirect(url_for('grand_test_details'))
 
+        # FIXED SCORING - Count correct answers
         score = 0
         user_answers = request.form
     
         for i, q in enumerate(all_questions):
-            user_answer = user_answers.get(f'q{i}', '')
-            correct_answer = str(q['answer'])
+            user_answer = user_answers.get(f'q{i}', '').strip()
+            correct_answer = str(q['answer']).strip()
         
-            if user_answer.strip().lower() == correct_answer.strip().lower():
+            # EXACT MATCH (case-insensitive)
+            if user_answer.lower() == correct_answer.lower():
                 score += 1
+            else:
+                print(f"Q{i}: User='{user_answer}' vs Correct='{correct_answer}' - WRONG")
 
         # Get user's score history for difficulty calculation
         result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
@@ -362,15 +369,19 @@ def grand_test():
         from ai_question_generator import determine_difficulty_level
         difficulty = determine_difficulty_level(user_scores, 'Grand Test', '')
     
-        # Save score WITH DIFFICULTY
-        supabase.table('user_scores').insert({
-            'user_email': user_email,
-            'topic': 'Grand Test',
-            'subtopic': '',
-            'score': score,
-            'total_questions': len(all_questions),
-            'difficulty': difficulty
-        }).execute()
+        # Save score WITH DIFFICULTY - FIXED
+        try:
+            supabase.table('user_scores').insert({
+                'user_email': user_email,
+                'topic': 'Grand Test',
+                'subtopic': '',
+                'score': score,
+                'total_questions': len(all_questions),
+                'difficulty': difficulty
+            }).execute()
+            print(f"✅ Grand Test score saved: {score}/{len(all_questions)}")
+        except Exception as e:
+            print(f"❌ Failed to save Grand Test score: {e}")
         
         # Delete saved progress after submission
         try:
@@ -393,6 +404,7 @@ def grand_test():
                              score=score,
                              suggestion=suggestion)
 
+    # ... rest of GET logic stays same
     # GET - Load or generate quiz
     saved_progress = None
     if resume and not restart:
