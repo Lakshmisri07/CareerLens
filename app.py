@@ -317,13 +317,6 @@ def grand_test_details():
 
 
 # Update the grand_test route to handle resume/restart
-# FIX FOR GRAND TEST SCORING
-
-# In app.py, find the grand_test POST handler (around line 340) and replace with:
-
-# FIX FOR GRAND TEST SCORING ISSUE
-# Add this to app.py - REPLACE the existing grand_test POST handler
-
 @app.route('/grand_test', methods=['GET', 'POST'])
 def grand_test():
     if 'user' not in session:
@@ -336,6 +329,7 @@ def grand_test():
     restart = request.args.get('restart') == 'true'
     
     if restart:
+        # Delete saved progress
         try:
             supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
         except:
@@ -349,34 +343,17 @@ def grand_test():
             flash("Grand Test session expired. Please start again.")
             return redirect(url_for('grand_test_details'))
 
-        # ✅ FIXED SCORING - Exact match with case-insensitive comparison
         score = 0
         user_answers = request.form
-        
-        print("\n" + "="*80)
-        print("🔍 GRAND TEST SCORING DEBUG")
-        print("="*80)
     
         for i, q in enumerate(all_questions):
-            question_name = f'q{i}'
-            user_answer = user_answers.get(question_name, '').strip()
-            correct_answer = str(q['answer']).strip()
+            user_answer = user_answers.get(f'q{i}', '')
+            correct_answer = str(q['answer'])
         
-            # Case-insensitive exact match
-            is_correct = user_answer.lower() == correct_answer.lower()
-            
-            if is_correct:
+            if user_answer.strip().lower() == correct_answer.strip().lower():
                 score += 1
-                print(f"✅ Q{i+1}: CORRECT - '{user_answer}'")
-            else:
-                print(f"❌ Q{i+1}: WRONG")
-                print(f"   User answered: '{user_answer}'")
-                print(f"   Correct answer: '{correct_answer}'")
 
-        print(f"\n🎯 FINAL SCORE: {score}/{len(all_questions)}")
-        print("="*80 + "\n")
-
-        # Get difficulty for this user
+        # Get user's score history for difficulty calculation
         result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
         user_scores = [{'topic': row['topic'], 'subtopic': row['subtopic'], 
                         'score': row['score'], 'total_questions': row['total_questions']} 
@@ -385,27 +362,17 @@ def grand_test():
         from ai_question_generator import determine_difficulty_level
         difficulty = determine_difficulty_level(user_scores, 'Grand Test', '')
     
-        # ✅ SAVE SCORE WITH DIFFICULTY
-        try:
-            save_result = supabase.table('user_scores').insert({
-                'user_email': user_email,
-                'topic': 'Grand Test',
-                'subtopic': '',
-                'score': score,
-                'total_questions': len(all_questions),
-                'difficulty': difficulty
-            }).execute()
-            
-            print(f"✅ Grand Test score saved to database")
-            print(f"   Score: {score}/{len(all_questions)}")
-            print(f"   Difficulty: {difficulty}")
-            
-        except Exception as e:
-            print(f"❌ Failed to save Grand Test score: {e}")
-            import traceback
-            traceback.print_exc()
+        # Save score WITH DIFFICULTY
+        supabase.table('user_scores').insert({
+            'user_email': user_email,
+            'topic': 'Grand Test',
+            'subtopic': '',
+            'score': score,
+            'total_questions': len(all_questions),
+            'difficulty': difficulty
+        }).execute()
         
-        # Delete saved progress
+        # Delete saved progress after submission
         try:
             supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', 'Grand Test').eq('subtopic', '').execute()
         except:
@@ -414,20 +381,16 @@ def grand_test():
         percent = (score / len(all_questions) * 100)
         
         if percent >= 80:
-            suggestion = "🎉 Excellent! You're well-prepared for placements. Focus on mock interviews and company-specific preparation."
+            suggestion = "Excellent! You're well-prepared for placements."
         elif percent >= 60:
-            suggestion = "👍 Good work! You're on the right track. Review weak areas and take more comprehensive tests."
-        elif percent >= 40:
-            suggestion = "📚 Keep practicing consistently. Focus on fundamentals and weak topics identified in AI Suggestions."
+            suggestion = "Good work! Review weak areas and practice more."
         else:
-            suggestion = "💪 Don't worry! Focus on building strong fundamentals. Practice daily and review concepts regularly."
+            suggestion = "Keep practicing. Focus on improving your fundamentals."
 
         return render_template('grand_test.html',
                              all_questions=all_questions,
                              submitted=True,
                              score=score,
-                             total=len(all_questions),
-                             percentage=round(percent, 1),
                              suggestion=suggestion)
 
     # GET - Load or generate quiz
@@ -450,7 +413,7 @@ def grand_test():
         # Generate new questions
         try:
             print("\n" + "="*80)
-            print("🎯 GENERATING GRAND TEST")
+            print("🎯 GENERATING GRAND TEST - ALL AI QUESTIONS")
             print("="*80)
 
             result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
@@ -466,58 +429,38 @@ def grand_test():
 
             all_questions = []
 
-            from ai_question_generator import generate_questions, determine_difficulty_level
+            from ai_question_generator import generate_quiz_questions, determine_difficulty_level
             
-            # Technical (20 questions)
-            print("\n[1/3] Technical Questions...")
+            # Technical Questions (5 questions)
+            print("\n[1/3] Generating Technical Questions...")
             tech_difficulty = determine_difficulty_level(user_scores, 'Technical', None)
-            tech_questions = []
-            
-            # Try AI first
-            from ai_question_generator import generate_questions_with_ai
-            tech_ai = generate_questions_with_ai('Technical', 'Programming & CS Fundamentals', tech_difficulty, 20)
-            
-            if tech_ai and len(tech_ai) >= 20:
-                tech_questions = tech_ai[:20]
-            else:
-                # Fallback
-                from ai_question_generator import get_fallback_questions
-                tech_questions = get_fallback_questions('Technical', '', 20)
+            tech_questions = generate_quiz_questions('Technical', 'Programming & CS Fundamentals', tech_difficulty, 20)
 
             all_questions.extend(tech_questions)
             print(f"✅ Added {len(tech_questions)} technical questions")
 
-            # Aptitude (15 questions)
-            print("\n[2/3] Aptitude Questions...")
+            # Aptitude Questions (5 questions)
+            print("\n[2/3] Generating Aptitude Questions...")
             apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
-            apt_ai = generate_questions_with_ai('Quantitative Aptitude', 'Math & Reasoning', apt_difficulty, 15)
-            
-            if apt_ai and len(apt_ai) >= 15:
-                apt_questions = apt_ai[:15]
-            else:
-                apt_questions = get_fallback_questions('Quantitative Aptitude', '', 15)
+            apt_questions = generate_quiz_questions('Quantitative Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 15)
 
             all_questions.extend(apt_questions)
             print(f"✅ Added {len(apt_questions)} aptitude questions")
 
-            # English (10 questions)
-            print("\n[3/3] English Questions...")
+            # English Questions (5 questions)
+            print("\n[3/3] Generating English Questions...")
             eng_difficulty = determine_difficulty_level(user_scores, 'English', None)
-            eng_ai = generate_questions_with_ai('Grammar', 'Grammar & Communication', eng_difficulty, 10)
-            
-            if eng_ai and len(eng_ai) >= 10:
-                eng_questions = eng_ai[:10]
-            else:
-                eng_questions = get_fallback_questions('Grammar', '', 10)
+            eng_questions = generate_quiz_questions('Grammar', 'Grammar & Communication', eng_difficulty, 10)
 
             all_questions.extend(eng_questions)
             print(f"✅ Added {len(eng_questions)} English questions")
 
-            print(f"\n✅ TOTAL: {len(all_questions)} questions generated")
+            print(f"\n✅ TOTAL: {len(all_questions)} AI-generated questions")
             print("="*80)
 
+            # Initialize variables for new test
             current_question = 0
-            time_left = 3600  # 60 minutes
+            time_left = 3600  # 20 minutes
             saved_answers = {}
 
         except Exception as e:
@@ -879,49 +822,7 @@ def check_progress(task_id):
     
     return jsonify(response), 200
 
-@app.route('/api/start_quiz_generation', methods=['POST'])
-def start_quiz_generation():
-    """Start async question generation"""
-    if 'user' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    data = request.json
-    topic = data.get('topic', '')
-    subtopic = data.get('subtopic', '')
-    user_email = session['user_email']
-    
-    # Get user scores
-    result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
-    user_scores = [
-        {
-            'topic': row['topic'],
-            'subtopic': row.get('subtopic', ''),
-            'score': row['score'],
-            'total_questions': row['total_questions']
-        }
-        for row in result.data
-    ]
-    
-    # Generate questions (this will use progress callback if provided)
-    from ai_question_generator import generate_questions
-    
-    questions, difficulty = generate_questions(
-        user_email,
-        topic,
-        subtopic,
-        user_scores,
-        num_questions=20
-    )
-    
-    # Store in session
-    session['quiz_questions'] = questions
-    session['quiz_difficulty'] = difficulty
-    
-    return jsonify({
-        'success': True,
-        'questions_count': len(questions),
-        'difficulty': difficulty
-    })
+
 # ============================================================================
 # MODIFIED ROUTE: Quiz Details with Async Option
 # ============================================================================
