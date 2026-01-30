@@ -6,271 +6,128 @@
     <title>Quiz Details - CareerLens</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: rgba(148, 163, 184, 0.1);
+        /* ... Keep all your existing styles ... */
+        
+        /* Loading Modal Styles */
+        .loading-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        
+        .loading-modal.active {
+            display: flex;
         }
-
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .navbar {
+        
+        .loading-content {
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        .btn-back {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-back:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .quiz-info {
-            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .quiz-info-header {
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            max-width: 450px;
+            width: 90%;
             text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
         }
-
-        .quiz-info-header h1 {
-            color: var(--text-primary);
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .quiz-info-header p {
-            color: var(--text-secondary);
-        }
-
-        .quiz-info-details {
-            display: grid;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.875rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
-
-        .info-label {
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .info-value {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.375rem 0.875rem;
-            background: rgba(99, 102, 241, 0.2);
+        
+        .loading-spinner {
+            font-size: 4rem;
             color: var(--accent);
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        /* Saved Progress Alert */
-        .saved-progress-alert {
-            background: var(--bg-tertiary);
-            padding: 1rem;
-            border-radius: 8px;
             margin-bottom: 1.5rem;
-            border-left: 4px solid var(--accent);
+            animation: spin 2s linear infinite;
         }
-
-        .saved-progress-alert p {
-            margin: 0;
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .saved-progress-alert strong {
+        
+        .loading-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text-primary);
+            margin-bottom: 1rem;
         }
-
-        .saved-progress-alert .text-muted {
+        
+        .loading-message {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #5558d9);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
             color: var(--text-muted);
             font-size: 0.9rem;
-            margin-top: 0.5rem;
         }
-
-        .action-buttons {
+        
+        .loading-steps {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .loading-step {
             display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            background: linear-gradient(145deg, var(--accent), #5558d9);
-            color: white;
-            border: none;
-            padding: 0.875rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            gap: 1rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
             transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            min-width: 200px;
         }
-
-        .btn:hover {
-            background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        
+        .loading-step.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-left: 3px solid var(--accent);
         }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-            box-shadow: none;
+        
+        .loading-step.complete {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 3px solid var(--success);
         }
-
-        .btn-outline:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
+        
+        .step-icon {
+            font-size: 1.2rem;
+            color: var(--text-muted);
         }
-
-        .instructions {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
+        
+        .loading-step.active .step-icon {
+            color: var(--accent);
         }
-
-        .instructions h3 {
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
+        
+        .loading-step.complete .step-icon {
+            color: var(--success);
         }
-
-        .instructions ul {
+        
+        .step-text {
             color: var(--text-secondary);
             font-size: 0.9rem;
-            padding-left: 1.5rem;
         }
-
-        .instructions li {
-            margin-bottom: 0.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-        }
-
-        /* Add this to the <style> section: */
-.saved-progress-alert {
-    background: var(--bg-tertiary);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border-left: 4px solid var(--accent);
-}
-
-.saved-progress-alert p {
-    margin: 0;
-}
-
-.saved-progress-alert strong {
-    color: var(--text-primary);
-}
-
-.saved-progress-alert .text-muted {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
     </style>
 </head>
 <body>
+    <!-- Your existing navbar -->
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo"><i class="fas fa-graduation-cap"></i> CareerLens</div>
@@ -279,10 +136,11 @@
     </nav>
 
     <div class="container">
-        <a href="{{ url_for('dashboard') }}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        <a href="/dashboard" class="btn-back">
+             Back to Dashboard
         </a>
 
+        <!-- Your existing quiz info card -->
         <div class="quiz-info">
             <div class="quiz-info-header">
                 <h1>{{ topic }}{% if subtopic %} - {{ subtopic }}{% endif %}</h1>
@@ -305,17 +163,14 @@
                     </span>
                 </div>
             </div>
-            <!-- ADD THIS SECTION IF MISSING (after quiz info details): -->
 
-            <!-- Saved Progress Alert -->
             {% if has_saved_progress %}
             <div class="saved-progress-alert">
                 <p><i class="fas fa-info-circle"></i> <strong>You have a saved quiz in progress</strong></p>
-                <p class="text-muted">Question {{ saved_question }}/5 • {{ saved_time_left }} remaining</p>
+                <p class="text-muted">Question {{ saved_question }}/20 • {{ saved_time_left }} remaining</p>
             </div>
             {% endif %}
 
-            <!-- Action Buttons -->
             <div class="action-buttons">
                 {% if has_saved_progress %}
                 <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET" style="margin: 0;">
@@ -324,23 +179,16 @@
                         <i class="fas fa-play"></i> Resume Quiz
                     </button>
                 </form>
-                <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET" style="margin: 0;">
-                    <input type="hidden" name="restart" value="true">
-                    <button type="submit" class="btn btn-outline">
-                        <i class="fas fa-redo"></i> Start Fresh
-                    </button>
-                </form>
+                <button onclick="startQuiz(true)" class="btn btn-outline">
+                    <i class="fas fa-redo"></i> Start Fresh
+                </button>
                 {% else %}
-                <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET" style="margin: 0;">
-                    <button type="submit" class="btn">
-                        <i class="fas fa-play"></i> Start Quiz
-                    </button>
-                </form>
+                <button onclick="startQuiz()" class="btn">
+                    <i class="fas fa-play"></i> Start Quiz
+                </button>
                 {% endif %}
             </div>
-           
 
-            <!-- Instructions -->
             <div class="instructions">
                 <h3>Instructions:</h3>
                 <ul>
@@ -353,5 +201,159 @@
             </div>
         </div>
     </div>
+
+    <!-- Loading Modal -->
+    <div class="loading-modal" id="loadingModal">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="loading-title">Generating Questions...</div>
+            <div class="loading-message" id="loadingMessage">
+                AI is crafting personalized questions for you
+            </div>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progressPercent">0</span>% Complete
+            </div>
+            
+            <div class="loading-steps">
+                <div class="loading-step" id="step1">
+                    <div class="step-icon"><i class="fas fa-circle-notch"></i></div>
+                    <div class="step-text">Analyzing your performance...</div>
+                </div>
+                <div class="loading-step" id="step2">
+                    <div class="step-icon"><i class="fas fa-circle-notch"></i></div>
+                    <div class="step-text">Selecting difficulty level...</div>
+                </div>
+                <div class="loading-step" id="step3">
+                    <div class="step-icon"><i class="fas fa-circle-notch"></i></div>
+                    <div class="step-text">Generating unique questions...</div>
+                </div>
+                <div class="loading-step" id="step4">
+                    <div class="step-icon"><i class="fas fa-circle-notch"></i></div>
+                    <div class="step-text">Validating answers...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const topic = "{{ topic }}";
+        const subtopic = "{{ subtopic or '' }}";
+        let pollingInterval = null;
+        
+        function startQuiz(restart = false) {
+            // Show loading modal
+            document.getElementById('loadingModal').classList.add('active');
+            
+            // Start async generation
+            fetch('/api/generate_questions_async', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    subtopic: subtopic,
+                    num_questions: 20,
+                    restart: restart
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.task_id) {
+                    // Start polling for progress
+                    pollProgress(data.task_id);
+                } else {
+                    throw new Error('Failed to start generation');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingModal').classList.remove('active');
+                alert('Failed to start quiz generation. Please try again.');
+            });
+        }
+        
+        function pollProgress(taskId) {
+            let lastProgress = 0;
+            
+            pollingInterval = setInterval(() => {
+                fetch(`/api/check_progress/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const progress = data.progress || 0;
+                        const message = data.message || 'Generating...';
+                        
+                        // Update progress bar
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = progress;
+                        document.getElementById('loadingMessage').textContent = message;
+                        
+                        // Update steps based on progress
+                        if (progress >= 10) {
+                            updateStep('step1', progress >= 25 ? 'complete' : 'active');
+                        }
+                        if (progress >= 25) {
+                            updateStep('step2', progress >= 50 ? 'complete' : 'active');
+                        }
+                        if (progress >= 50) {
+                            updateStep('step3', progress >= 85 ? 'complete' : 'active');
+                        }
+                        if (progress >= 85) {
+                            updateStep('step4', progress >= 100 ? 'complete' : 'active');
+                        }
+                        
+                        // Check if complete
+                        if (data.status === 'complete') {
+                            clearInterval(pollingInterval);
+                            
+                            // Update all steps to complete
+                            updateStep('step1', 'complete');
+                            updateStep('step2', 'complete');
+                            updateStep('step3', 'complete');
+                            updateStep('step4', 'complete');
+                            
+                            // Redirect to quiz
+                            setTimeout(() => {
+                                const redirectUrl = `/quiz/${encodeURIComponent(topic)}${subtopic ? '/' + encodeURIComponent(subtopic) : ''}?task_id=${taskId}`;
+                                window.location.href = redirectUrl;
+                            }, 500);
+                        }
+                        else if (data.status === 'error') {
+                            clearInterval(pollingInterval);
+                            document.getElementById('loadingModal').classList.remove('active');
+                            alert('Error generating questions: ' + (data.error || 'Unknown error'));
+                        }
+                        
+                        lastProgress = progress;
+                    })
+                    .catch(error => {
+                        console.error('Polling error:', error);
+                        clearInterval(pollingInterval);
+                        document.getElementById('loadingModal').classList.remove('active');
+                        alert('Lost connection. Please try again.');
+                    });
+            }, 1000); // Poll every second
+        }
+        
+        function updateStep(stepId, status) {
+            const step = document.getElementById(stepId);
+            step.classList.remove('active', 'complete');
+            if (status) {
+                step.classList.add(status);
+            }
+            
+            if (status === 'complete') {
+                step.querySelector('.step-icon i').className = 'fas fa-check-circle';
+            } else if (status === 'active') {
+                step.querySelector('.step-icon i').className = 'fas fa-spinner fa-spin';
+            }
+        }
+    </script>
 </body>
 </html>

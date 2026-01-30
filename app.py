@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash,jsonify
 from supabase import create_client, Client
+from threading import Thread
 import os
 from dotenv import load_dotenv
 from ml_model import analyze_user_performance, get_overall_readiness
@@ -11,6 +12,7 @@ from certificate_manager import CertificateManager
 from datetime import datetime
 from validators import validate_email, validate_password
 import json
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
@@ -920,6 +922,378 @@ def save_quiz():
         
     except Exception as e:
         return {'error': str(e)}, 500
+    
+# ============================================================================
+# ADD THESE ROUTES TO YOUR app.py
+# These enable real-time progress updates during question generation
+# ============================================================================
+
+
+# Global storage for generation progress (use Redis in production)
+generation_progress = {}
+
+# ============================================================================
+# NEW ROUTE: Start Async Question Generation
+# ============================================================================
+@app.route('/api/generate_questions_async', methods=['POST'])
+def generate_questions_async():
+    """Start async question generation with progress tracking"""
+    if 'user' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.json
+    user_email = session['user_email']
+    topic = data.get('topic', '').strip()
+    subtopic = data.get('subtopic', '').strip()
+    num_questions = int(data.get('num_questions', 20))
+    
+    # Generate unique task ID
+    import uuid
+    task_id = str(uuid.uuid4())
+    
+    # Initialize progress
+    generation_progress[task_id] = {
+        'status': 'starting',
+        'progress': 0,
+        'message': 'Initializing...',
+        'questions': None,
+        'difficulty': None,
+        'error': None
+    }
+    
+    # Start background thread
+    def generate_in_background():
+        try:
+            # Get user scores
+            result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
+            
+            user_scores = []
+            for row in result.data:
+                user_scores.append({
+                    'topic': row['topic'],
+                    'subtopic': row.get('subtopic', ''),
+                    'score': row['score'],
+                    'total_questions': row['total_questions']
+                })
+            
+            # Progress callback
+            def update_progress(percent, message):
+                generation_progress[task_id]['progress'] = percent
+                generation_progress[task_id]['message'] = message
+                generation_progress[task_id]['status'] = 'generating'
+            
+            # Generate questions with progress updates
+            from ai_question_generator import generate_questions
+            questions, difficulty = generate_questions(
+                user_email, 
+                topic, 
+                subtopic, 
+                user_scores, 
+                num_questions,
+                progress_callback=update_progress
+            )
+            
+            # Store results
+            generation_progress[task_id]['status'] = 'complete'
+            generation_progress[task_id]['progress'] = 100
+            generation_progress[task_id]['message'] = 'Questions ready!'
+            generation_progress[task_id]['questions'] = questions
+            generation_progress[task_id]['difficulty'] = difficulty
+            
+        except Exception as e:
+            generation_progress[task_id]['status'] = 'error'
+            generation_progress[task_id]['error'] = str(e)
+            generation_progress[task_id]['message'] = f'Error: {str(e)}'
+    
+    # Start thread
+    thread = Thread(target=generate_in_background)
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'task_id': task_id, 'status': 'started'}), 200
+
+
+# ============================================================================
+# NEW ROUTE: Check Generation Progress
+# ============================================================================
+@app.route('/api/check_progress/<task_id>')
+def check_progress(task_id):
+    """Check the progress of question generation"""
+    if task_id not in generation_progress:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    progress_data = generation_progress[task_id]
+    
+    response = {
+        'status': progress_data['status'],
+        'progress': progress_data['progress'],
+        'message': progress_data['message']
+    }
+    
+    # Include questions if complete
+    if progress_data['status'] == 'complete':
+        response['questions'] = progress_data['questions']
+        response['difficulty'] = progress_data['difficulty']
+        
+        # Clean up after retrieval
+        # del generation_progress[task_id]  # Uncomment to auto-cleanup
+    
+    elif progress_data['status'] == 'error':
+        response['error'] = progress_data['error']
+    
+    return jsonify(response), 200
+
+
+# ============================================================================
+# MODIFIED ROUTE: Quiz Details with Async Option
+# ============================================================================
+@app.route('/quiz/<path:topic>/details')
+@app.route('/quiz/<path:topic>/<path:subtopic>/details')
+def quiz_details(topic, subtopic=None):
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    user_email = session['user_email']
+    
+    # Decode URL encoding
+    from urllib.parse import unquote
+    topic = unquote(topic).strip().rstrip('/')
+    if subtopic:
+        subtopic = unquote(subtopic).strip().rstrip('/')
+    
+    print(f"Quiz Details: topic={topic}, subtopic={subtopic}")
+    
+    # Check for saved progress
+    try:
+        search_subtopic = subtopic if subtopic else ''
+        saved = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
+        has_saved = bool(saved.data)
+        saved_question = saved.data[0]['current_question'] if has_saved else 0
+        saved_time = saved.data[0]['time_left'] if has_saved else 1800
+        
+        mins = saved_time // 60
+        secs = saved_time % 60
+        saved_time_left = f"{mins}:{secs:02d}"
+        
+    except Exception as e:
+        print(f"Error checking saved progress: {e}")
+        has_saved = False
+        saved_question = 0
+        saved_time_left = "30:00"
+    
+    # Get difficulty
+    try:
+        result = supabase.table('user_scores').select('score, total_questions').eq('user_email', user_email).eq('topic', topic).eq('subtopic', subtopic or '').execute()
+        
+        user_scores = []
+        for row in result.data:
+            user_scores.append({
+                'topic': topic,
+                'subtopic': subtopic or '',
+                'score': row['score'],
+                'total_questions': row['total_questions'],
+            })
+        
+        from ai_question_generator import determine_difficulty_level
+        difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
+    except Exception as e:
+        print(f"Error determining difficulty: {e}")
+        difficulty = 'intermediate'
+    
+    # Pass flag to enable async loading
+    return render_template('quiz_details.html',
+                         topic=topic,
+                         subtopic=subtopic,
+                         difficulty=difficulty.capitalize(),
+                         has_saved_progress=has_saved,
+                         saved_question=saved_question,
+                         saved_time_left=saved_time_left,
+                         use_async=True)  # Enable async mode
+
+
+# ============================================================================
+# MODIFIED ROUTE: Quiz Page with Async Loading Support
+# ============================================================================
+@app.route('/quiz/<path:topic>', methods=['GET', 'POST'])
+@app.route('/quiz/<path:topic>/<path:subtopic>', methods=['GET', 'POST'])
+def quiz(topic, subtopic=None):
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    
+    from urllib.parse import unquote
+    topic = unquote(topic).strip().rstrip('/')
+    if subtopic:
+        subtopic = unquote(subtopic).strip().rstrip('/')
+    
+    user_email = session['user_email']
+    
+    # Handle resume or restart
+    resume = request.args.get('resume') == 'true'
+    restart = request.args.get('restart') == 'true'
+    
+    if restart:
+        try:
+            search_subtopic = subtopic if subtopic else ''
+            supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
+        except:
+            pass
+    
+    # POST - Submit quiz
+    if request.method == 'POST':
+        topic_questions = session.get('quiz_questions', [])
+        
+        if not topic_questions:
+            flash("Quiz session expired. Please start again.")
+            return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
+        
+        # Calculate score with EXACT matching
+        score = 0
+        user_answers = request.form
+        
+        for i, q in enumerate(topic_questions):
+            user_answer = user_answers.get(f'q{i}', '').strip()
+            correct_answer = str(q['answer']).strip()
+            
+            # STRICT comparison - must match exactly
+            if user_answer == correct_answer:
+                score += 1
+            else:
+                print(f"Q{i}: User='{user_answer}' vs Correct='{correct_answer}' - WRONG")
+        
+        # Get difficulty
+        try:
+            result = supabase.table('user_scores').select('*').eq('user_email', user_email).execute()
+            user_scores = [{'topic': row['topic'], 'subtopic': row.get('subtopic', ''), 
+                            'score': row['score'], 'total_questions': row['total_questions']} 
+                           for row in result.data]
+            from ai_question_generator import determine_difficulty_level
+            difficulty = determine_difficulty_level(user_scores, topic, subtopic or '')
+        except:
+            difficulty = 'intermediate'
+        
+        # Save score
+        try:
+            supabase.table('user_scores').insert({
+                'user_email': user_email,
+                'topic': topic,
+                'subtopic': subtopic or '',
+                'score': score,
+                'total_questions': len(topic_questions),
+                'difficulty': difficulty
+            }).execute()
+            
+            # Delete saved progress
+            try:
+                search_subtopic = subtopic if subtopic else ''
+                supabase.table('quiz_progress').delete().eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"Error saving score: {e}")
+            flash("Error saving quiz results")
+            return redirect(url_for('dashboard'))
+        
+        # Generate suggestions
+        percent = (score / len(topic_questions) * 100)
+        
+        if percent < 40:
+            suggestion = f"Keep practicing {topic}. Focus on understanding basic concepts."
+        elif percent < 60:
+            suggestion = f"Good effort! Review the questions you missed in {topic}."
+        elif percent < 80:
+            suggestion = f"Well done! You're getting better at {topic}."
+        else:
+            suggestion = f"Excellent! You've mastered {topic}."
+        
+        return render_template('quiz.html',
+                             topic=topic,
+                             subtopic=subtopic,
+                             questions=topic_questions,
+                             submitted=True,
+                             score=score,
+                             suggestion=suggestion)
+    
+    # GET - Check for saved progress
+    saved_progress = None
+    if resume and not restart:
+        try:
+            search_subtopic = subtopic if subtopic else ''
+            result = supabase.table('quiz_progress').select('*').eq('user_email', user_email).eq('topic', topic).eq('subtopic', search_subtopic).execute()
+            if result.data:
+                saved_progress = result.data[0]
+        except:
+            pass
+    
+    if saved_progress:
+        # Resume from saved
+        topic_questions = json.loads(saved_progress['questions'])
+        current_question = saved_progress['current_question']
+        time_left = saved_progress['time_left']
+        saved_answers = json.loads(saved_progress['answers']) if saved_progress['answers'] else {}
+    else:
+        # Check if coming from async generation
+        task_id = request.args.get('task_id')
+        if task_id and task_id in generation_progress:
+            progress_data = generation_progress[task_id]
+            
+            if progress_data['status'] == 'complete':
+                topic_questions = progress_data['questions']
+                difficulty = progress_data['difficulty']
+                current_question = 0
+                time_left = 1800
+                saved_answers = {}
+                
+                # Cleanup
+                del generation_progress[task_id]
+            else:
+                flash("Question generation not complete. Please try again.")
+                return redirect(url_for('quiz_details', topic=topic, subtopic=subtopic or ''))
+        else:
+            # Generate synchronously (fallback)
+            result = supabase.table('user_scores').select('topic, subtopic, score, total_questions').eq('user_email', user_email).execute()
+            
+            user_scores = []
+            for row in result.data:
+                user_scores.append({
+                    'topic': row['topic'],
+                    'subtopic': row['subtopic'],
+                    'score': row['score'],
+                    'total_questions': row['total_questions']
+                })
+            
+            try:
+                from ai_question_generator import get_adaptive_questions
+                ai_result = get_adaptive_questions(
+                    user_email=user_email,
+                    topic=topic,
+                    subtopic=subtopic or '',
+                    user_scores=user_scores,
+                    num_questions=20
+                )
+                
+                topic_questions = ai_result['questions']
+                difficulty = ai_result['difficulty']
+                current_question = 0
+                time_left = 1800
+                saved_answers = {}
+                
+            except Exception as e:
+                print(f"Error generating questions: {e}")
+                flash("Error loading quiz. Please try again.")
+                return redirect(url_for('dashboard'))
+    
+    # Store in session
+    session['quiz_questions'] = topic_questions
+    
+    return render_template('quiz.html',
+                         topic=topic,
+                         subtopic=subtopic,
+                         questions=topic_questions,
+                         submitted=False,
+                         time_left=time_left,
+                         current_question=current_question,
+                         saved_answers=saved_answers)
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
