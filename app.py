@@ -348,12 +348,27 @@ def grand_test():
     
         for i, q in enumerate(all_questions):
             user_answer = user_answers.get(f'q{i}', '').strip()
+    
+            # THE ANSWER MIGHT BE THE FULL OPTION TEXT, NOT JUST A/B/C/D
+            # Check what format your answer is in
             correct_answer = str(q['answer']).strip()
     
-             # Debug logging
-            print(f"Q{i+1}: User='{user_answer}' | Correct='{correct_answer}' | Match={user_answer.lower() == correct_answer.lower()}")
+            # Try matching against the actual option text
+            is_correct = False
+            if user_answer == correct_answer:
+                is_correct = True
+            else:
+                # Also check if answer is in the options list at the same index
+                try:
+                    answer_index = q['options'].index(correct_answer)
+                    if user_answer == q['options'][answer_index]:
+                        is_correct = True
+                except:
+                    pass
     
-            if user_answer.lower() == correct_answer.lower():
+            print(f"Q{i+1}: User='{user_answer}' | Correct='{correct_answer}' | Options={q['options']} | Match={is_correct}")
+    
+            if is_correct:
                 score += 1
 
         # Get user's score history for difficulty calculation
@@ -445,7 +460,7 @@ def grand_test():
             # Aptitude Questions (5 questions)
             print("\n[2/3] Generating Aptitude Questions...")
             apt_difficulty = determine_difficulty_level(user_scores, 'Aptitude', None)
-            apt_questions = generate_quiz_questions('Quantitative Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 15)
+            apt_questions = generate_quiz_questions('Quantitative Aptitude', 'Quantitative & Logical Reasoning', apt_difficulty, 10)
 
             all_questions.extend(apt_questions)
             print(f"✅ Added {len(apt_questions)} aptitude questions")
