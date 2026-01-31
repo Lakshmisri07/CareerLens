@@ -1296,8 +1296,9 @@ def quiz(topic, subtopic=None):
                 })
             
             try:
-                from ai_question_generator import get_adaptive_questions
-                ai_result = get_adaptive_questions(
+                from ai_question_generator import generate_questions
+                
+                topic_questions, difficulty = generate_questions(
                     user_email=user_email,
                     topic=topic,
                     subtopic=subtopic or '',
@@ -1305,8 +1306,11 @@ def quiz(topic, subtopic=None):
                     num_questions=20
                 )
                 
-                topic_questions = ai_result['questions']
-                difficulty = ai_result['difficulty']
+                # Check if questions available
+                if not topic_questions:
+                    flash(f"No questions available for {topic} - {subtopic}. Please add predefined questions to the database.")
+                    return redirect(url_for('dashboard'))
+                
                 current_question = 0
                 time_left = 1800
                 saved_answers = {}
