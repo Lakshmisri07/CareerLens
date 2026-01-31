@@ -146,7 +146,6 @@
             font-weight: 600;
         }
 
-        /* Saved Progress Alert */
         .saved-progress-alert {
             background: var(--bg-tertiary);
             padding: 1rem;
@@ -195,10 +194,16 @@
             min-width: 200px;
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
             transform: translateY(-2px);
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-outline {
@@ -235,6 +240,75 @@
             margin-bottom: 0.5rem;
         }
 
+        /* Loading Modal Styles */
+        #loadingModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            max-width: 450px;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid rgba(99, 102, 241, 0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loadingStep {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        #loadingDesc {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        .loading-tip {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         @media (max-width: 768px) {
             .action-buttons {
                 flex-direction: column;
@@ -244,30 +318,11 @@
                 width: 100%;
             }
 
+            .loading-content {
+                padding: 30px 20px;
+                max-width: 90%;
+            }
         }
-
-        /* Add this to the <style> section: */
-.saved-progress-alert {
-    background: var(--bg-tertiary);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border-left: 4px solid var(--accent);
-}
-
-.saved-progress-alert p {
-    margin: 0;
-}
-
-.saved-progress-alert strong {
-    color: var(--text-primary);
-}
-
-.saved-progress-alert .text-muted {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
     </style>
 </head>
 <body>
@@ -280,8 +335,8 @@
 
     <div class="container">
         <a href="{{ url_for('dashboard') }}" class="btn-back">
-                ← 
-            </a>
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
 
         <div class="quiz-info">
             <div class="quiz-info-header">
@@ -305,64 +360,6 @@
                     </span>
                 </div>
             </div>
-            <!-- Add this script at the end of quiz_details.html, before </body> -->
-
-<div id="loadingModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center;">
-    <div style="text-align:center; color:white; max-width:400px; padding:40px;">
-        <div style="width:80px; height:80px; border:8px solid rgba(99,102,241,0.3); border-top-color:#6366f1; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 30px;"></div>
-        <h2 id="loadingStep" style="margin-bottom:15px; font-size:1.5rem;">Analyzing performance...</h2>
-        <p id="loadingDesc" style="color:#94a3b8; font-size:1rem;">Please wait</p>
-        <div style="margin-top:20px; width:100%; height:4px; background:rgba(99,102,241,0.2); border-radius:2px; overflow:hidden;">
-            <div id="progressBar" style="height:100%; width:0%; background:#6366f1; transition:width 0.5s;"></div>
-        </div>
-    </div>
-</div>
-
-<style>
-    @keyframes spin { to { transform: rotate(360deg); } }
-</style>
-
-<script>
-function startQuizWithLoading() {
-    const modal = document.getElementById('loadingModal');
-    const step = document.getElementById('loadingStep');
-    const desc = document.getElementById('loadingDesc');
-    const progress = document.getElementById('progressBar');
-    
-    modal.style.display = 'flex';
-    
-    const steps = [
-        {title: '📊 Analyzing performance...', desc: 'Reviewing your quiz history', progress: 25},
-        {title: '🎯 Determining difficulty...', desc: 'Calculating optimal challenge level', progress: 50},
-        {title: '🤖 Generating AI questions...', desc: 'Creating personalized questions', progress: 75},
-        {title: '✨ Almost ready...', desc: 'Finalizing your quiz', progress: 90}
-    ];
-    
-    let currentStep = 0;
-    progress.style.width = '0%';
-    
-    const interval = setInterval(() => {
-        currentStep++;
-        if (currentStep < steps.length) {
-            step.textContent = steps[currentStep].title;
-            desc.textContent = steps[currentStep].desc;
-            progress.style.width = steps[currentStep].progress + '%';
-        }
-    }, 1800);
-    
-    setTimeout(() => {
-        clearInterval(interval);
-        progress.style.width = '100%';
-        window.location.href = "{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}";
-    }, 500);
-}
-
-// Replace the Start Quiz button form with:
-// <button type="button" class="btn" onclick="startQuizWithLoading()">
-//     <i class="fas fa-play"></i> Start Quiz
-// </button>
-</script>
-            <!-- ADD THIS SECTION IF MISSING (after quiz info details): -->
 
             <!-- Saved Progress Alert -->
             {% if has_saved_progress %}
@@ -388,19 +385,17 @@ function startQuizWithLoading() {
                     </button>
                 </form>
                 {% else %}
-                <form action="{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}" method="GET" style="margin: 0;">
-                    <button type="submit" class="btn">
-                        <i class="fas fa-play"></i> Start Quiz
-                    </button>
-                </form>
+                <button type="button" class="btn" id="startQuizBtn" onclick="startQuizWithLoading()">
+                    <i class="fas fa-play"></i> Start Quiz
+                </button>
                 {% endif %}
             </div>
-           
 
             <!-- Instructions -->
             <div class="instructions">
                 <h3>Instructions:</h3>
                 <ul>
+                    <li>AI will generate 20 personalized questions based on your performance</li>
                     <li>Answer all questions before submitting</li>
                     <li>You can save and resume the quiz anytime</li>
                     <li>Timer will pause when you save progress</li>
@@ -410,5 +405,98 @@ function startQuizWithLoading() {
             </div>
         </div>
     </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h2 id="loadingStep">🤖 Initializing AI...</h2>
+            <p id="loadingDesc">Please wait while we prepare your quiz</p>
+            <div class="progress-container">
+                <div id="progressBar"></div>
+            </div>
+            <div class="loading-tip" id="loadingTip">
+                💡 Tip: Questions adapt to your skill level
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startQuizWithLoading() {
+            const modal = document.getElementById('loadingModal');
+            const step = document.getElementById('loadingStep');
+            const desc = document.getElementById('loadingDesc');
+            const progress = document.getElementById('progressBar');
+            const tip = document.getElementById('loadingTip');
+            const startBtn = document.getElementById('startQuizBtn');
+            
+            // Disable button
+            startBtn.disabled = true;
+            
+            // Show modal
+            modal.style.display = 'flex';
+            
+            const loadingMessages = [
+                {
+                    step: '🤖 Initializing AI...',
+                    desc: 'Connecting to question generator',
+                    progress: 10,
+                    tip: '💡 Tip: Questions adapt to your skill level'
+                },
+                {
+                    step: '📊 Analyzing performance...',
+                    desc: 'Reviewing your quiz history',
+                    progress: 25,
+                    tip: '📈 Better scores = harder questions'
+                },
+                {
+                    step: '🎯 Calculating difficulty...',
+                    desc: 'Determining optimal challenge level',
+                    progress: 40,
+                    tip: '🎓 Each quiz helps you improve'
+                },
+                {
+                    step: '🤖 Generating questions...',
+                    desc: 'AI is creating personalized questions',
+                    progress: 60,
+                    tip: '⏱️ This may take 15-30 seconds'
+                },
+                {
+                    step: '✨ Finalizing quiz...',
+                    desc: 'Preparing your test environment',
+                    progress: 85,
+                    tip: '✅ Almost ready!'
+                }
+            ];
+            
+            let currentStep = 0;
+            
+            // Update loading messages every 2 seconds
+            const messageInterval = setInterval(() => {
+                if (currentStep < loadingMessages.length) {
+                    const msg = loadingMessages[currentStep];
+                    step.textContent = msg.step;
+                    desc.textContent = msg.desc;
+                    progress.style.width = msg.progress + '%';
+                    tip.textContent = msg.tip;
+                    currentStep++;
+                }
+            }, 2000);
+            
+            // Start quiz generation by navigating to the URL
+            // The server will generate questions and then show the quiz page
+            setTimeout(() => {
+                window.location.href = "{{ url_for('quiz', topic=topic, subtopic=subtopic or '') }}";
+            }, 1000); // Small delay to show the first loading message
+        }
+
+        // If coming back from server-side error, re-enable button
+        window.addEventListener('pageshow', function() {
+            const startBtn = document.getElementById('startQuizBtn');
+            if (startBtn) {
+                startBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>

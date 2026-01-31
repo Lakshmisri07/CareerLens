@@ -596,24 +596,7 @@ def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=20):
         models_to_try = [
             'gemini-flash-latest',
             'gemini-flash-lite-latest',
-            'gemini-pro-latest',
-            'gemini-2.0-flash-001',
-            'gemini-2.0-flash-lite-001',
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.5-pro',
-            'gemini-exp-1206',
-            'gemini-3-flash-preview',
-            'gemini-2.0-flash',
-            'gemini-2.5-flash-image',
-            'gemma-3-27b-it',
-            'gemma-3-12b-it',
-            'gemma-3-4b-it',
-            'gemini-2.5-flash-preview-09-2025',
-            'gemini-3-pro-preview',
-            'gemini-robotics-er-1.5-preview',
-            'deep-research-pro-preview-12-2025',
-            'gemini-2.5-computer-use-preview-10-2025',
+            'gemini-pro-latest'
         ]
 
         # Randomize order each time
