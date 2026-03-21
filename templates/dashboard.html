@@ -1786,40 +1786,26 @@ See app_routes_v3.py for how the ai_context is stored in custom_topics.
         });
 
         // Welcome overlay function - show only once per session
+        // WITH THIS:
         function closeWelcome() {
             const overlay = document.getElementById('welcomeOverlay');
-            const body = document.body;
-            overlay.classList.add('hidden');
-            
-            // Mark as shown in this session
+            overlay.style.display = 'none';
+            document.body.classList.remove('welcome-active');
             sessionStorage.setItem('welcomeShown', 'true');
-            
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                body.classList.remove('welcome-active');
-            }, 300);
         }
 
         // Check if welcome should be shown
-        window.addEventListener('DOMContentLoaded', function() {
-            // Check if coming from fresh login
-            const urlParams = new URLSearchParams(window.location.search);
-            const justLoggedIn = urlParams.get('welcome');
-            
-            // Check if already shown in this session
-            const welcomeShown = sessionStorage.getItem('welcomeShown');
-            
-            if (welcomeShown === 'true' || justLoggedIn === 'false') {
-                // Already shown, hide immediately
-                const overlay = document.getElementById('welcomeOverlay');
-                const body = document.body;
-                overlay.style.display = 'none';
-                body.classList.remove('welcome-active');
-            } else if (justLoggedIn === 'true') {
-                // Fresh login, show welcome and mark as shown
-                sessionStorage.setItem('welcomeShown', 'true');
-            }
-        });
+        // WITH THIS:
+    window.addEventListener('DOMContentLoaded', function() {
+        const welcomeShown = sessionStorage.getItem('welcomeShown');
+        const overlay = document.getElementById('welcomeOverlay');
+        
+        if (welcomeShown === 'true') {
+            overlay.style.display = 'none';
+            document.body.classList.remove('welcome-active');
+        }
+        // If not shown yet, overlay stays visible — user must click the button
+    });
     </script>
 
     <!--
