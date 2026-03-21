@@ -375,6 +375,50 @@
             animation: slideUp 0.5s ease-out;
         }
 
+/* Dynamic add-row styling */
+.dynamic-add-row {
+    border-left: 3px solid var(--accent) !important;
+    background: rgba(99,102,241,0.05);
+    cursor: pointer;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideInRow 0.2s ease-out;
+}
+
+.dynamic-add-row:hover {
+    background: rgba(99,102,241,0.12) !important;
+    padding-left: 1.5rem !important;
+}
+
+@keyframes slideInRow {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+.dyn-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-weight: 700;
+    background: rgba(99,102,241,0.25);
+    color: #a5b4fc;
+    flex-shrink: 0;
+}
+
+/* "wrong section" / loading rows */
+.no-results-msg {
+    padding: 0.9rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    line-height: 1.5;
+}
+
+
         @keyframes slideUp {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -390,6 +434,117 @@
         .welcome-btn { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
         .welcome-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6); }
         body.welcome-active .navbar, body.welcome-active .container { filter: blur(5px); }
+    
+    
+    <!--
+╔══════════════════════════════════════════════════════════════════╗
+║  DASHBOARD PATCH — Only 2 changes, nothing else moves.           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 1 — Add inside your existing <style> tag
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+/* ── Dynamic rows in browse dropdown ── */
+.dyn-row {
+    animation: dynSlideIn 0.18s ease-out;
+}
+@keyframes dynSlideIn {
+    from { opacity:0; transform:translateY(-4px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+/* "Boats → Boats and Streams" single match */
+.dyn-single {
+    border-left: 3px solid var(--accent) !important;
+    background: rgba(99,102,241,0.06) !important;
+    cursor: pointer;
+}
+.dyn-single:hover {
+    background: rgba(99,102,241,0.14) !important;
+    padding-left: 1.4rem !important;
+}
+
+/* "Recursion found in: [Algorithms] [C] [Java]…" multi-picker */
+.dyn-multi-wrap {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    background: rgba(99,102,241,0.04);
+}
+.dyn-multi-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+.dyn-multi-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.dyn-chip {
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px;
+    border: 1.5px solid rgba(99,102,241,0.35);
+    background: rgba(99,102,241,0.1);
+    color: #a5b4fc;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.dyn-chip:hover {
+    background: rgba(99,102,241,0.28);
+    border-color: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* "wrong card" info row */
+.dyn-wrong {
+    padding: 0.75rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.83rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    line-height: 1.5;
+}
+
+/* invalid / loading */
+.dyn-loading, .dyn-invalid {
+    padding: 0.75rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.83rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* new-topic row */
+.dyn-new {
+    border-left: 3px solid var(--success) !important;
+    background: rgba(16,185,129,0.05) !important;
+    cursor: pointer;
+}
+.dyn-new:hover {
+    background: rgba(16,185,129,0.12) !important;
+    padding-left: 1.4rem !important;
+}
+.dyn-badge {
+    margin-left: auto;
+    font-size: 0.68rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.dyn-badge-new  { background:rgba(16,185,129,0.25); color:#6ee7b7; }
+.dyn-badge-map  { background:rgba(99,102,241,0.25); color:#a5b4fc; }
     </style>
 </head>
 <body class="welcome-active">
@@ -1334,57 +1489,213 @@ const SUBTOPICS = {
         }
 
         // FIXED SEARCH FILTER FUNCTION
-        function filterTopics(inputId, listId) {
-            const input = document.getElementById(inputId);
-            const searchTerm = input.value.toLowerCase().trim();
-            const listContainer = document.getElementById(listId);
-            
-            // Get all items - both links and divs
-            const items = listContainer.querySelectorAll('.dropdown-item');
-            
-            let visibleCount = 0;
-            
-            items.forEach(item => {
-                // Get text content from the item
-                let text = '';
-                
-                // If it's a link, get the text after the icon
-                if (item.tagName === 'A') {
-                    // Remove icon and get just the text
-                    const clone = item.cloneNode(true);
-                    const icon = clone.querySelector('i');
-                    if (icon) icon.remove();
-                    text = clone.textContent.trim().toLowerCase();
-                } else {
-                    // For divs (onclick items), same approach
-                    const clone = item.cloneNode(true);
-                    const icon = clone.querySelector('i');
-                    if (icon) icon.remove();
-                    text = clone.textContent.trim().toLowerCase();
-                }
-                
-                // Check if search term matches
-                if (searchTerm === '' || text.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    item.style.display = 'none';
-                }
+        
+
+
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 2 — REPLACE the existing filterTopics() function
+           Find it in your <script> block and swap it out.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+<script>
+// ── Map search input IDs to their card category ──────────────────────────
+const _CARD_CATEGORY = {
+    'techSearch':   'Technical',
+    'aptSearch':    'Aptitude',
+    'verbalSearch': 'Verbal',
+};
+
+function filterTopics(inputId, listId) {
+    const input       = document.getElementById(inputId);
+    const searchTerm  = input.value.trim();
+    const listEl      = document.getElementById(listId);
+    const items       = listEl.querySelectorAll('.dropdown-item:not(.dyn-row)');
+
+    // ── 1. Standard filter (identical to original behaviour) ─────────────
+    let visibleCount = 0;
+    items.forEach(item => {
+        const clone = item.cloneNode(true);
+        clone.querySelector('i')?.remove();
+        const text = clone.textContent.trim().toLowerCase();
+        const show = !searchTerm || text.includes(searchTerm.toLowerCase());
+        item.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+    });
+
+    // ── 2. Remove any previous dynamic rows ──────────────────────────────
+    listEl.querySelectorAll('.dyn-row').forEach(r => r.remove());
+
+    if (!searchTerm || searchTerm.length < 2) return;
+
+    // ── 3. When nothing matched, call smart resolver ──────────────────────
+    if (visibleCount === 0) {
+        const cardCategory = _CARD_CATEGORY[inputId] || 'Technical';
+
+        // Show loading placeholder
+        const loadEl = _dynEl('dyn-loading',
+            `<i class="fas fa-spinner fa-spin" style="color:var(--accent)"></i>
+             Checking "${_esc(searchTerm)}"…`);
+        listEl.appendChild(loadEl);
+
+        _resolve(searchTerm, cardCategory, listEl, loadEl);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+async function _resolve(query, cardCategory, listEl, placeholder) {
+    try {
+        const res  = await fetch('/api/resolve_topic', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({ query, card_category: cardCategory }),
+        });
+        const data = await res.json();
+        placeholder.remove();
+        _render(data, query, cardCategory, listEl);
+    } catch {
+        placeholder.remove();
+        listEl.appendChild(_dynEl('dyn-invalid',
+            `<i class="fas fa-exclamation-circle" style="color:var(--danger)"></i>
+             Search error — please try again.`));
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+function _render(data, query, cardCategory, listEl) {
+
+    if (data.status === 'single') {
+        // ── Exact single match ── e.g. "boats" → "Boats and Streams" ─────
+        const row = _dynEl('dropdown-item dyn-row dyn-single', `
+            <i class="fas fa-bullseye" style="color:var(--accent)"></i>
+            <span>
+                <span style="color:var(--text-muted);font-size:.78rem;">Mapped to</span><br>
+                <strong>${_esc(data.display_label)}</strong>
+            </span>
+            <span class="dyn-badge dyn-badge-map">Go</span>`);
+        row.title = data.ai_context;
+        row.addEventListener('click', () => {
+            window.location.href =
+                `/quiz/${enc(data.topic)}/${enc(data.subtopic)}/details`;
+        });
+        listEl.appendChild(row);
+
+    } else if (data.status === 'multi') {
+        // ── Multi-context match ── e.g. "recursion" → chips ──────────────
+        const wrap = document.createElement('div');
+        wrap.className = 'dyn-row dyn-multi-wrap';
+
+        const label = document.createElement('div');
+        label.className = 'dyn-multi-label';
+        label.textContent = `"${data.query}" found in multiple topics — pick context:`;
+        wrap.appendChild(label);
+
+        const chips = document.createElement('div');
+        chips.className = 'dyn-multi-chips';
+
+        data.options.forEach(opt => {
+            const chip = document.createElement('span');
+            chip.className = 'dyn-chip';
+            chip.textContent = opt.display_label;
+            chip.title = opt.ai_context;
+            chip.addEventListener('click', () => {
+                window.location.href =
+                    `/quiz/${enc(opt.topic)}/${enc(opt.subtopic)}/details`;
             });
-            
-            // Show "No results" message if needed
-            const existingMsg = listContainer.querySelector('.no-results-msg');
-            if (existingMsg) {
-                existingMsg.remove();
-            }
-            
-            if (visibleCount === 0 && searchTerm !== '') {
-                const noResultsMsg = document.createElement('div');
-                noResultsMsg.className = 'no-results-msg';
-                noResultsMsg.innerHTML = '<i class="fas fa-search"></i> No topics found';
-                listContainer.appendChild(noResultsMsg);
-            }
-        }
+            chips.appendChild(chip);
+        });
+
+        wrap.appendChild(chips);
+        listEl.appendChild(wrap);
+
+    } else if (data.status === 'new') {
+        // ── Genuinely new topic — add silently ────────────────────────────
+        const row = _dynEl('dropdown-item dyn-row dyn-new', `
+            <i class="fas fa-plus-circle" style="color:var(--success)"></i>
+            <span>
+                <span style="color:var(--text-muted);font-size:.78rem;">New topic</span><br>
+                <strong>"${_esc(data.topic)}"</strong> — click to add &amp; start quiz
+            </span>
+            <span class="dyn-badge dyn-badge-new">New</span>`);
+        row.addEventListener('click', () => _addNewTopic(data, cardCategory, row));
+        listEl.appendChild(row);
+
+    } else {
+        // ── Invalid / gibberish ───────────────────────────────────────────
+        listEl.appendChild(_dynEl('dyn-invalid',
+            `<i class="fas fa-info-circle" style="color:var(--warning)"></i>
+             ${_esc(data.message || 'Could not recognise this topic.')}`));
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+async function _addNewTopic(data, category, rowEl) {
+    rowEl.style.pointerEvents = 'none';
+    rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+        `<i class="fas fa-spinner fa-spin" style="color:var(--success)"></i>
+         Adding <strong>"${_esc(data.topic)}"</strong>…`;
+
+    try {
+        const res  = await fetch('/api/add_dynamic_topic', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({
+                topic:      data.topic,
+                category,
+                ai_context: data.ai_context || '',
+            }),
+        });
+        const result = await res.json();
+        if (result.success) {
+            rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+                `<i class="fas fa-check" style="color:var(--success)"></i>
+                 Added! Redirecting…`;
+            setTimeout(() => { window.location.href = result.quiz_url; }, 500);
+        } else throw new Error(result.error);
+    } catch (err) {
+        rowEl.style.pointerEvents = '';
+        rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+            `<strong>"${_esc(data.topic)}"</strong> — click to retry`;
+        rowEl.addEventListener('click',
+            () => _addNewTopic(data, category, rowEl), { once: true });
+    }
+}
+
+// ── Tiny helpers ──────────────────────────────────────────────────────────
+function _dynEl(classes, html) {
+    const el = document.createElement('div');
+    el.className = classes;
+    el.innerHTML = html;
+    return el;
+}
+function enc(s) { return encodeURIComponent(s); }
+function _esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+
+
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 3 — Update ai_question_generator.py prompt (optional but
+           recommended so AI generates correct questions)
+
+In generate_questions_with_ai(), find the prompt = f"""...""" block.
+Replace the line:
+    TOPIC: {topic}
+    SUBTOPIC: {subtopic if subtopic else 'General'}
+
+With:
+    TOPIC: {topic}
+    SUBTOPIC: {subtopic if subtopic else 'General'}
+    IMPORTANT CONTEXT: {ai_context if ai_context else f'Generate questions specifically about {subtopic or topic} in the context of placement preparation for engineering students.'}
+
+Then pass ai_context as a parameter to generate_questions_with_ai().
+See app_routes_v3.py for how the ai_context is stored in custom_topics.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
         function showSubtopics(topic) {
             const modal = document.getElementById('subtopicsModal');
@@ -1510,5 +1821,194 @@ const SUBTOPICS = {
             }
         });
     </script>
+
+    <!--
+==========================================================================
+  PATCH for templates/dashboard.html
+  ── Nothing about the existing layout/style changes ──
+  Do these 3 small edits:
+
+  EDIT 1: Replace the existing filterTopics() function with the
+          new one in PART A below.
+
+  EDIT 2: Add the CSS from PART B anywhere inside the existing <style>.
+
+  EDIT 3: Add the JS from PART C anywhere inside the existing <script>
+          (after the SUBTOPICS object is defined, before closing </script>).
+
+  EDIT 4: Run custom_topics.sql in Supabase (only needed once).
+          See file: custom_topics.sql
+==========================================================================
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PART A  ──  NEW filterTopics()
+     Replace the OLD filterTopics function entirely with this one.
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+function filterTopics(inputId, listId) {
+    const input     = document.getElementById(inputId);
+    const searchTerm = input.value.trim();
+    const listContainer = document.getElementById(listId);
+
+    // ── 1. Filter visible items (existing behaviour) ───────────────
+    const items = listContainer.querySelectorAll('.dropdown-item');
+    let visibleCount = 0;
+
+    items.forEach(item => {
+        const clone = item.cloneNode(true);
+        const icon  = clone.querySelector('i');
+        if (icon) icon.remove();
+        const text = clone.textContent.trim().toLowerCase();
+
+        if (!searchTerm || text.includes(searchTerm.toLowerCase())) {
+            item.style.display = 'flex';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // ── 2. Remove previous dynamic rows ───────────────────────────
+    listContainer.querySelectorAll('.dynamic-row').forEach(r => r.remove());
+
+    if (!searchTerm) return;   // nothing typed → done
+
+    // ── 3. If nothing found → show "Add topic?" row ───────────────
+    if (visibleCount === 0) {
+        // Determine which card category this search bar belongs to
+        const cardCategory = getCardCategory(inputId);
+
+        // Show a loading skeleton row first
+        const loadingRow = document.createElement('div');
+        loadingRow.className = 'dynamic-row no-results-msg';
+        loadingRow.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;color:var(--accent)"></i> Checking "${searchTerm}"…`;
+        listContainer.appendChild(loadingRow);
+
+        // Validate with backend
+        validateAndShowOption(searchTerm, cardCategory, listContainer, loadingRow);
+    }
+}
+
+// Map search input IDs → card categories
+function getCardCategory(inputId) {
+    if (inputId === 'techSearch')   return 'Technical';
+    if (inputId === 'aptSearch')    return 'Aptitude';
+    if (inputId === 'verbalSearch') return 'Verbal';
+    return 'Technical';
+}
+
+async function validateAndShowOption(topicName, cardCategory, listContainer, loadingRow) {
+    try {
+        const res  = await fetch('/api/validate_topic', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({ topic: topicName, card_category: cardCategory }),
+        });
+        const data = await res.json();
+
+        // Remove loading row
+        loadingRow.remove();
+
+        if (data.belongs) {
+            // ── Topic belongs here → show "Add" option ────────────
+            const addRow = document.createElement('div');
+            addRow.className = 'dropdown-item dynamic-row dynamic-add-row';
+
+            if (data.already_exists) {
+                // Already in DB, just quiz them
+                addRow.innerHTML = `
+                    <i class="fas fa-check-circle" style="color:var(--success)"></i>
+                    <span><strong>"${escHtml(topicName)}"</strong> — take quiz on this topic</span>`;
+                addRow.addEventListener('click', () => {
+                    window.location.href = `/quiz/${encodeURIComponent(topicName)}/details`;
+                });
+            } else {
+                // New → add to DB then quiz
+                addRow.innerHTML = `
+                    <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
+                    <span>Add <strong>"${escHtml(topicName)}"</strong> to ${cardCategory} &amp; start quiz</span>
+                    <span class="dyn-badge">New</span>`;
+                addRow.addEventListener('click', () => addTopicAndGo(topicName, cardCategory, addRow));
+            }
+            listContainer.appendChild(addRow);
+
+        } else {
+            // ── Doesn't belong → show "wrong section" hint ────────
+            const wrongRow = document.createElement('div');
+            wrongRow.className = 'dynamic-row no-results-msg';
+            wrongRow.innerHTML = `
+                <i class="fas fa-info-circle" style="color:var(--warning);margin-right:6px;"></i>
+                <span>"${escHtml(topicName)}" looks like a
+                <strong>${data.detected_category}</strong> topic —
+                search in that card instead.</span>`;
+            listContainer.appendChild(wrongRow);
+        }
+
+    } catch (err) {
+        loadingRow.remove();
+        const errRow = document.createElement('div');
+        errRow.className = 'dynamic-row no-results-msg';
+        errRow.textContent = 'Search error. Please try again.';
+        listContainer.appendChild(errRow);
+    }
+}
+
+async function addTopicAndGo(topicName, category, rowElement) {
+    // Disable row while saving
+    rowElement.style.pointerEvents = 'none';
+    rowElement.innerHTML = `
+        <i class="fas fa-spinner fa-spin" style="color:var(--accent)"></i>
+        <span>Adding <strong>"${escHtml(topicName)}"</strong>…</span>`;
+
+    try {
+        const res  = await fetch('/api/add_dynamic_topic', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({ topic: topicName, category }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            rowElement.innerHTML = `
+                <i class="fas fa-check" style="color:var(--success)"></i>
+                <span>Added! Redirecting…</span>`;
+            setTimeout(() => { window.location.href = data.quiz_url; }, 500);
+        } else {
+            throw new Error(data.error || 'Failed');
+        }
+    } catch (err) {
+        rowElement.style.pointerEvents = '';
+        rowElement.innerHTML = `
+            <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
+            <span>Add <strong>"${escHtml(topicName)}"</strong> — click to retry</span>
+            <span class="dyn-badge">Retry</span>`;
+        rowElement.addEventListener('click', () => addTopicAndGo(topicName, category, rowElement), {once:true});
+    }
+}
+
+function escHtml(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PART B  ──  CSS  (add inside existing <style>)
+     ═══════════════════════════════════════════════════════════════ -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PART C  ──  No extra JS needed beyond PART A.
+     The functions above (validateAndShowOption, addTopicAndGo,
+     escHtml, getCardCategory) are standalone.
+     ═══════════════════════════════════════════════════════════════ -->
+
 </body>
 </html>
+
+
+

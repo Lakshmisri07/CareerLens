@@ -13,6 +13,8 @@ from datetime import datetime
 from validators import validate_email, validate_password
 import json
 from learning_resources import get_resources_for_topic
+from smart_topic_resolver import resolve_topic, build_ai_context
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -1331,6 +1333,227 @@ def quiz(topic, subtopic=None):
                          time_left=time_left,
                          current_question=current_question,
                          saved_answers=saved_answers)
+ 
+# ============================================================
+# ADD THESE TO app.py  —  paste before if __name__ == '__main__':
+# ============================================================
+
+# ── Keyword sets used to decide which category a topic belongs to ──────────
+_TECHNICAL_KEYWORDS = {
+    # Programming languages
+    'python','java','c++','javascript','typescript','golang','rust','kotlin','swift',
+    'ruby','php','scala','r','matlab','assembly','perl','dart','julia',
+    # CS fundamentals
+    'algorithm','data structure','sorting','searching','hashing','tree','graph',
+    'linked list','stack','queue','heap','trie','recursion','dynamic programming',
+    'greedy','backtracking','complexity','big o','bit manipulation',
+    # Databases
+    'sql','nosql','database','dbms','mongodb','postgresql','mysql','sqlite',
+    'normalization','indexing','transaction','query','orm','redis',
+    # Networks / OS
+    'networking','tcp','ip','http','dns','socket','protocol','osi','subnet',
+    'operating system','process','thread','deadlock','scheduling','memory','paging',
+    'virtual memory','file system','kernel','concurrency','semaphore','mutex',
+    # Electronics / ECE
+    'circuit','electronics','vlsi','verilog','vhdl','embedded','microcontroller',
+    'fpga','signal','digital','analog','communication','antenna','microprocessor',
+    'transistor','diode','amplifier','filter','modulation','semiconductor',
+    # EEE
+    'power','electrical','motor','generator','transformer','inverter','rectifier',
+    'thyristor','scr','converter','drives','switchgear','relay','protection',
+    'electromagnetic','maxwell','capacitor','inductor',
+    # Mech / Civil / Chem
+    'thermodynamics','mechanics','fluid','heat transfer','machine design','cad',
+    'manufacturing','welding','casting','autocad','structural','surveying',
+    'geotechnical','concrete','rcc','transportation','reaction','distillation',
+    'mass transfer','process control','chemical reactor',
+    # AI / ML / DS
+    'machine learning','deep learning','neural network','nlp','computer vision',
+    'tensorflow','pytorch','scikit','pandas','numpy','statistics','regression',
+    'classification','clustering','reinforcement','transformer','bert','llm',
+    'data science','feature engineering','model','training',
+    # Web / Cloud / DevOps
+    'html','css','react','angular','vue','node','flask','django','spring',
+    'rest','api','graphql','docker','kubernetes','aws','azure','gcp',
+    'devops','ci/cd','git','linux','bash','cloud','serverless',
+    # Security / Other tech
+    'cybersecurity','cryptography','blockchain','iot','robotics','automation',
+    'testing','agile','design pattern','solid','microservices','architecture',
+}
+
+_APTITUDE_KEYWORDS = {
+    'aptitude','arithmetic','percentage','profit','loss','ratio','proportion',
+    'average','mean','median','mode','number system','hcf','lcm','prime',
+    'speed','distance','time','work','pipe','cistern','train','boat',
+    'simple interest','compound interest','probability','permutation','combination',
+    'series','sequence','algebra','geometry','mensuration','trigonometry',
+    'logical reasoning','puzzle','syllogism','blood relation','direction',
+    'coding decoding','arrangement','seating','calendar','clock','data interpretation',
+    'bar chart','pie chart','table','graph','venn diagram','set theory',
+}
+
+_VERBAL_KEYWORDS = {
+    'grammar','vocabulary','synonym','antonym','reading comprehension','passage',
+    'verbal','sentence','paragraph','error','correction','fill blank',
+    'idiom','phrase','one word','analogy','word','meaning','spelling',
+    'tense','voice','narration','preposition','conjunction','noun','verb',
+    'adjective','adverb','pronoun','article','essay','letter','communication',
+    'english','language','comprehension','jumble','para',
+}
+
+
+def _classify_topic(topic_name: str) -> str:
+    """
+    Return 'Technical', 'Aptitude', 'Verbal', or 'Unknown'
+    by checking keyword overlap with the topic name.
+    """
+    t = topic_name.lower()
+
+    # Check word-level overlap (split on spaces, hyphens, slashes)
+    import re
+    words = set(re.split(r'[\s\-/&]+', t))
+    # Also check full phrase containment
+    def hits(kw_set):
+        # Full phrase match
+        for kw in kw_set:
+            if kw in t:
+                return True
+        # Word match (for multi-word keywords, check containment)
+        for word in words:
+            if word in kw_set:
+                return True
+        return False
+
+    if hits(_TECHNICAL_KEYWORDS):
+        return 'Technical'
+    if hits(_APTITUDE_KEYWORDS):
+        return 'Aptitude'
+    if hits(_VERBAL_KEYWORDS):
+        return 'Verbal'
+    return 'Unknown'
+
+
+@app.route('/api/validate_topic', methods=['POST'])
+def validate_topic():
+    """
+    Check whether a searched topic belongs to the given card category.
+    Called when user searches something not in the existing list.
+
+    Body: { "topic": "Recursion", "card_category": "Technical" }
+    Returns:
+      { "belongs": true/false, "detected_category": "Technical",
+        "already_exists": false }
+    """
+    if 'user_email' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data          = request.json or {}
+    topic         = data.get('topic', '').strip()
+    card_category = data.get('card_category', '').strip()   # Technical / Aptitude / Verbal
+
+    if not topic or len(topic) < 2:
+        return jsonify({'error': 'Topic too short'}), 400
+
+    detected = _classify_topic(topic)
+
+    # Map card label → detected label
+    card_to_detected = {
+        'Technical': 'Technical',
+        'Aptitude':  'Aptitude',
+        'Verbal':    'Verbal',
+    }
+    expected = card_to_detected.get(card_category, 'Technical')
+    belongs  = (detected == expected) or (detected == 'Unknown')
+    # 'Unknown' → we allow it with a warning rather than hard-blocking
+
+    # Check if already in custom_topics table
+    already_exists = False
+    try:
+        res = supabase.table('custom_topics').select('id').ilike('name', topic).execute()
+        already_exists = bool(res.data)
+    except Exception as e:
+        print(f"validate_topic DB check error: {e}")
+
+    return jsonify({
+        'belongs':           belongs,
+        'detected_category': detected,
+        'already_exists':    already_exists,
+        'topic':             topic,
+    })
+
+# ============================================================
+# ADD TO app.py
+# 1. At the top with other imports:
+#        from smart_topic_resolver import resolve_topic, build_ai_context
+#
+# 2. Paste both routes before:  if __name__ == '__main__':
+# ============================================================
+
+
+@app.route('/api/resolve_topic', methods=['POST'])
+def resolve_topic_api():
+    """
+    Smart topic resolver — called from the browse-dropdown search.
+    Body: { "query": "boats", "card_category": "Aptitude" }
+
+    Returns one of:
+        { status: 'single', topic, subtopic, ai_context, display_label }
+        { status: 'multi',  options: [{topic, subtopic, ai_context, display_label}] }
+        { status: 'new',    topic, ai_context }
+        { status: 'invalid', message }
+    """
+    if 'user_email' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data  = request.json or {}
+    query = data.get('query', '').strip()
+
+    if not query:
+        return jsonify({'status': 'invalid', 'message': 'Empty query'}), 400
+
+    result = resolve_topic(query)
+    return jsonify(result)
+
+
+@app.route('/api/add_dynamic_topic', methods=['POST'])
+def add_dynamic_topic():
+    """
+    Saves a new topic to custom_topics (shared, visible to all users).
+    Body: { "topic": "JWT Authentication", "category": "Technical", "ai_context": "..." }
+    Returns: { success: true, quiz_url: "/quiz/JWT Authentication/details" }
+    """
+    if 'user_email' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data       = request.json or {}
+    topic      = data.get('topic', '').strip()
+    category   = data.get('category', 'Technical').strip()
+    ai_context = data.get('ai_context', '').strip()
+
+    if not topic or len(topic) < 2:
+        return jsonify({'error': 'Topic name too short'}), 400
+
+    try:
+        existing = supabase.table('custom_topics') \
+                           .select('id, name') \
+                           .ilike('name', topic) \
+                           .execute()
+        if not existing.data:
+            supabase.table('custom_topics').insert({
+                'name':       topic,
+                'category':   category,
+                'ai_context': ai_context,   # stored so AI knows the right context
+                'created_by': session['user_email'],
+            }).execute()
+    except Exception as e:
+        print(f"add_dynamic_topic DB error: {e}")
+        # Still redirect — AI can generate even without DB row
+
+    return jsonify({
+        'success':  True,
+        'topic':    topic,
+        'quiz_url': f'/quiz/{topic}/details',
+    })   
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
