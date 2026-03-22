@@ -12,17 +12,16 @@
             --bg-tertiary: #334155;
             --accent: #6366f1;
             --accent-hover: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
             --border: rgba(148, 163, 184, 0.1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -50,26 +49,12 @@
             align-items: center;
         }
 
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
 
-        .grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-
-        .grid-3 {
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        }
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 
         .stat-card {
             background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
@@ -77,39 +62,22 @@
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             transition: all 0.3s;
         }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+        .stat-label { color: var(--text-secondary); font-size: 0.9rem; }
 
         .card {
             background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             transition: all 0.3s;
         }
-
-        .card h3 {
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
+        .card h3 { margin-bottom: 1rem; color: var(--text-primary); }
 
         .dropdown-section {
             margin-top: 1rem;
@@ -118,7 +86,6 @@
             transition: max-height 0.3s ease-out;
             opacity: 0;
         }
-        
         .dropdown-section.active {
             max-height: 600px;
             opacity: 1;
@@ -139,28 +106,13 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
+        .browse-btn:hover { background: linear-gradient(145deg, var(--accent-hover), #4a4dc9); transform: translateY(-2px); }
+        .browse-btn i.fa-chevron-down { transition: transform 0.3s; }
+        .browse-btn.active i.fa-chevron-down { transform: rotate(180deg); }
 
-        .browse-btn:hover {
-            background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
-            transform: translateY(-2px);
-        }
-
-        .browse-btn i.fa-chevron-down {
-            transition: transform 0.3s;
-        }
-        
-        .browse-btn.active i.fa-chevron-down {
-            transform: rotate(180deg);
-        }
-
-        .search-input {
-            position: relative;
-            margin: 1rem 0;
-            z-index: 10;
-        }
-
+        .search-input { position: relative; margin: 1rem 0; z-index: 10; }
         .search-input input {
             width: 100%;
             padding: 0.75rem 1rem 0.75rem 2.5rem;
@@ -171,45 +123,14 @@
             font-size: 0.95rem;
             font-family: inherit;
         }
+        .search-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        .search-input input::placeholder { color: var(--text-muted); }
+        .search-input::before { content: '🔍'; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); z-index: 11; pointer-events: none; }
 
-        .search-input input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .search-input input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .search-input::before {
-            content: '🔍';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 11;
-            pointer-events: none;
-        }
-
-        .topic-list {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 0.5rem;
-        }
-
-        .topic-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .topic-list::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-
-        .topic-list::-webkit-scrollbar-thumb {
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-        }
+        .topic-list { max-height: 300px; overflow-y: auto; margin-top: 0.5rem; }
+        .topic-list::-webkit-scrollbar { width: 8px; }
+        .topic-list::-webkit-scrollbar-track { background: var(--bg-primary); }
+        .topic-list::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
 
         .dropdown-item {
             display: flex;
@@ -222,27 +143,24 @@
             text-decoration: none;
             align-items: center;
         }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-item:hover {
-            background: var(--bg-tertiary);
-            padding-left: 1.5rem;
-        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: var(--bg-tertiary); padding-left: 1.5rem; }
 
         .no-results-msg {
-            padding: 1rem;
-            text-align: center;
+            padding: 0.9rem 1rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            line-height: 1.5;
         }
 
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(4px);
             z-index: 9999;
             display: flex;
@@ -250,37 +168,13 @@
             justify-content: center;
             padding: 1rem;
         }
+        .modal-overlay .card { max-width: 500px; margin: 2rem; background: var(--bg-secondary); color: var(--text-primary); }
+        .modal-overlay h2 { color: var(--text-primary); margin-bottom: 1rem; }
+        .modal-overlay .search-input input { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border); }
+        .modal-overlay .dropdown-item { color: var(--text-primary); background: transparent; }
+        .modal-overlay .dropdown-item:hover { background: var(--bg-tertiary); }
 
-        .modal-overlay .card {
-            max-width: 500px;
-            margin: 2rem;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .modal-overlay h2 {
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-
-        .modal-overlay .search-input input {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border-color: var(--border);
-        }
-
-        .modal-overlay .dropdown-item {
-            color: var(--text-primary);
-            background: transparent;
-        }
-
-        .modal-overlay .dropdown-item:hover {
-            background: var(--bg-tertiary);
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         .btn {
             background: linear-gradient(145deg, var(--accent), #5558d9);
@@ -294,32 +188,15 @@
             text-decoration: none;
             display: inline-block;
         }
-
-        .btn:hover {
-            background: linear-gradient(145deg, var(--accent-hover), #4a4dc9);
-            transform: translateY(-2px);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
-        }
+        .btn:hover { background: linear-gradient(145deg, var(--accent-hover), #4a4dc9); transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background: var(--bg-tertiary); border-color: var(--accent); }
 
         .mb-2 { margin-bottom: 1rem; }
-
-        h2 {
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-        }
+        h2 { color: var(--text-primary); margin-bottom: 1.5rem; }
 
         .branch-badge {
-            background: rgba(99, 102, 241, 0.2);
+            background: rgba(99,102,241,0.2);
             color: var(--accent);
             padding: 0.375rem 0.875rem;
             border-radius: 6px;
@@ -328,238 +205,83 @@
             margin-left: 0.5rem;
         }
 
-        @media (max-width: 768px) {
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Welcome Overlay Styles */
-        .welcome-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
-            z-index: 9999;
-            display: flex;
+        /* Dynamic row styles */
+        .dynamic-add-row {
+            border-left: 3px solid var(--accent) !important;
+            background: rgba(99,102,241,0.05);
+            cursor: pointer;
             align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.4s ease-in-out;
+            gap: 0.75rem;
         }
+        .dynamic-add-row:hover { background: rgba(99,102,241,0.12) !important; padding-left: 1.5rem !important; }
 
-        .welcome-overlay.hidden {
-            animation: fadeOut 0.3s ease-in-out forwards;
+        .dyn-row { animation: dynSlideIn 0.18s ease-out; }
+        @keyframes dynSlideIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+        .dyn-single { border-left: 3px solid var(--accent) !important; background: rgba(99,102,241,0.06) !important; cursor: pointer; }
+        .dyn-single:hover { background: rgba(99,102,241,0.14) !important; padding-left: 1.4rem !important; }
+
+        .dyn-multi-wrap { padding: 0.75rem 1rem; border-top: 1px solid var(--border); background: rgba(99,102,241,0.04); }
+        .dyn-multi-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; letter-spacing: 0.03em; }
+        .dyn-multi-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .dyn-chip {
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            border: 1.5px solid rgba(99,102,241,0.35);
+            background: rgba(99,102,241,0.1);
+            color: #a5b4fc;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
         }
+        .dyn-chip:hover { background: rgba(99,102,241,0.28); border-color: var(--accent); color: white; transform: translateY(-1px); }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        .dyn-loading, .dyn-invalid { padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.83rem; display: flex; align-items: center; gap: 0.5rem; }
 
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
+        .dyn-new { border-left: 3px solid var(--success) !important; background: rgba(16,185,129,0.05) !important; cursor: pointer; }
+        .dyn-new:hover { background: rgba(16,185,129,0.12) !important; padding-left: 1.4rem !important; }
 
-        .welcome-box {
-            background: linear-gradient(145deg, var(--bg-secondary), #1a2332);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: 20px;
-            padding: 3rem 2.5rem;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.5s ease-out;
-        }
+        .dyn-badge { margin-left: auto; font-size: 0.68rem; padding: 0.18rem 0.5rem; border-radius: 4px; font-weight: 700; flex-shrink: 0; }
+        .dyn-badge-new { background:rgba(16,185,129,0.25); color:#6ee7b7; }
+        .dyn-badge-map { background:rgba(99,102,241,0.25); color:#a5b4fc; }
 
-/* Dynamic add-row styling */
-.dynamic-add-row {
-    border-left: 3px solid var(--accent) !important;
-    background: rgba(99,102,241,0.05);
-    cursor: pointer;
-    align-items: center;
-    gap: 0.75rem;
-    animation: slideInRow 0.2s ease-out;
-}
-
-.dynamic-add-row:hover {
-    background: rgba(99,102,241,0.12) !important;
-    padding-left: 1.5rem !important;
-}
-
-@keyframes slideInRow {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0);    }
-}
-
-.dyn-badge {
-    margin-left: auto;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 4px;
-    font-weight: 700;
-    background: rgba(99,102,241,0.25);
-    color: #a5b4fc;
-    flex-shrink: 0;
-}
-
-/* "wrong section" / loading rows */
-.no-results-msg {
-    padding: 0.9rem 1rem;
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    line-height: 1.5;
-}
-
-
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .welcome-icon { font-size: 3.5rem; margin-bottom: 1.5rem; }
-        .welcome-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
-        .welcome-subtitle { font-size: 1rem; color: var(--text-secondary); margin-bottom: 2rem; }
-        .welcome-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
-        .welcome-stat { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2); }
-        .welcome-stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
-        .welcome-stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
-        .welcome-btn { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
-        .welcome-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6); }
-        body.welcome-active .navbar, body.welcome-active .container { filter: blur(5px); }
-    
-    
-    <!--
-╔══════════════════════════════════════════════════════════════════╗
-║  DASHBOARD PATCH — Only 2 changes, nothing else moves.           ║
-╚══════════════════════════════════════════════════════════════════╝
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHANGE 1 — Add inside your existing <style> tag
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--->
-/* ── Dynamic rows in browse dropdown ── */
-.dyn-row {
-    animation: dynSlideIn 0.18s ease-out;
-}
-@keyframes dynSlideIn {
-    from { opacity:0; transform:translateY(-4px); }
-    to   { opacity:1; transform:translateY(0); }
-}
-
-/* "Boats → Boats and Streams" single match */
-.dyn-single {
-    border-left: 3px solid var(--accent) !important;
-    background: rgba(99,102,241,0.06) !important;
-    cursor: pointer;
-}
-.dyn-single:hover {
-    background: rgba(99,102,241,0.14) !important;
-    padding-left: 1.4rem !important;
-}
-
-/* "Recursion found in: [Algorithms] [C] [Java]…" multi-picker */
-.dyn-multi-wrap {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid var(--border);
-    background: rgba(99,102,241,0.04);
-}
-.dyn-multi-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-}
-.dyn-multi-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-.dyn-chip {
-    padding: 0.3rem 0.75rem;
-    border-radius: 6px;
-    border: 1.5px solid rgba(99,102,241,0.35);
-    background: rgba(99,102,241,0.1);
-    color: #a5b4fc;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-}
-.dyn-chip:hover {
-    background: rgba(99,102,241,0.28);
-    border-color: var(--accent);
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* "wrong card" info row */
-.dyn-wrong {
-    padding: 0.75rem 1rem;
-    color: var(--text-muted);
-    font-size: 0.83rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-    line-height: 1.5;
-}
-
-/* invalid / loading */
-.dyn-loading, .dyn-invalid {
-    padding: 0.75rem 1rem;
-    color: var(--text-muted);
-    font-size: 0.83rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* new-topic row */
-.dyn-new {
-    border-left: 3px solid var(--success) !important;
-    background: rgba(16,185,129,0.05) !important;
-    cursor: pointer;
-}
-.dyn-new:hover {
-    background: rgba(16,185,129,0.12) !important;
-    padding-left: 1.4rem !important;
-}
-.dyn-badge {
-    margin-left: auto;
-    font-size: 0.68rem;
-    padding: 0.18rem 0.5rem;
-    border-radius: 4px;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-.dyn-badge-new  { background:rgba(16,185,129,0.25); color:#6ee7b7; }
-.dyn-badge-map  { background:rgba(99,102,241,0.25); color:#a5b4fc; }
+        @media (max-width: 768px) { .grid-3 { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body class="welcome-active">
-    <!-- Welcome Overlay -->
-    <div class="welcome-overlay" id="welcomeOverlay">
-        <div class="welcome-box">
-            <h1 class="welcome-title">Welcome {{ user }}!</h1>
-            <p class="welcome-subtitle">Ready to continue your placement preparation</p>
-            
-            <button class="welcome-btn" onclick="closeWelcome()">
-                <i class="fas fa-rocket"></i> Continue Learning
+<body>
+
+    <!-- ══════════════════════════════════════════
+         WELCOME OVERLAY — completely self-contained
+         No CSS classes, no external dependencies
+    ══════════════════════════════════════════ -->
+    <div id="welcomeOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.96);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;">
+        <div style="background:linear-gradient(145deg,#1e293b,#1a2332);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:3rem 2.5rem;max-width:460px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+            <div style="font-size:3rem;margin-bottom:1rem;">🎓</div>
+            <h1 style="font-size:1.8rem;font-weight:700;color:#f1f5f9;margin-bottom:0.5rem;">Welcome {{ user }}!</h1>
+            <p style="font-size:1rem;color:#94a3b8;margin-bottom:2rem;">Ready to continue your placement preparation</p>
+            <button
+                id="continueBtn"
+                style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:1rem 2.5rem;border-radius:12px;font-size:1.1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);width:100%;max-width:260px;">
+                🚀 Continue Learning
             </button>
         </div>
     </div>
 
+    <!-- This script runs IMMEDIATELY — before any other JS -->
+    <script>
+        // Hide overlay instantly if already shown this session
+        if (sessionStorage.getItem('welcomeShown') === 'true') {
+            document.getElementById('welcomeOverlay').style.display = 'none';
+        }
+
+        // Wire up the button — runs as soon as this script tag is parsed
+        document.getElementById('continueBtn').addEventListener('click', function() {
+            document.getElementById('welcomeOverlay').style.display = 'none';
+            sessionStorage.setItem('welcomeShown', 'true');
+        });
+    </script>
 
     <nav class="navbar">
         <div class="navbar-content">
@@ -567,38 +289,35 @@ CHANGE 1 — Add inside your existing <style> tag
                 <i class="fas fa-graduation-cap"></i> CareerLens
                 <span class="branch-badge">{{ branch_key }}</span>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <div style="position: relative;">
-                    <button onclick="toggleProfile()" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 0.5rem 1rem; border-radius: 8px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+            <div style="display:flex;gap:1rem;align-items:center;">
+                <div style="position:relative;">
+                    <button onclick="toggleProfile()" style="background:var(--bg-tertiary);border:2px solid var(--border);padding:0.5rem 1rem;border-radius:8px;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-weight:600;">
                         <i class="fas fa-user-circle"></i> {{ user }}
                     </button>
-        
-                    <div id="profileDropdown" style="display: none; position: absolute; top: 110%; right: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; min-width: 280px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 1000; padding: 1.5rem;">
-                        <div style="text-align: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
-                            <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--accent); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white;">
+                    <div id="profileDropdown" style="display:none;position:absolute;top:110%;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.4);z-index:1000;padding:1.5rem;">
+                        <div style="text-align:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+                            <div style="width:60px;height:60px;border-radius:50%;background:var(--accent);margin:0 auto 0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:white;">
                                 {{ user[0].upper() }}
                             </div>
-                            <h3 style="color: var(--text-primary); margin-bottom: 0.25rem;">{{ user }}</h3>
-                            <p style="color: var(--text-muted); font-size: 0.85rem;">{{ user_profile.email }}</p>
+                            <h3 style="color:var(--text-primary);margin-bottom:0.25rem;">{{ user }}</h3>
+                            <p style="color:var(--text-muted);font-size:0.85rem;">{{ user_profile.email }}</p>
                         </div>
-
-                        <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="color: var(--text-muted);">Branch:</span>
-                                <span style="color: var(--text-primary); font-weight: 600;">{{ user_profile.branch }}</span>
+                        <div style="margin-bottom:1rem;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+                                <span style="color:var(--text-muted);">Branch:</span>
+                                <span style="color:var(--text-primary);font-weight:600;">{{ user_profile.branch }}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="color: var(--text-muted);">CGPA:</span>
-                                <span style="color: var(--accent); font-weight: 600;">{{ user_profile.cgpa }}</span>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+                                <span style="color:var(--text-muted);">CGPA:</span>
+                                <span style="color:var(--accent);font-weight:600;">{{ user_profile.cgpa }}</span>
                             </div>
                         </div>
-
-                        <a href="/logout" onclick="sessionStorage.clear()" style="display: block; width: 100%; background: #ef4444; color: white; padding: 0.75rem; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600;">
+                        <a href="/logout" onclick="sessionStorage.clear()" style="display:block;width:100%;background:#ef4444;color:white;padding:0.75rem;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     </div>
                 </div>
-            </div>       
+            </div>
         </div>
     </nav>
 
@@ -620,26 +339,20 @@ CHANGE 1 — Add inside your existing <style> tag
 
         <h2 class="mb-2">Assessment Categories</h2>
         <div class="grid grid-3 mb-2">
-            
-            <!-- Technical (DYNAMIC TOPICS) -->
+
+            <!-- Technical -->
             <div class="card">
                 <h3><i class="fas fa-code"></i> Technical</h3>
                 <button class="browse-btn" type="button" onclick="toggleDropdown('technicalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-    
                 <div id="technicalDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" 
-                            id="techSearch" 
-                            placeholder="Search topics..." 
+                        <input type="text" id="techSearch" placeholder="Search topics..."
                             onkeyup="filterTopics('techSearch', 'techList')"
-                            onclick="event.stopPropagation()"
-                            autocomplete="off">
+                            onclick="event.stopPropagation()" autocomplete="off">
                     </div>
-                    <div class="topic-list" id="techList">
-                    <!-- Will be populated by JavaScript -->
-                    </div>
+                    <div class="topic-list" id="techList"></div>
                 </div>
             </div>
 
@@ -649,133 +362,74 @@ CHANGE 1 — Add inside your existing <style> tag
                 <button class="browse-btn" type="button" onclick="toggleDropdown('aptitudeDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-    
                 <div id="aptitudeDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" 
-                            id="aptSearch" 
-                            placeholder="Search topics..." 
+                        <input type="text" id="aptSearch" placeholder="Search topics..."
                             onkeyup="filterTopics('aptSearch', 'aptList')"
-                            onclick="event.stopPropagation()"
-                            autocomplete="off">
+                            onclick="event.stopPropagation()" autocomplete="off">
                     </div>
                     <div class="topic-list" id="aptList">
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-calculator"></i> Number System
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-percentage"></i> Percentage & Profit Loss
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-clock"></i> Time & Work
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-tachometer-alt"></i> Speed, Time & Distance
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-chart-line"></i> Simple & Compound Interest
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-fill-drip"></i> Mixtures & Alligations
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-square-root-alt"></i> Ratio & Proportion
-                        </a>
-                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item">
-                            <i class="fas fa-divide"></i> Average
-                        </a>
-                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
-                           <i class="fas fa-brain"></i> Logical Reasoning
-                        </a>
-                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
-                            <i class="fas fa-project-diagram"></i> Seating Arrangement
-                        </a>
-                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
-                            <i class="fas fa-puzzle-piece"></i> Blood Relations
-                        </a>
-                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item">
-                            <i class="fas fa-calendar-alt"></i> Calendar & Clocks
-                        </a>
-                        <a href="/quiz/Data Interpretation/details" class="dropdown-item">
-                            <i class="fas fa-chart-bar"></i> Data Interpretation
-                        </a>
-                        <a href="/quiz/Data Interpretation/details" class="dropdown-item">
-                            <i class="fas fa-table"></i> Tables & Graphs
-                        </a>
-                        <a href="/quiz/Data Interpretation/details" class="dropdown-item">
-                            <i class="fas fa-chart-pie"></i> Pie Charts
-                        </a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-calculator"></i> Number System</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-percentage"></i> Percentage &amp; Profit Loss</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-clock"></i> Time &amp; Work</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-tachometer-alt"></i> Speed, Time &amp; Distance</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-chart-line"></i> Simple &amp; Compound Interest</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-fill-drip"></i> Mixtures &amp; Alligations</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-square-root-alt"></i> Ratio &amp; Proportion</a>
+                        <a href="/quiz/Quantitative Aptitude/details" class="dropdown-item"><i class="fas fa-divide"></i> Average</a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item"><i class="fas fa-brain"></i> Logical Reasoning</a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item"><i class="fas fa-project-diagram"></i> Seating Arrangement</a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item"><i class="fas fa-puzzle-piece"></i> Blood Relations</a>
+                        <a href="/quiz/Logical Reasoning/details" class="dropdown-item"><i class="fas fa-calendar-alt"></i> Calendar &amp; Clocks</a>
+                        <a href="/quiz/Data Interpretation/details" class="dropdown-item"><i class="fas fa-chart-bar"></i> Data Interpretation</a>
+                        <a href="/quiz/Data Interpretation/details" class="dropdown-item"><i class="fas fa-table"></i> Tables &amp; Graphs</a>
+                        <a href="/quiz/Data Interpretation/details" class="dropdown-item"><i class="fas fa-chart-pie"></i> Pie Charts</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Verbal Ability -->
+            <!-- Verbal -->
             <div class="card">
                 <h3><i class="fas fa-language"></i> Verbal Ability</h3>
                 <button class="browse-btn" type="button" onclick="toggleDropdown('verbalDropdown', this)">
                     Browse Topics <i class="fas fa-chevron-down"></i>
                 </button>
-    
                 <div id="verbalDropdown" class="dropdown-section">
                     <div class="search-input">
-                        <input type="text" 
-                               id="verbalSearch" 
-                               placeholder="Search topics..." 
-                               onkeyup="filterTopics('verbalSearch', 'verbalList')"
-                               onclick="event.stopPropagation()"
-                               autocomplete="off">
+                        <input type="text" id="verbalSearch" placeholder="Search topics..."
+                            onkeyup="filterTopics('verbalSearch', 'verbalList')"
+                            onclick="event.stopPropagation()" autocomplete="off">
                     </div>
                     <div class="topic-list" id="verbalList">
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-spell-check"></i> Synonyms & Antonyms
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-book-open"></i> Reading Comprehension
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-fill"></i> Fill in the Blanks
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-times-circle"></i> Error Detection
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-exchange-alt"></i> Sentence Improvement
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-sort-amount-down"></i> Para Jumbles
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa text-width"></i> Idioms & Phrases
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-comment-dots"></i> One Word Substitution
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-align-left"></i> Sentence Completion
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-font"></i> Vocabulary
-                        </a>
-                        <a href="/quiz/Verbal Ability/details" class="dropdown-item">
-                            <i class="fas fa-pen"></i> Grammar
-                        </a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-spell-check"></i> Synonyms &amp; Antonyms</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-book-open"></i> Reading Comprehension</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-fill"></i> Fill in the Blanks</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-times-circle"></i> Error Detection</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-exchange-alt"></i> Sentence Improvement</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-sort-amount-down"></i> Para Jumbles</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-comment-dots"></i> Idioms &amp; Phrases</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-comment-dots"></i> One Word Substitution</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-align-left"></i> Sentence Completion</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-font"></i> Vocabulary</a>
+                        <a href="/quiz/Verbal Ability/details" class="dropdown-item"><i class="fas fa-pen"></i> Grammar</a>
                     </div>
                 </div>
             </div>
-        </div>    
+        </div>
+
         <h2 class="mb-2">Quick Actions</h2>
         <div class="grid grid-3">
-            <a href="/suggestions" class="card" style="text-decoration: none; cursor: pointer;">
+            <a href="/suggestions" class="card" style="text-decoration:none;cursor:pointer;">
                 <h3><i class="fas fa-lightbulb"></i> AI Suggestions</h3>
-                <p style="color: var(--text-muted);">Get personalized recommendations</p>
+                <p style="color:var(--text-muted);">Get personalized recommendations</p>
             </a>
-            <a href="/grand_test/details" class="card" style="text-decoration: none; cursor: pointer;">
+            <a href="/grand_test/details" class="card" style="text-decoration:none;cursor:pointer;">
                 <h3><i class="fas fa-trophy"></i> Grand Test</h3>
-                <p style="color: var(--text-muted);">Comprehensive assessment</p>
+                <p style="color:var(--text-muted);">Comprehensive assessment</p>
             </a>
-            <a href="/resume_draft" class="card" style="text-decoration: none; cursor: pointer;">
+            <a href="/resume_draft" class="card" style="text-decoration:none;cursor:pointer;">
                 <h3><i class="fas fa-file-alt"></i> Resume Builder</h3>
-                <p style="color: var(--text-muted);">Create professional resume</p>
+                <p style="color:var(--text-muted);">Create professional resume</p>
             </a>
         </div>
     </div>
@@ -783,704 +437,100 @@ CHANGE 1 — Add inside your existing <style> tag
     <!-- Subtopics Modal -->
     <div id="subtopicsModal" class="modal-overlay hidden" onclick="closeModal(event)">
         <div class="card" onclick="event.stopPropagation()">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2 id="modalTitle" style="margin: 0;">Subtopics</h2>
-                <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h2 id="modalTitle" style="margin:0;">Subtopics</h2>
+                <button onclick="closeModal()" class="btn btn-outline" style="padding:0.5rem;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
             <div class="search-input">
-                <input type="text" 
-                       id="subtopicSearch" 
-                       placeholder="Search subtopics..." 
-                       onkeyup="filterTopics('subtopicSearch', 'subtopicList')"
-                       onclick="event.stopPropagation()"
-                       autocomplete="off">
+                <input type="text" id="subtopicSearch" placeholder="Search subtopics..."
+                    onkeyup="filterTopics('subtopicSearch', 'subtopicList')"
+                    onclick="event.stopPropagation()" autocomplete="off">
             </div>
-            
             <div class="topic-list" id="subtopicList"></div>
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════
+         SINGLE CLEAN SCRIPT BLOCK — no HTML comments inside
+    ══════════════════════════════════════════ -->
     <script>
-        // COMPREHENSIVE PLACEMENT-READY TOPICS & SUBTOPICS
-// Replace lines 652-699 in dashboard.html with this
 
-const SUBTOPICS = {
-    // ============ CSE/IT TOPICS ============
-    
-    // Programming Languages
-    'C': [
-        'Data Types & Operators',
-        'Control Structures',
-        'Arrays & Strings',
-        'Pointers & References',
-        'Functions',
-        'Structures & Unions',
-        'File Handling',
-        'Memory Management',
-        'Preprocessor Directives'
-    ],
-    
-    'Java': [
-        'OOP Concepts',
-        'Classes & Objects',
-        'Inheritance',
-        'Polymorphism',
-        'Abstraction & Encapsulation',
-        'Exception Handling',
-        'Collections Framework',
-        'Multithreading',
-        'Java 8 Features',
-        'JDBC & Servlets'
-    ],
-    
-    'Python': [
-        'Data Types & Variables',
-        'Lists & Tuples',
-        'Dictionaries & Sets',
-        'Functions & Lambda',
-        'File Handling',
-        'OOP in Python',
-        'Modules & Packages',
-        'Exception Handling',
-        'Decorators',
-        'NumPy & Pandas Basics'
-    ],
-    
-    'C++': [
-        'Classes & Objects',
-        'Constructors & Destructors',
-        'Inheritance',
-        'Polymorphism',
-        'Operator Overloading',
-        'Templates',
-        'STL Containers',
-        'Exception Handling',
-        'Virtual Functions'
-    ],
-    
-    // Core CS Subjects
-    'Data Structures': [
-        'Arrays',
-        'Linked Lists',
-        'Stacks',
-        'Queues',
-        'Trees (Binary, BST)',
-        'Graphs',
-        'Hashing',
-        'Heaps',
-        'Tries'
-    ],
-    
-    'Algorithms': [
-        'Sorting Algorithms',
-        'Searching Algorithms',
-        'Recursion',
-        'Dynamic Programming',
-        'Greedy Algorithms',
-        'Backtracking',
-        'Divide & Conquer',
-        'Graph Algorithms',
-        'Time Complexity Analysis'
-    ],
-    
-    'DBMS': [
-        'ER Model',
-        'Relational Model',
-        'SQL Queries',
-        'Normalization',
-        'Transactions & ACID',
-        'Indexing',
-        'Joins',
-        'Views & Triggers',
-        'PL/SQL Basics'
-    ],
-    
-    'OS': [
-        'Process Management',
-        'Threads',
-        'CPU Scheduling',
-        'Deadlock',
-        'Memory Management',
-        'Virtual Memory',
-        'File Systems',
-        'Disk Scheduling',
-        'Synchronization'
-    ],
-    
-    'Computer Networks': [
-        'OSI Model',
-        'TCP/IP Model',
-        'IP Addressing',
-        'Subnetting',
-        'Routing Protocols',
-        'Transport Layer',
-        'Application Layer',
-        'Network Security',
-        'Socket Programming'
-    ],
-    
-    'OOP': [
-        'Classes & Objects',
-        'Encapsulation',
-        'Inheritance',
-        'Polymorphism',
-        'Abstraction',
-        'Interfaces',
-        'Design Patterns',
-        'SOLID Principles'
-    ],
-    
-    // Web & Modern Tech
-    'Web Development': [
-        'HTML5 & Semantic HTML',
-        'CSS3 & Flexbox',
-        'JavaScript ES6+',
-        'DOM Manipulation',
-        'React Basics',
-        'REST APIs',
-        'Node.js Basics',
-        'Git & Version Control'
-    ],
-    
-    'Cloud Computing': [
-        'Cloud Models (IaaS, PaaS, SaaS)',
-        'AWS EC2 & S3',
-        'Azure Fundamentals',
-        'Docker Basics',
-        'Kubernetes Basics',
-        'Serverless Computing',
-        'CI/CD Pipelines'
-    ],
-    
-    
-    // ============ ECE TOPICS ============
-    
-    'Digital Electronics': [
-        'Number Systems',
-        'Logic Gates',
-        'Boolean Algebra',
-        'Combinational Circuits',
-        'Sequential Circuits',
-        'Flip Flops',
-        'Counters & Registers',
-        'ADC & DAC',
-        'Multiplexers & Demultiplexers'
-    ],
-    
-    'Signal Processing': [
-        'Signals & Systems',
-        'Fourier Transform',
-        'Laplace Transform',
-        'Z-Transform',
-        'Digital Filters',
-        'Sampling Theorem',
-        'Convolution',
-        'DFT & FFT'
-    ],
-    
-    'Embedded Systems': [
-        'Microcontroller Basics',
-        '8051 Microcontroller',
-        'ARM Architecture',
-        'Timers & Interrupts',
-        'Serial Communication',
-        'RTOS Concepts',
-        'Embedded C',
-        'Sensors & Actuators'
-    ],
-    
-    'VLSI': [
-        'CMOS Technology',
-        'MOSFET Characteristics',
-        'Combinational Logic Design',
-        'Sequential Logic Design',
-        'FPGA Basics',
-        'Verilog HDL',
-        'VHDL',
-        'Design for Testability'
-    ],
-    
-    'Microprocessors': [
-        '8085 Architecture',
-        '8086 Architecture',
-        'Assembly Language',
-        'Addressing Modes',
-        'Instruction Set',
-        'Memory Interfacing',
-        'I/O Interfacing',
-        'Interrupts'
-    ],
-    
-    'Communication Systems': [
-        'Analog Modulation (AM, FM)',
-        'Digital Modulation (ASK, FSK, PSK)',
-        'Multiplexing (TDM, FDM)',
-        'Antennas & Propagation',
-        'Wireless Communication',
-        'Optical Fiber',
-        'Satellite Communication',
-        'Mobile Communication (GSM, CDMA)'
-    ],
-    
-    'Analog Electronics': [
-        'Diode Circuits',
-        'BJT Amplifiers',
-        'FET & MOSFET',
-        'Op-Amp Applications',
-        'Oscillators',
-        'Rectifiers',
-        'Voltage Regulators',
-        'Filters'
-    ],
-    
-    'Control Systems': [
-        'Transfer Functions',
-        'Block Diagrams',
-        'Signal Flow Graphs',
-        'Time Response',
-        'Stability Analysis',
-        'Root Locus',
-        'Frequency Response',
-        'PID Controllers'
-    ],
-    
-    
-    // ============ EEE TOPICS ============
-    
-    'Circuit Theory': [
-        'Ohm\'s Law & KCL/KVL',
-        'Network Theorems',
-        'AC Circuits',
-        'Resonance',
-        'Three Phase Circuits',
-        'Transient Analysis',
-        'Two Port Networks',
-        'Laplace Transform Applications'
-    ],
-    
-    'Power Systems': [
-        'Power Generation',
-        'Transmission Lines',
-        'Distribution Systems',
-        'Load Flow Analysis',
-        'Fault Analysis',
-        'Protection Schemes',
-        'FACTS Devices',
-        'Smart Grids'
-    ],
-    
-    'Electrical Machines': [
-        'DC Generators',
-        'DC Motors',
-        'Transformers',
-        'Induction Motors',
-        'Synchronous Machines',
-        'Starting & Speed Control',
-        'Testing of Machines',
-        'Special Machines'
-    ],
-    
-    'Power Electronics': [
-        'Power Diodes',
-        'Thyristors (SCR)',
-        'Rectifiers',
-        'Inverters',
-        'Choppers',
-        'AC Voltage Controllers',
-        'SMPS',
-        'PWM Techniques'
-    ],
-    
-    'Control Systems': [
-        'Transfer Functions',
-        'Block Diagrams',
-        'Time Response',
-        'Stability Analysis',
-        'Root Locus',
-        'Frequency Response',
-        'PID Controllers',
-        'State Space Analysis'
-    ],
-    
-    'Electromagnetic Theory': [
-        'Electrostatics',
-        'Magnetostatics',
-        'Maxwell\'s Equations',
-        'Electromagnetic Waves',
-        'Transmission Lines',
-        'Waveguides',
-        'Antennas Basics'
-    ],
-    
-    'Measurements': [
-        'Instrument Types',
-        'Voltmeters & Ammeters',
-        'Wattmeters',
-        'Energy Meters',
-        'Bridge Measurements',
-        'Oscilloscopes',
-        'Digital Instruments',
-        'Transducers'
-    ],
-    
-    
-    // ============ MECH TOPICS ============
-    
-    'Thermodynamics': [
-        'Zeroth & First Law',
-        'Second Law',
-        'Entropy',
-        'Carnot Cycle',
-        'Rankine Cycle',
-        'Otto & Diesel Cycles',
-        'Properties of Steam',
-        'Gas Power Cycles',
-        'Refrigeration Cycles'
-    ],
-    
-    'Mechanics': [
-        'Statics',
-        'Dynamics',
-        'Kinematics',
-        'Newton\'s Laws',
-        'Work & Energy',
-        'Momentum',
-        'Friction',
-        'Simple Machines',
-        'Rotational Motion'
-    ],
-    
-    'Strength of Materials': [
-        'Stress & Strain',
-        'Elastic Constants',
-        'Shear Force & Bending Moment',
-        'Torsion',
-        'Deflection of Beams',
-        'Columns',
-        'Springs',
-        'Strain Energy',
-        'Theories of Failure'
-    ],
-    
-    'Manufacturing': [
-        'Casting Processes',
-        'Welding Techniques',
-        'Machining Operations',
-        'Metal Forming',
-        'Powder Metallurgy',
-        'CNC Machining',
-        'Metrology',
-        'Inspection & Quality Control'
-    ],
-    
-    'CAD/CAM': [
-        'Engineering Drawing',
-        'AutoCAD 2D',
-        'AutoCAD 3D',
-        'SolidWorks Basics',
-        'CATIA Basics',
-        'CNC Programming',
-        'Rapid Prototyping',
-        'FEA Basics'
-    ],
-    
-    'Fluid Mechanics': [
-        'Fluid Properties',
-        'Fluid Statics',
-        'Fluid Kinematics',
-        'Bernoulli\'s Equation',
-        'Flow Through Pipes',
-        'Boundary Layer',
-        'Turbomachinery',
-        'Pumps & Turbines'
-    ],
-    
-    'Heat Transfer': [
-        'Conduction',
-        'Convection',
-        'Radiation',
-        'Heat Exchangers',
-        'Fins',
-        'Boiling & Condensation',
-        'Heat Transfer Applications'
-    ],
-    
-    'Machine Design': [
-        'Design Process',
-        'Failure Theories',
-        'Fasteners',
-        'Shafts & Keys',
-        'Bearings',
-        'Gears',
-        'Clutches & Brakes',
-        'Springs',
-        'Flywheels'
-    ],
-    
-    'Automobile Engineering': [
-        'Engine Components',
-        'IC Engine Types',
-        'Fuel Systems',
-        'Cooling & Lubrication',
-        'Transmission Systems',
-        'Braking Systems',
-        'Suspension',
-        'Steering Systems'
-    ],
-    
-    
-    // ============ CIVIL TOPICS ============
-    
-    'AutoCAD': [
-        '2D Drawing Commands',
-        '3D Modeling',
-        'Layers & Blocks',
-        'Dimensioning',
-        'Layouts & Plotting',
-        'Building Plans',
-        'Structural Drawings'
-    ],
-    
-    'Structural Analysis': [
-        'Types of Structures',
-        'Analysis of Beams',
-        'Trusses',
-        'Frames',
-        'Arches',
-        'Influence Lines',
-        'Slope Deflection Method',
-        'Moment Distribution',
-        'Matrix Methods'
-    ],
-    
-    'Surveying': [
-        'Chain Surveying',
-        'Compass Surveying',
-        'Leveling',
-        'Theodolite Surveying',
-        'Tacheometry',
-        'Contouring',
-        'Total Station',
-        'GPS Surveying'
-    ],
-    
-    'Geotechnical Engineering': [
-        'Soil Classification',
-        'Soil Mechanics',
-        'Compaction',
-        'Permeability',
-        'Consolidation',
-        'Shear Strength',
-        'Shallow Foundations',
-        'Deep Foundations',
-        'Slope Stability',
-        'Retaining Walls'
-    ],
-    
-    'Concrete Technology': [
-        'Cement Properties',
-        'Aggregates',
-        'Water for Concrete',
-        'Mix Design',
-        'Admixtures',
-        'Testing of Concrete',
-        'Workability',
-        'Durability',
-        'Special Concretes'
-    ],
-    
-    'RCC Design': [
-        'Working Stress Method',
-        'Limit State Method',
-        'Singly Reinforced Beams',
-        'Doubly Reinforced Beams',
-        'T-Beams',
-        'Slabs',
-        'Columns',
-        'Footings',
-        'Staircases'
-    ],
-    
-    'Transportation Engineering': [
-        'Highway Planning',
-        'Geometric Design',
-        'Pavement Design',
-        'Highway Materials',
-        'Traffic Engineering',
-        'Railway Engineering',
-        'Airport Engineering'
-    ],
-    
-    'Environmental Engineering': [
-        'Water Supply',
-        'Wastewater Treatment',
-        'Solid Waste Management',
-        'Air Pollution',
-        'Water Quality',
-        'Sewage Treatment',
-        'Environmental Impact Assessment'
-    ],
-    
-    
-    // ============ CHEM TOPICS ============
-    
-    'Chemical Thermodynamics': [
-        'First Law',
-        'Second Law',
-        'Third Law',
-        'Free Energy',
-        'Phase Equilibrium',
-        'Chemical Equilibrium',
-        'Fugacity & Activity',
-        'Thermodynamic Cycles'
-    ],
-    
-    'Process Control': [
-        'Control Systems Basics',
-        'Feedback Control',
-        'PID Controllers',
-        'Transfer Functions',
-        'Stability Analysis',
-        'Frequency Response',
-        'Advanced Control Strategies'
-    ],
-    
-    'Reaction Engineering': [
-        'Rate Equations',
-        'Batch Reactors',
-        'CSTR',
-        'Plug Flow Reactors',
-        'Multiple Reactions',
-        'Catalysis',
-        'Reactor Design',
-        'Non-Ideal Reactors'
-    ],
-    
-    'Mass Transfer': [
-        'Diffusion',
-        'Distillation',
-        'Absorption',
-        'Extraction',
-        'Adsorption',
-        'Drying',
-        'Crystallization',
-        'Membrane Separation'
-    ],
-    
-    'Fluid Mechanics': [
-        'Fluid Properties',
-        'Fluid Statics',
-        'Bernoulli Equation',
-        'Flow Through Pipes',
-        'Boundary Layer',
-        'Flow Measurement',
-        'Pumps & Compressors'
-    ],
-    
-    'Heat Transfer': [
-        'Conduction',
-        'Convection',
-        'Radiation',
-        'Heat Exchangers',
-        'Evaporators',
-        'Condensers',
-        'Boiling & Condensation'
-    ],
-    
-    'Chemical Engineering Thermodynamics': [
-        'P-V-T Behavior',
-        'Vapor-Liquid Equilibrium',
-        'Solution Thermodynamics',
-        'Phase Diagrams',
-        'Refrigeration',
-        'Power Cycles'
-    ],
-    
-    'Process Equipment Design': [
-        'Pressure Vessels',
-        'Heat Exchanger Design',
-        'Column Design',
-        'Reactor Design',
-        'Separator Design',
-        'Material Selection'
-    ],
-    
-    
-    // ============ APTITUDE (Common for All) ============
-    
-    'Quantitative Aptitude': [
-        'Number System',
-        'HCF & LCM',
-        'Percentages',
-        'Profit & Loss',
-        'Simple & Compound Interest',
-        'Time & Work',
-        'Time Speed Distance',
-        'Ratio & Proportion',
-        'Mixtures & Alligations',
-        'Permutations & Combinations',
-        'Probability',
-        'Sequences & Series'
-    ],
-    
-    'Logical Reasoning': [
-        'Analytical Reasoning',
-        'Verbal Reasoning',
-        'Non-Verbal Reasoning',
-        'Data Interpretation',
-        'Puzzles',
-        'Blood Relations',
-        'Coding-Decoding',
-        'Syllogisms',
-        'Seating Arrangements'
-    ],
-    
-    
-    // ============ ENGLISH (Common for All) ============
-    
-    'Verbal Ability': [
-        'Reading Comprehension',
-        'Sentence Completion',
-        'Para Jumbles',
-        'Error Spotting',
-        'Synonyms & Antonyms',
-        'Analogies',
-        'Idioms & Phrases',
-        'One Word Substitution'
-    ]
-};
+        // ── SUBTOPICS DATA ────────────────────────────────────────────────
+        const SUBTOPICS = {
+            'C': ['Data Types & Operators','Control Structures','Arrays & Strings','Pointers & References','Functions','Structures & Unions','File Handling','Memory Management','Preprocessor Directives'],
+            'Java': ['OOP Concepts','Classes & Objects','Inheritance','Polymorphism','Abstraction & Encapsulation','Exception Handling','Collections Framework','Multithreading','Java 8 Features','JDBC & Servlets'],
+            'Python': ['Data Types & Variables','Lists & Tuples','Dictionaries & Sets','Functions & Lambda','File Handling','OOP in Python','Modules & Packages','Exception Handling','Decorators','NumPy & Pandas Basics'],
+            'C++': ['Classes & Objects','Constructors & Destructors','Inheritance','Polymorphism','Operator Overloading','Templates','STL Containers','Exception Handling','Virtual Functions'],
+            'Data Structures': ['Arrays','Linked Lists','Stacks','Queues','Trees (Binary, BST)','Graphs','Hashing','Heaps','Tries'],
+            'Algorithms': ['Sorting Algorithms','Searching Algorithms','Recursion','Dynamic Programming','Greedy Algorithms','Backtracking','Divide & Conquer','Graph Algorithms','Time Complexity Analysis'],
+            'DBMS': ['ER Model','Relational Model','SQL Queries','Normalization','Transactions & ACID','Indexing','Joins','Views & Triggers','PL/SQL Basics'],
+            'OS': ['Process Management','Threads','CPU Scheduling','Deadlock','Memory Management','Virtual Memory','File Systems','Disk Scheduling','Synchronization'],
+            'Computer Networks': ['OSI Model','TCP/IP Model','IP Addressing','Subnetting','Routing Protocols','Transport Layer','Application Layer','Network Security','Socket Programming'],
+            'OOP': ['Classes & Objects','Encapsulation','Inheritance','Polymorphism','Abstraction','Interfaces','Design Patterns','SOLID Principles'],
+            'Web Development': ['HTML5 & Semantic HTML','CSS3 & Flexbox','JavaScript ES6+','DOM Manipulation','React Basics','REST APIs','Node.js Basics','Git & Version Control'],
+            'Cloud Computing': ['Cloud Models (IaaS, PaaS, SaaS)','AWS EC2 & S3','Azure Fundamentals','Docker Basics','Kubernetes Basics','Serverless Computing','CI/CD Pipelines'],
+            'Digital Electronics': ['Number Systems','Logic Gates','Boolean Algebra','Combinational Circuits','Sequential Circuits','Flip Flops','Counters & Registers','ADC & DAC','Multiplexers & Demultiplexers'],
+            'Signal Processing': ['Signals & Systems','Fourier Transform','Laplace Transform','Z-Transform','Digital Filters','Sampling Theorem','Convolution','DFT & FFT'],
+            'Embedded Systems': ['Microcontroller Basics','8051 Microcontroller','ARM Architecture','Timers & Interrupts','Serial Communication','RTOS Concepts','Embedded C','Sensors & Actuators'],
+            'VLSI': ['CMOS Technology','MOSFET Characteristics','Combinational Logic Design','Sequential Logic Design','FPGA Basics','Verilog HDL','VHDL','Design for Testability'],
+            'Microprocessors': ['8085 Architecture','8086 Architecture','Assembly Language','Addressing Modes','Instruction Set','Memory Interfacing','I/O Interfacing','Interrupts'],
+            'Communication Systems': ['Analog Modulation (AM, FM)','Digital Modulation (ASK, FSK, PSK)','Multiplexing (TDM, FDM)','Antennas & Propagation','Wireless Communication','Optical Fiber','Satellite Communication','Mobile Communication (GSM, CDMA)'],
+            'Analog Electronics': ['Diode Circuits','BJT Amplifiers','FET & MOSFET','Op-Amp Applications','Oscillators','Rectifiers','Voltage Regulators','Filters'],
+            'Control Systems': ['Transfer Functions','Block Diagrams','Signal Flow Graphs','Time Response','Stability Analysis','Root Locus','Frequency Response','PID Controllers'],
+            'Circuit Theory': ["Ohm's Law & KCL/KVL",'Network Theorems','AC Circuits','Resonance','Three Phase Circuits','Transient Analysis','Two Port Networks','Laplace Transform Applications'],
+            'Power Systems': ['Power Generation','Transmission Lines','Distribution Systems','Load Flow Analysis','Fault Analysis','Protection Schemes','FACTS Devices','Smart Grids'],
+            'Electrical Machines': ['DC Generators','DC Motors','Transformers','Induction Motors','Synchronous Machines','Starting & Speed Control','Testing of Machines','Special Machines'],
+            'Power Electronics': ['Power Diodes','Thyristors (SCR)','Rectifiers','Inverters','Choppers','AC Voltage Controllers','SMPS','PWM Techniques'],
+            'Electromagnetic Theory': ['Electrostatics','Magnetostatics',"Maxwell's Equations",'Electromagnetic Waves','Transmission Lines','Waveguides','Antennas Basics'],
+            'Measurements': ['Instrument Types','Voltmeters & Ammeters','Wattmeters','Energy Meters','Bridge Measurements','Oscilloscopes','Digital Instruments','Transducers'],
+            'Thermodynamics': ['Zeroth & First Law','Second Law','Entropy','Carnot Cycle','Rankine Cycle','Otto & Diesel Cycles','Properties of Steam','Gas Power Cycles','Refrigeration Cycles'],
+            'Mechanics': ['Statics','Dynamics','Kinematics',"Newton's Laws",'Work & Energy','Momentum','Friction','Simple Machines','Rotational Motion'],
+            'Strength of Materials': ['Stress & Strain','Elastic Constants','Shear Force & Bending Moment','Torsion','Deflection of Beams','Columns','Springs','Strain Energy','Theories of Failure'],
+            'Manufacturing': ['Casting Processes','Welding Techniques','Machining Operations','Metal Forming','Powder Metallurgy','CNC Machining','Metrology','Inspection & Quality Control'],
+            'CAD/CAM': ['Engineering Drawing','AutoCAD 2D','AutoCAD 3D','SolidWorks Basics','CATIA Basics','CNC Programming','Rapid Prototyping','FEA Basics'],
+            'Fluid Mechanics': ['Fluid Properties','Fluid Statics','Fluid Kinematics',"Bernoulli's Equation",'Flow Through Pipes','Boundary Layer','Turbomachinery','Pumps & Turbines'],
+            'Heat Transfer': ['Conduction','Convection','Radiation','Heat Exchangers','Fins','Boiling & Condensation','Heat Transfer Applications'],
+            'Machine Design': ['Design Process','Failure Theories','Fasteners','Shafts & Keys','Bearings','Gears','Clutches & Brakes','Springs','Flywheels'],
+            'Automobile Engineering': ['Engine Components','IC Engine Types','Fuel Systems','Cooling & Lubrication','Transmission Systems','Braking Systems','Suspension','Steering Systems'],
+            'AutoCAD': ['2D Drawing Commands','3D Modeling','Layers & Blocks','Dimensioning','Layouts & Plotting','Building Plans','Structural Drawings'],
+            'Structural Analysis': ['Types of Structures','Analysis of Beams','Trusses','Frames','Arches','Influence Lines','Slope Deflection Method','Moment Distribution','Matrix Methods'],
+            'Surveying': ['Chain Surveying','Compass Surveying','Leveling','Theodolite Surveying','Tacheometry','Contouring','Total Station','GPS Surveying'],
+            'Geotechnical Engineering': ['Soil Classification','Soil Mechanics','Compaction','Permeability','Consolidation','Shear Strength','Shallow Foundations','Deep Foundations','Slope Stability','Retaining Walls'],
+            'Concrete Technology': ['Cement Properties','Aggregates','Water for Concrete','Mix Design','Admixtures','Testing of Concrete','Workability','Durability','Special Concretes'],
+            'RCC Design': ['Working Stress Method','Limit State Method','Singly Reinforced Beams','Doubly Reinforced Beams','T-Beams','Slabs','Columns','Footings','Staircases'],
+            'Transportation Engineering': ['Highway Planning','Geometric Design','Pavement Design','Highway Materials','Traffic Engineering','Railway Engineering','Airport Engineering'],
+            'Environmental Engineering': ['Water Supply','Wastewater Treatment','Solid Waste Management','Air Pollution','Water Quality','Sewage Treatment','Environmental Impact Assessment'],
+            'Chemical Thermodynamics': ['First Law','Second Law','Third Law','Free Energy','Phase Equilibrium','Chemical Equilibrium','Fugacity & Activity','Thermodynamic Cycles'],
+            'Process Control': ['Control Systems Basics','Feedback Control','PID Controllers','Transfer Functions','Stability Analysis','Frequency Response','Advanced Control Strategies'],
+            'Reaction Engineering': ['Rate Equations','Batch Reactors','CSTR','Plug Flow Reactors','Multiple Reactions','Catalysis','Reactor Design','Non-Ideal Reactors'],
+            'Mass Transfer': ['Diffusion','Distillation','Absorption','Extraction','Adsorption','Drying','Crystallization','Membrane Separation'],
+            'Chemical Engineering Thermodynamics': ['P-V-T Behavior','Vapor-Liquid Equilibrium','Solution Thermodynamics','Phase Diagrams','Refrigeration','Power Cycles'],
+            'Process Equipment Design': ['Pressure Vessels','Heat Exchanger Design','Column Design','Reactor Design','Separator Design','Material Selection'],
+            'Quantitative Aptitude': ['Number System','HCF & LCM','Percentages','Profit & Loss','Simple & Compound Interest','Time & Work','Time Speed Distance','Ratio & Proportion','Mixtures & Alligations','Permutations & Combinations','Probability','Sequences & Series'],
+            'Logical Reasoning': ['Analytical Reasoning','Verbal Reasoning','Non-Verbal Reasoning','Data Interpretation','Puzzles','Blood Relations','Coding-Decoding','Syllogisms','Seating Arrangements'],
+            'Verbal Ability': ['Reading Comprehension','Sentence Completion','Para Jumbles','Error Spotting','Synonyms & Antonyms','Analogies','Idioms & Phrases','One Word Substitution']
+        };
 
+        // ── DROPDOWN TOGGLE ───────────────────────────────────────────────
         function toggleDropdown(id, buttonElement) {
-            const dropdown = document.getElementById(id);
-            const isActive = dropdown.classList.contains('active');
-            
-            // Close all dropdowns
-            document.querySelectorAll('.dropdown-section').forEach(d => {
-                d.classList.remove('active');
-            });
-            document.querySelectorAll('.browse-btn').forEach(b => {
-                b.classList.remove('active');
-            });
-            
-            // Open clicked dropdown if it wasn't active
+            var dropdown = document.getElementById(id);
+            var isActive = dropdown.classList.contains('active');
+
+            document.querySelectorAll('.dropdown-section').forEach(function(d) { d.classList.remove('active'); });
+            document.querySelectorAll('.browse-btn').forEach(function(b) { b.classList.remove('active'); });
+
             if (!isActive) {
                 dropdown.classList.add('active');
                 buttonElement.classList.add('active');
-                
-                // Focus search input after animation
-                setTimeout(() => {
-                    const searchInput = dropdown.querySelector('input[type="text"]');
+                setTimeout(function() {
+                    var searchInput = dropdown.querySelector('input[type="text"]');
                     if (searchInput) {
                         searchInput.value = '';
                         searchInput.focus();
-                        
-                        // Reset filter to show all items
-                        const listId = dropdown.querySelector('.topic-list').id;
-                        const items = document.getElementById(listId).querySelectorAll('.dropdown-item');
-                        items.forEach(item => {
+                        var listId = dropdown.querySelector('.topic-list').id;
+                        document.getElementById(listId).querySelectorAll('.dropdown-item').forEach(function(item) {
                             item.style.display = 'flex';
                         });
                     }
@@ -1488,234 +538,142 @@ const SUBTOPICS = {
             }
         }
 
-        // FIXED SEARCH FILTER FUNCTION
-        
+        // ── SEARCH / FILTER ───────────────────────────────────────────────
+        var _CARD_CATEGORY = { 'techSearch': 'Technical', 'aptSearch': 'Aptitude', 'verbalSearch': 'Verbal' };
 
+        function filterTopics(inputId, listId) {
+            var input = document.getElementById(inputId);
+            var searchTerm = input.value.trim();
+            var listEl = document.getElementById(listId);
+            var items = listEl.querySelectorAll('.dropdown-item:not(.dyn-row)');
 
-<!--
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHANGE 2 — REPLACE the existing filterTopics() function
-           Find it in your <script> block and swap it out.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--->
-<script>
-// ── Map search input IDs to their card category ──────────────────────────
-const _CARD_CATEGORY = {
-    'techSearch':   'Technical',
-    'aptSearch':    'Aptitude',
-    'verbalSearch': 'Verbal',
-};
-
-function filterTopics(inputId, listId) {
-    const input       = document.getElementById(inputId);
-    const searchTerm  = input.value.trim();
-    const listEl      = document.getElementById(listId);
-    const items       = listEl.querySelectorAll('.dropdown-item:not(.dyn-row)');
-
-    // ── 1. Standard filter (identical to original behaviour) ─────────────
-    let visibleCount = 0;
-    items.forEach(item => {
-        const clone = item.cloneNode(true);
-        clone.querySelector('i')?.remove();
-        const text = clone.textContent.trim().toLowerCase();
-        const show = !searchTerm || text.includes(searchTerm.toLowerCase());
-        item.style.display = show ? 'flex' : 'none';
-        if (show) visibleCount++;
-    });
-
-    // ── 2. Remove any previous dynamic rows ──────────────────────────────
-    listEl.querySelectorAll('.dyn-row').forEach(r => r.remove());
-
-    if (!searchTerm || searchTerm.length < 2) return;
-
-    // ── 3. When nothing matched, call smart resolver ──────────────────────
-    if (visibleCount === 0) {
-        const cardCategory = _CARD_CATEGORY[inputId] || 'Technical';
-
-        // Show loading placeholder
-        const loadEl = _dynEl('dyn-loading',
-            `<i class="fas fa-spinner fa-spin" style="color:var(--accent)"></i>
-             Checking "${_esc(searchTerm)}"…`);
-        listEl.appendChild(loadEl);
-
-        _resolve(searchTerm, cardCategory, listEl, loadEl);
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-async function _resolve(query, cardCategory, listEl, placeholder) {
-    try {
-        const res  = await fetch('/api/resolve_topic', {
-            method:  'POST',
-            headers: {'Content-Type': 'application/json'},
-            body:    JSON.stringify({ query, card_category: cardCategory }),
-        });
-        const data = await res.json();
-        placeholder.remove();
-        _render(data, query, cardCategory, listEl);
-    } catch {
-        placeholder.remove();
-        listEl.appendChild(_dynEl('dyn-invalid',
-            `<i class="fas fa-exclamation-circle" style="color:var(--danger)"></i>
-             Search error — please try again.`));
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-function _render(data, query, cardCategory, listEl) {
-
-    if (data.status === 'single') {
-        // ── Exact single match ── e.g. "boats" → "Boats and Streams" ─────
-        const row = _dynEl('dropdown-item dyn-row dyn-single', `
-            <i class="fas fa-bullseye" style="color:var(--accent)"></i>
-            <span>
-                <span style="color:var(--text-muted);font-size:.78rem;">Mapped to</span><br>
-                <strong>${_esc(data.display_label)}</strong>
-            </span>
-            <span class="dyn-badge dyn-badge-map">Go</span>`);
-        row.title = data.ai_context;
-        row.addEventListener('click', () => {
-            window.location.href =
-                `/quiz/${enc(data.topic)}/${enc(data.subtopic)}/details`;
-        });
-        listEl.appendChild(row);
-
-    } else if (data.status === 'multi') {
-        // ── Multi-context match ── e.g. "recursion" → chips ──────────────
-        const wrap = document.createElement('div');
-        wrap.className = 'dyn-row dyn-multi-wrap';
-
-        const label = document.createElement('div');
-        label.className = 'dyn-multi-label';
-        label.textContent = `"${data.query}" found in multiple topics — pick context:`;
-        wrap.appendChild(label);
-
-        const chips = document.createElement('div');
-        chips.className = 'dyn-multi-chips';
-
-        data.options.forEach(opt => {
-            const chip = document.createElement('span');
-            chip.className = 'dyn-chip';
-            chip.textContent = opt.display_label;
-            chip.title = opt.ai_context;
-            chip.addEventListener('click', () => {
-                window.location.href =
-                    `/quiz/${enc(opt.topic)}/${enc(opt.subtopic)}/details`;
+            var visibleCount = 0;
+            items.forEach(function(item) {
+                var clone = item.cloneNode(true);
+                var icon = clone.querySelector('i');
+                if (icon) icon.remove();
+                var text = clone.textContent.trim().toLowerCase();
+                var show = !searchTerm || text.includes(searchTerm.toLowerCase());
+                item.style.display = show ? 'flex' : 'none';
+                if (show) visibleCount++;
             });
-            chips.appendChild(chip);
-        });
 
-        wrap.appendChild(chips);
-        listEl.appendChild(wrap);
+            listEl.querySelectorAll('.dyn-row').forEach(function(r) { r.remove(); });
 
-    } else if (data.status === 'new') {
-        // ── Genuinely new topic — add silently ────────────────────────────
-        const row = _dynEl('dropdown-item dyn-row dyn-new', `
-            <i class="fas fa-plus-circle" style="color:var(--success)"></i>
-            <span>
-                <span style="color:var(--text-muted);font-size:.78rem;">New topic</span><br>
-                <strong>"${_esc(data.topic)}"</strong> — click to add &amp; start quiz
-            </span>
-            <span class="dyn-badge dyn-badge-new">New</span>`);
-        row.addEventListener('click', () => _addNewTopic(data, cardCategory, row));
-        listEl.appendChild(row);
+            if (!searchTerm || searchTerm.length < 2) return;
 
-    } else {
-        // ── Invalid / gibberish ───────────────────────────────────────────
-        listEl.appendChild(_dynEl('dyn-invalid',
-            `<i class="fas fa-info-circle" style="color:var(--warning)"></i>
-             ${_esc(data.message || 'Could not recognise this topic.')}`));
-    }
-}
+            if (visibleCount === 0) {
+                var cardCategory = _CARD_CATEGORY[inputId] || 'Technical';
+                var loadEl = _dynEl('dyn-loading',
+                    '<i class="fas fa-spinner fa-spin" style="color:var(--accent)"></i> Checking "' + _esc(searchTerm) + '"…');
+                listEl.appendChild(loadEl);
+                _resolve(searchTerm, cardCategory, listEl, loadEl);
+            }
+        }
 
-// ─────────────────────────────────────────────────────────────────────────
-async function _addNewTopic(data, category, rowEl) {
-    rowEl.style.pointerEvents = 'none';
-    rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
-        `<i class="fas fa-spinner fa-spin" style="color:var(--success)"></i>
-         Adding <strong>"${_esc(data.topic)}"</strong>…`;
+        async function _resolve(query, cardCategory, listEl, placeholder) {
+            try {
+                var res = await fetch('/api/resolve_topic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, card_category: cardCategory })
+                });
+                var data = await res.json();
+                placeholder.remove();
+                _render(data, query, cardCategory, listEl);
+            } catch(e) {
+                placeholder.remove();
+                listEl.appendChild(_dynEl('dyn-invalid',
+                    '<i class="fas fa-exclamation-circle" style="color:var(--danger)"></i> Search error — please try again.'));
+            }
+        }
 
-    try {
-        const res  = await fetch('/api/add_dynamic_topic', {
-            method:  'POST',
-            headers: {'Content-Type': 'application/json'},
-            body:    JSON.stringify({
-                topic:      data.topic,
-                category,
-                ai_context: data.ai_context || '',
-            }),
-        });
-        const result = await res.json();
-        if (result.success) {
-            rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
-                `<i class="fas fa-check" style="color:var(--success)"></i>
-                 Added! Redirecting…`;
-            setTimeout(() => { window.location.href = result.quiz_url; }, 500);
-        } else throw new Error(result.error);
-    } catch (err) {
-        rowEl.style.pointerEvents = '';
-        rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
-            `<strong>"${_esc(data.topic)}"</strong> — click to retry`;
-        rowEl.addEventListener('click',
-            () => _addNewTopic(data, category, rowEl), { once: true });
-    }
-}
+        function _render(data, query, cardCategory, listEl) {
+            if (data.status === 'single') {
+                var row = _dynEl('dropdown-item dyn-row dyn-single',
+                    '<i class="fas fa-bullseye" style="color:var(--accent)"></i>' +
+                    '<span><span style="color:var(--text-muted);font-size:.78rem;">Mapped to</span><br><strong>' + _esc(data.display_label) + '</strong></span>' +
+                    '<span class="dyn-badge dyn-badge-map">Go</span>');
+                row.addEventListener('click', function() {
+                    window.location.href = '/quiz/' + enc(data.topic) + '/' + enc(data.subtopic) + '/details';
+                });
+                listEl.appendChild(row);
 
-// ── Tiny helpers ──────────────────────────────────────────────────────────
-function _dynEl(classes, html) {
-    const el = document.createElement('div');
-    el.className = classes;
-    el.innerHTML = html;
-    return el;
-}
-function enc(s) { return encodeURIComponent(s); }
-function _esc(s) {
-    return String(s)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-</script>
+            } else if (data.status === 'multi') {
+                var wrap = document.createElement('div');
+                wrap.className = 'dyn-row dyn-multi-wrap';
+                var label = document.createElement('div');
+                label.className = 'dyn-multi-label';
+                label.textContent = '"' + data.query + '" found in multiple topics — pick context:';
+                wrap.appendChild(label);
+                var chips = document.createElement('div');
+                chips.className = 'dyn-multi-chips';
+                data.options.forEach(function(opt) {
+                    var chip = document.createElement('span');
+                    chip.className = 'dyn-chip';
+                    chip.textContent = opt.display_label;
+                    chip.addEventListener('click', function() {
+                        window.location.href = '/quiz/' + enc(opt.topic) + '/' + enc(opt.subtopic) + '/details';
+                    });
+                    chips.appendChild(chip);
+                });
+                wrap.appendChild(chips);
+                listEl.appendChild(wrap);
 
+            } else if (data.status === 'new') {
+                var row = _dynEl('dropdown-item dyn-row dyn-new',
+                    '<i class="fas fa-plus-circle" style="color:var(--success)"></i>' +
+                    '<span><span style="color:var(--text-muted);font-size:.78rem;">New topic</span><br><strong>"' + _esc(data.topic) + '"</strong> — click to add &amp; start quiz</span>' +
+                    '<span class="dyn-badge dyn-badge-new">New</span>');
+                row.addEventListener('click', function() { _addNewTopic(data, cardCategory, row); });
+                listEl.appendChild(row);
 
-<!--
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHANGE 3 — Update ai_question_generator.py prompt (optional but
-           recommended so AI generates correct questions)
-
-In generate_questions_with_ai(), find the prompt = f"""...""" block.
-Replace the line:
-    TOPIC: {topic}
-    SUBTOPIC: {subtopic if subtopic else 'General'}
-
-With:
-    TOPIC: {topic}
-    SUBTOPIC: {subtopic if subtopic else 'General'}
-    IMPORTANT CONTEXT: {ai_context if ai_context else f'Generate questions specifically about {subtopic or topic} in the context of placement preparation for engineering students.'}
-
-Then pass ai_context as a parameter to generate_questions_with_ai().
-See app_routes_v3.py for how the ai_context is stored in custom_topics.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--->
-
-        function showSubtopics(topic) {
-            const modal = document.getElementById('subtopicsModal');
-            const title = document.getElementById('modalTitle');
-            const list = document.getElementById('subtopicList');
-            
-            title.textContent = topic + ' - Subtopics';
-            
-            const subtopics = SUBTOPICS[topic] || [];
-            if (subtopics.length > 0) {
-                list.innerHTML = subtopics.map(sub => 
-                    `<a href="/quiz/${encodeURIComponent(topic)}/${encodeURIComponent(sub)}/details" class="dropdown-item">
-                        <i class="fas fa-chevron-right"></i> ${sub}
-                    </a>`
-                ).join('');
             } else {
-                window.location.href = `/quiz/${encodeURIComponent(topic)}/details`;
+                listEl.appendChild(_dynEl('dyn-invalid',
+                    '<i class="fas fa-info-circle" style="color:var(--warning)"></i> ' +
+                    _esc(data.message || 'Could not recognise this topic.')));
+            }
+        }
+
+        async function _addNewTopic(data, category, rowEl) {
+            rowEl.style.pointerEvents = 'none';
+            rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+                '<i class="fas fa-spinner fa-spin" style="color:var(--success)"></i> Adding <strong>"' + _esc(data.topic) + '"</strong>…';
+            try {
+                var res = await fetch('/api/add_dynamic_topic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: data.topic, category: category, ai_context: data.ai_context || '' })
+                });
+                var result = await res.json();
+                if (result.success) {
+                    rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+                        '<i class="fas fa-check" style="color:var(--success)"></i> Added! Redirecting…';
+                    setTimeout(function() { window.location.href = result.quiz_url; }, 500);
+                } else throw new Error(result.error);
+            } catch(err) {
+                rowEl.style.pointerEvents = '';
+                rowEl.querySelector('span:not(.dyn-badge)').innerHTML =
+                    '<strong>"' + _esc(data.topic) + '"</strong> — click to retry';
+                rowEl.addEventListener('click', function() { _addNewTopic(data, category, rowEl); }, { once: true });
+            }
+        }
+
+        // ── SUBTOPICS MODAL ───────────────────────────────────────────────
+        function showSubtopics(topic) {
+            var modal = document.getElementById('subtopicsModal');
+            var title = document.getElementById('modalTitle');
+            var list = document.getElementById('subtopicList');
+            title.textContent = topic + ' - Subtopics';
+            var subtopics = SUBTOPICS[topic] || [];
+            if (subtopics.length > 0) {
+                list.innerHTML = subtopics.map(function(sub) {
+                    return '<a href="/quiz/' + encodeURIComponent(topic) + '/' + encodeURIComponent(sub) + '/details" class="dropdown-item"><i class="fas fa-chevron-right"></i> ' + sub + '</a>';
+                }).join('');
+            } else {
+                window.location.href = '/quiz/' + encodeURIComponent(topic) + '/details';
                 return;
             }
-            
             document.getElementById('subtopicSearch').value = '';
             modal.classList.remove('hidden');
         }
@@ -1726,275 +684,57 @@ See app_routes_v3.py for how the ai_context is stored in custom_topics.
             }
         }
 
-        // Close dropdown and modal on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-                document.querySelectorAll('.dropdown-section').forEach(d => {
-                    d.classList.remove('active');
-                });
-                document.querySelectorAll('.browse-btn').forEach(b => {
-                    b.classList.remove('active');
-                });
-            }
-        });
-
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            const isCard = e.target.closest('.card');
-            const isButton = e.target.closest('.browse-btn');
-            const isSearch = e.target.closest('.search-input');
-            
-            if (!isCard && !isButton && !isSearch) {
-                document.querySelectorAll('.dropdown-section').forEach(d => {
-                    d.classList.remove('active');
-                });
-                document.querySelectorAll('.browse-btn').forEach(b => {
-                    b.classList.remove('active');
-                });
-            }
-        });
-
+        // ── PROFILE DROPDOWN ──────────────────────────────────────────────
         function toggleProfile() {
-            const dropdown = document.getElementById('profileDropdown');
+            var dropdown = document.getElementById('profileDropdown');
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Close profile dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('profileDropdown');
-            const button = e.target.closest('button');
-            if (!button || !button.onclick) {
-                dropdown.style.display = 'none';
+        // ── CLOSE ON OUTSIDE CLICK / ESCAPE ──────────────────────────────
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.querySelectorAll('.dropdown-section').forEach(function(d) { d.classList.remove('active'); });
+                document.querySelectorAll('.browse-btn').forEach(function(b) { b.classList.remove('active'); });
             }
         });
-    
-        // Load branch-specific topics
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.card') && !e.target.closest('.browse-btn') && !e.target.closest('.search-input')) {
+                document.querySelectorAll('.dropdown-section').forEach(function(d) { d.classList.remove('active'); });
+                document.querySelectorAll('.browse-btn').forEach(function(b) { b.classList.remove('active'); });
+            }
+            var profileDropdown = document.getElementById('profileDropdown');
+            if (!e.target.closest('#profileDropdown') && !e.target.closest('button[onclick="toggleProfile()"]')) {
+                if (profileDropdown) profileDropdown.style.display = 'none';
+            }
+        });
+
+        // ── LOAD BRANCH TOPICS ────────────────────────────────────────────
         fetch('/api/branch_topics')
-            .then(res => res.json())
-            .then(data => {
-                const topics = data.topics;
-                const techList = document.getElementById('techList');
-        
-                techList.innerHTML = topics.map(topic => {
-                    const icon = topic === 'Python' ? 'fab fa-python' : 
-                            topic === 'Java' ? 'fas fa-coffee' : 'fas fa-code';
-                    return `<div class="dropdown-item" onclick="showSubtopics('${topic}')">
-                        <i class="${icon}"></i> ${topic}
-                    </div>`;
-            }).join('');
-        });
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var topics = data.topics;
+                var techList = document.getElementById('techList');
+                techList.innerHTML = topics.map(function(topic) {
+                    var icon = topic === 'Python' ? 'fab fa-python' : topic === 'Java' ? 'fas fa-coffee' : 'fas fa-code';
+                    return '<div class="dropdown-item" onclick="showSubtopics(\'' + topic + '\')"><i class="' + icon + '"></i> ' + topic + '</div>';
+                }).join('');
+            });
 
-        // Welcome overlay function - show only once per session
-        // WITH THIS:
-        function closeWelcome() {
-            const overlay = document.getElementById('welcomeOverlay');
-            overlay.style.display = 'none';
-            document.body.classList.remove('welcome-active');
-            sessionStorage.setItem('welcomeShown', 'true');
+        // ── TINY HELPERS ──────────────────────────────────────────────────
+        function _dynEl(classes, html) {
+            var el = document.createElement('div');
+            el.className = classes;
+            el.innerHTML = html;
+            return el;
+        }
+        function enc(s) { return encodeURIComponent(s); }
+        function _esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
 
-        // Check if welcome should be shown
-        // WITH THIS:
-    window.addEventListener('DOMContentLoaded', function() {
-        const welcomeShown = sessionStorage.getItem('welcomeShown');
-        const overlay = document.getElementById('welcomeOverlay');
-        
-        if (welcomeShown === 'true') {
-            overlay.style.display = 'none';
-            document.body.classList.remove('welcome-active');
-        }
-        // If not shown yet, overlay stays visible — user must click the button
-    });
     </script>
-
-    <!--
-==========================================================================
-  PATCH for templates/dashboard.html
-  ── Nothing about the existing layout/style changes ──
-  Do these 3 small edits:
-
-  EDIT 1: Replace the existing filterTopics() function with the
-          new one in PART A below.
-
-  EDIT 2: Add the CSS from PART B anywhere inside the existing <style>.
-
-  EDIT 3: Add the JS from PART C anywhere inside the existing <script>
-          (after the SUBTOPICS object is defined, before closing </script>).
-
-  EDIT 4: Run custom_topics.sql in Supabase (only needed once).
-          See file: custom_topics.sql
-==========================================================================
--->
-
-
-<!-- ═══════════════════════════════════════════════════════════════
-     PART A  ──  NEW filterTopics()
-     Replace the OLD filterTopics function entirely with this one.
-     ═══════════════════════════════════════════════════════════════ -->
-<script>
-function filterTopics(inputId, listId) {
-    const input     = document.getElementById(inputId);
-    const searchTerm = input.value.trim();
-    const listContainer = document.getElementById(listId);
-
-    // ── 1. Filter visible items (existing behaviour) ───────────────
-    const items = listContainer.querySelectorAll('.dropdown-item');
-    let visibleCount = 0;
-
-    items.forEach(item => {
-        const clone = item.cloneNode(true);
-        const icon  = clone.querySelector('i');
-        if (icon) icon.remove();
-        const text = clone.textContent.trim().toLowerCase();
-
-        if (!searchTerm || text.includes(searchTerm.toLowerCase())) {
-            item.style.display = 'flex';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-
-    // ── 2. Remove previous dynamic rows ───────────────────────────
-    listContainer.querySelectorAll('.dynamic-row').forEach(r => r.remove());
-
-    if (!searchTerm) return;   // nothing typed → done
-
-    // ── 3. If nothing found → show "Add topic?" row ───────────────
-    if (visibleCount === 0) {
-        // Determine which card category this search bar belongs to
-        const cardCategory = getCardCategory(inputId);
-
-        // Show a loading skeleton row first
-        const loadingRow = document.createElement('div');
-        loadingRow.className = 'dynamic-row no-results-msg';
-        loadingRow.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;color:var(--accent)"></i> Checking "${searchTerm}"…`;
-        listContainer.appendChild(loadingRow);
-
-        // Validate with backend
-        validateAndShowOption(searchTerm, cardCategory, listContainer, loadingRow);
-    }
-}
-
-// Map search input IDs → card categories
-function getCardCategory(inputId) {
-    if (inputId === 'techSearch')   return 'Technical';
-    if (inputId === 'aptSearch')    return 'Aptitude';
-    if (inputId === 'verbalSearch') return 'Verbal';
-    return 'Technical';
-}
-
-async function validateAndShowOption(topicName, cardCategory, listContainer, loadingRow) {
-    try {
-        const res  = await fetch('/api/validate_topic', {
-            method:  'POST',
-            headers: {'Content-Type': 'application/json'},
-            body:    JSON.stringify({ topic: topicName, card_category: cardCategory }),
-        });
-        const data = await res.json();
-
-        // Remove loading row
-        loadingRow.remove();
-
-        if (data.belongs) {
-            // ── Topic belongs here → show "Add" option ────────────
-            const addRow = document.createElement('div');
-            addRow.className = 'dropdown-item dynamic-row dynamic-add-row';
-
-            if (data.already_exists) {
-                // Already in DB, just quiz them
-                addRow.innerHTML = `
-                    <i class="fas fa-check-circle" style="color:var(--success)"></i>
-                    <span><strong>"${escHtml(topicName)}"</strong> — take quiz on this topic</span>`;
-                addRow.addEventListener('click', () => {
-                    window.location.href = `/quiz/${encodeURIComponent(topicName)}/details`;
-                });
-            } else {
-                // New → add to DB then quiz
-                addRow.innerHTML = `
-                    <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
-                    <span>Add <strong>"${escHtml(topicName)}"</strong> to ${cardCategory} &amp; start quiz</span>
-                    <span class="dyn-badge">New</span>`;
-                addRow.addEventListener('click', () => addTopicAndGo(topicName, cardCategory, addRow));
-            }
-            listContainer.appendChild(addRow);
-
-        } else {
-            // ── Doesn't belong → show "wrong section" hint ────────
-            const wrongRow = document.createElement('div');
-            wrongRow.className = 'dynamic-row no-results-msg';
-            wrongRow.innerHTML = `
-                <i class="fas fa-info-circle" style="color:var(--warning);margin-right:6px;"></i>
-                <span>"${escHtml(topicName)}" looks like a
-                <strong>${data.detected_category}</strong> topic —
-                search in that card instead.</span>`;
-            listContainer.appendChild(wrongRow);
-        }
-
-    } catch (err) {
-        loadingRow.remove();
-        const errRow = document.createElement('div');
-        errRow.className = 'dynamic-row no-results-msg';
-        errRow.textContent = 'Search error. Please try again.';
-        listContainer.appendChild(errRow);
-    }
-}
-
-async function addTopicAndGo(topicName, category, rowElement) {
-    // Disable row while saving
-    rowElement.style.pointerEvents = 'none';
-    rowElement.innerHTML = `
-        <i class="fas fa-spinner fa-spin" style="color:var(--accent)"></i>
-        <span>Adding <strong>"${escHtml(topicName)}"</strong>…</span>`;
-
-    try {
-        const res  = await fetch('/api/add_dynamic_topic', {
-            method:  'POST',
-            headers: {'Content-Type': 'application/json'},
-            body:    JSON.stringify({ topic: topicName, category }),
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            rowElement.innerHTML = `
-                <i class="fas fa-check" style="color:var(--success)"></i>
-                <span>Added! Redirecting…</span>`;
-            setTimeout(() => { window.location.href = data.quiz_url; }, 500);
-        } else {
-            throw new Error(data.error || 'Failed');
-        }
-    } catch (err) {
-        rowElement.style.pointerEvents = '';
-        rowElement.innerHTML = `
-            <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
-            <span>Add <strong>"${escHtml(topicName)}"</strong> — click to retry</span>
-            <span class="dyn-badge">Retry</span>`;
-        rowElement.addEventListener('click', () => addTopicAndGo(topicName, category, rowElement), {once:true});
-    }
-}
-
-function escHtml(s) {
-    return String(s)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-</script>
-
-
-<!-- ═══════════════════════════════════════════════════════════════
-     PART B  ──  CSS  (add inside existing <style>)
-     ═══════════════════════════════════════════════════════════════ -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════
-     PART C  ──  No extra JS needed beyond PART A.
-     The functions above (validateAndShowOption, addTopicAndGo,
-     escHtml, getCardCategory) are standalone.
-     ═══════════════════════════════════════════════════════════════ -->
 
 </body>
 </html>
-
-
-
