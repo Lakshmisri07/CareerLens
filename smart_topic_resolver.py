@@ -1,795 +1,2199 @@
 """
-smart_topic_resolver.py
-========================
-Handles all smart topic resolution logic:
-- Keyword → canonical topic/subtopic mapping (Boats → Boats and Streams)
-- Multi-topic detection (Recursion → Algorithms, C, Java, Python)
-- Genuinely new topic detection
-- Invalid/garbage input rejection (strict vocabulary check)
-- Context-aware AI prompt generation
+smart_topic_resolver.py  –  v3.0
+==================================
+Architecture
+------------
+1. CANONICAL_TOPICS  – the single source of truth.
+   Every placement-relevant topic lives here exactly once, with:
+     - canonical_name   : the display name used everywhere
+     - category         : Technical | Aptitude | Verbal
+     - subcategory      : finer grouping (used for subtopic routing)
+     - ai_context       : what the AI should generate questions about
+     - aliases          : every spelling / abbreviation / partial name
+                          that should resolve to this topic
+
+2. resolve_topic(query) – looks up the query against all aliases,
+   returns a structured dict consumed by the Flask endpoint.
+
+3. _is_valid_query(query) – rejects pure garbage (random letters,
+   digits, noise words) before hitting the alias lookup.
+
+Key design decisions
+--------------------
+- One canonical name per topic, many aliases.  No ambiguity.
+- Aliases are all lowercase; matching is case-insensitive.
+- A query that is a PREFIX of an alias also matches (min 4 chars),
+  so "sort" -> "sorting algorithms", "boat" -> "boats and streams".
+- If a query matches aliases from MORE than one canonical topic
+  the resolver returns 'multi' so the user can pick.
+- If a query passes the validity check but matches nothing, it is
+  returned as 'new' so the dashboard can add it dynamically.
+- Garbage / noise returns 'invalid' with a helpful hint message.
 """
 
 import re
+from typing import Dict, List
 
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 1: ALIAS MAP
-# keyword (lowercase) → (topic, subtopic, description_for_ai)
-# ═══════════════════════════════════════════════════════════════════════════
+# ===========================================================================
+# SECTION 1 - CANONICAL TOPIC REGISTRY
+# ===========================================================================
+# Structure of each entry:
+#   "Canonical Name": {
+#       "category": "Technical" | "Aptitude" | "Verbal",
+#       "subcategory": str,          # used as subtopic in quiz URL
+#       "ai_context": str,           # injected into AI prompt
+#       "aliases": [str, ...]        # all lowercase alternative names
+#   }
+# ===========================================================================
 
-ALIAS_MAP = {
-    # ── APTITUDE: Speed / Distance / Time ─────────────────────────────────
-    'boats':               ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
-    'boat':                ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
-    'boats and streams':   ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
-    'stream':              ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
-    'upstream':            ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
-    'downstream':          ('Quantitative Aptitude', 'Boats and Streams',    'upstream downstream problems, speed of boat in still water, speed of current'),
+CANONICAL_TOPICS: Dict[str, dict] = {
 
-    'trains':              ('Quantitative Aptitude', 'Trains',               'time taken by trains to cross each other, platforms, poles; relative speed'),
-    'train problems':      ('Quantitative Aptitude', 'Trains',               'time taken by trains to cross each other, platforms, poles; relative speed'),
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Programming Languages
+    # -------------------------------------------------------------------------
 
-    'pipes':               ('Quantitative Aptitude', 'Pipes and Cisterns',   'filling and emptying tanks, time taken, combined work rate of pipes'),
-    'cisterns':            ('Quantitative Aptitude', 'Pipes and Cisterns',   'filling and emptying tanks, time taken, combined work rate of pipes'),
-    'pipes and cisterns':  ('Quantitative Aptitude', 'Pipes and Cisterns',   'filling and emptying tanks, time taken, combined work rate of pipes'),
-    'tank':                ('Quantitative Aptitude', 'Pipes and Cisterns',   'filling and emptying tanks, time taken, combined work rate of pipes'),
+    "C Programming": {
+        "category": "Technical",
+        "subcategory": "C",
+        "ai_context": (
+            "C programming language: data types, operators, control flow, "
+            "arrays, strings, pointers, pointer arithmetic, functions, "
+            "recursion, structures, unions, file I/O, memory management, "
+            "malloc/free, preprocessor directives - as tested in placement exams."
+        ),
+        "aliases": [
+            "c", "c programming", "c language", "c lang", "c prog",
+            "c basics", "c fundamentals", "programming in c",
+            "c pointers", "c arrays", "c functions", "c loops",
+            "c strings", "c structures", "c unions", "c file handling",
+        ],
+    },
 
-    'profit':              ('Quantitative Aptitude', 'Profit & Loss',        'cost price, selling price, profit percent, loss percent, discount, markup'),
-    'loss':                ('Quantitative Aptitude', 'Profit & Loss',        'cost price, selling price, profit percent, loss percent, discount, markup'),
-    'profit and loss':     ('Quantitative Aptitude', 'Profit & Loss',        'cost price, selling price, profit percent, loss percent, discount, markup'),
-    'discount':            ('Quantitative Aptitude', 'Profit & Loss',        'cost price, selling price, profit percent, loss percent, discount, markup'),
+    "C++ Programming": {
+        "category": "Technical",
+        "subcategory": "C++",
+        "ai_context": (
+            "C++ programming: classes and objects, constructors/destructors, "
+            "inheritance, polymorphism, operator overloading, templates, STL "
+            "(vector, map, set, stack, queue), exception handling, smart pointers, "
+            "virtual functions, abstract classes - as tested in placement exams."
+        ),
+        "aliases": [
+            "c++", "cpp", "c plus plus", "cplusplus", "c++ programming",
+            "c++ language", "stl", "standard template library",
+            "c++ stl", "c++ oops", "c++ oop",
+            "vector", "c++ vector", "c++ map", "c++ set",
+            "operator overloading", "templates", "smart pointers",
+            "virtual functions",
+        ],
+    },
 
-    'simple interest':     ('Quantitative Aptitude', 'Simple & Compound Interest', 'SI and CI formulas, principal, rate, time, difference between SI and CI'),
-    'compound interest':   ('Quantitative Aptitude', 'Simple & Compound Interest', 'SI and CI formulas, principal, rate, time, difference between SI and CI'),
-    'si':                  ('Quantitative Aptitude', 'Simple & Compound Interest', 'SI and CI formulas, principal, rate, time, difference between SI and CI'),
-    'ci':                  ('Quantitative Aptitude', 'Simple & Compound Interest', 'SI and CI formulas, principal, rate, time, difference between SI and CI'),
-    'interest':            ('Quantitative Aptitude', 'Simple & Compound Interest', 'SI and CI formulas, principal, rate, time, difference between SI and CI'),
+    "Java Programming": {
+        "category": "Technical",
+        "subcategory": "Java",
+        "ai_context": (
+            "Java programming: OOP concepts, classes and objects, inheritance, "
+            "polymorphism, abstraction, encapsulation, interfaces, abstract classes, "
+            "exception handling, collections framework (ArrayList, HashMap, LinkedList), "
+            "multithreading, Java 8 features (streams, lambdas), JDBC basics - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "java", "java programming", "java language", "core java",
+            "java basics", "java fundamentals", "java oops", "java oop",
+            "java collections", "java multithreading", "java 8",
+            "java streams", "java lambda", "java generics",
+            "arraylist", "hashmap", "linked list java",
+            "java exception", "java interface",
+        ],
+    },
 
-    'percentage':          ('Quantitative Aptitude', 'Percentages',          'percentage calculations, percentage increase/decrease, successive percentage'),
-    'percent':             ('Quantitative Aptitude', 'Percentages',          'percentage calculations, percentage increase/decrease, successive percentage'),
+    "Python Programming": {
+        "category": "Technical",
+        "subcategory": "Python",
+        "ai_context": (
+            "Python programming: data types, lists, tuples, sets, dictionaries, "
+            "comprehensions, functions, lambda, decorators, generators, iterators, "
+            "OOP in Python, file handling, exception handling, modules, "
+            "NumPy and Pandas basics - as tested in placement exams."
+        ),
+        "aliases": [
+            "python", "python programming", "python language", "python basics",
+            "python fundamentals", "python oops", "python oop", "python3",
+            "python lists", "python dict", "python dictionaries",
+            "python tuples", "python sets", "python functions",
+            "python decorators", "python generators", "python file handling",
+            "python modules", "python packages",
+        ],
+    },
 
-    'ratio':               ('Quantitative Aptitude', 'Ratio & Proportion',   'ratios, proportions, direct/inverse proportion, partnership problems'),
-    'proportion':          ('Quantitative Aptitude', 'Ratio & Proportion',   'ratios, proportions, direct/inverse proportion, partnership problems'),
+    "JavaScript": {
+        "category": "Technical",
+        "subcategory": "JavaScript",
+        "ai_context": (
+            "JavaScript: variables (var/let/const), data types, functions, "
+            "closures, prototypes, ES6+ features (arrow functions, destructuring, "
+            "spread/rest, promises, async/await), DOM manipulation, event handling, "
+            "fetch API, modules - as tested in placement exams."
+        ),
+        "aliases": [
+            "javascript", "js", "java script", "es6", "es2015",
+            "ecmascript", "javascript es6", "vanilla js", "js basics",
+            "node.js", "nodejs", "node js",
+            "promises", "async await", "closures",
+        ],
+    },
 
-    'average':             ('Quantitative Aptitude', 'Average',              'mean, weighted average, average speed, age-based average problems'),
-    'mean':                ('Quantitative Aptitude', 'Average',              'mean, weighted average, average speed, age-based average problems'),
+    "TypeScript": {
+        "category": "Technical",
+        "subcategory": "TypeScript",
+        "ai_context": (
+            "TypeScript: static typing, interfaces, type aliases, generics, "
+            "enums, decorators, modules, type narrowing, utility types - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "typescript", "ts", "type script",
+        ],
+    },
 
-    'time and work':       ('Quantitative Aptitude', 'Time & Work',          'work done, efficiency, days to complete work alone or together, LCM method'),
-    'work':                ('Quantitative Aptitude', 'Time & Work',          'work done, efficiency, days to complete work alone or together, LCM method'),
+    "Golang": {
+        "category": "Technical",
+        "subcategory": "Golang",
+        "ai_context": (
+            "Go programming: goroutines, channels, interfaces, structs, "
+            "error handling, slices, maps, packages, concurrency model - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "golang", "go lang", "go programming", "go language",
+            "goroutines", "go channels", "go interfaces",
+        ],
+    },
 
-    'speed':               ('Quantitative Aptitude', 'Time Speed Distance',  'speed distance time formula, relative speed, average speed, races'),
-    'distance':            ('Quantitative Aptitude', 'Time Speed Distance',  'speed distance time formula, relative speed, average speed, races'),
-    'time speed distance': ('Quantitative Aptitude', 'Time Speed Distance',  'speed distance time formula, relative speed, average speed, races'),
+    "Kotlin": {
+        "category": "Technical",
+        "subcategory": "Kotlin",
+        "ai_context": (
+            "Kotlin: null safety, data classes, extension functions, coroutines, "
+            "sealed classes, smart casts, lambdas, collections - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "kotlin", "kotlin programming", "kotlin android",
+        ],
+    },
 
-    'permutation':         ('Quantitative Aptitude', 'Permutations & Combinations', 'nPr, nCr, arrangements, selections, word arrangements, circular permutation'),
-    'combination':         ('Quantitative Aptitude', 'Permutations & Combinations', 'nPr, nCr, arrangements, selections, word arrangements, circular permutation'),
-    'pnc':                 ('Quantitative Aptitude', 'Permutations & Combinations', 'nPr, nCr, arrangements, selections, word arrangements, circular permutation'),
+    "Ruby": {
+        "category": "Technical",
+        "subcategory": "Ruby",
+        "ai_context": (
+            "Ruby: blocks, procs, lambdas, modules, mixins, "
+            "symbols, hashes, Ruby on Rails basics - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "ruby", "ruby programming", "ruby on rails", "rails",
+        ],
+    },
 
-    'probability':         ('Quantitative Aptitude', 'Probability',          'classical probability, events, sample space, conditional probability, dice/cards/coins'),
+    "SQL": {
+        "category": "Technical",
+        "subcategory": "SQL",
+        "ai_context": (
+            "SQL queries: SELECT, INSERT, UPDATE, DELETE, WHERE, GROUP BY, "
+            "HAVING, ORDER BY, DISTINCT, aggregate functions (COUNT/SUM/AVG/MAX/MIN), "
+            "subqueries, correlated subqueries, CASE, COALESCE, window functions - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "sql", "structured query language", "sql queries", "sql basics",
+            "sql commands", "sql functions", "sql aggregates",
+            "mysql", "my sql", "postgresql", "postgres", "oracle sql",
+            "ms sql", "sql server", "sqlite",
+            "sql subquery", "sql joins query",
+            "window functions", "sql window",
+        ],
+    },
 
-    'mixture':             ('Quantitative Aptitude', 'Mixtures & Alligations', 'alligation method, mixing two items of different prices/concentrations'),
-    'alligation':          ('Quantitative Aptitude', 'Mixtures & Alligations', 'alligation method, mixing two items of different prices/concentrations'),
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Data Structures
+    # -------------------------------------------------------------------------
 
-    'number system':       ('Quantitative Aptitude', 'Number System',        'divisibility rules, HCF, LCM, prime numbers, remainders, unit digit'),
-    'hcf':                 ('Quantitative Aptitude', 'Number System',        'HCF and LCM problems, finding GCD, applications in real problems'),
-    'lcm':                 ('Quantitative Aptitude', 'Number System',        'HCF and LCM problems, finding GCD, applications in real problems'),
-    'prime':               ('Quantitative Aptitude', 'Number System',        'prime numbers, divisibility, factors, prime factorization'),
+    "Data Structures": {
+        "category": "Technical",
+        "subcategory": "Data Structures",
+        "ai_context": (
+            "Data structures: arrays, linked lists (singly, doubly, circular), "
+            "stacks, queues, deque, trees (binary tree, BST, AVL), heaps, "
+            "hash tables, graphs, tries - operations, time/space complexity, "
+            "applications - as tested in placement exams."
+        ),
+        "aliases": [
+            "data structures", "dsa", "ds", "data structure",
+            "data structures and algorithms",
+        ],
+    },
 
-    'ages':                ('Quantitative Aptitude', 'Problems on Ages',     'present/past/future age calculations, ratio of ages, algebra-based age problems'),
-    'age':                 ('Quantitative Aptitude', 'Problems on Ages',     'present/past/future age calculations, ratio of ages, algebra-based age problems'),
-    'problems on ages':    ('Quantitative Aptitude', 'Problems on Ages',     'present/past/future age calculations, ratio of ages, algebra-based age problems'),
+    "Linked Lists": {
+        "category": "Technical",
+        "subcategory": "Linked Lists",
+        "ai_context": (
+            "Linked Lists: singly linked list, doubly linked list, circular linked list; "
+            "insertion (at beginning/end/position), deletion, traversal, reversal, "
+            "cycle detection (Floyd's algorithm), merge two sorted lists, "
+            "find middle element, nth from end - as tested in placement exams."
+        ),
+        "aliases": [
+            "linked list", "linked lists", "singly linked list",
+            "doubly linked list", "circular linked list",
+            "ll", "linkedlist",
+        ],
+    },
 
-    'partnership':         ('Quantitative Aptitude', 'Partnership',          'capital invested, profit sharing, sleeping vs working partner, time-weighted capital'),
+    "Stacks and Queues": {
+        "category": "Technical",
+        "subcategory": "Stacks and Queues",
+        "ai_context": (
+            "Stacks: LIFO, push/pop/peek, balanced parentheses, infix to postfix, "
+            "postfix evaluation, stack using queue; "
+            "Queues: FIFO, enqueue/dequeue, circular queue, deque, "
+            "priority queue, queue using stacks - as tested in placement exams."
+        ),
+        "aliases": [
+            "stack", "stacks", "stack data structure",
+            "queue", "queues", "circular queue", "deque",
+            "priority queue", "stacks and queues",
+            "infix postfix", "balanced parentheses",
+        ],
+    },
 
-    'calendar':            ('Logical Reasoning',     'Calendar',             'day of week calculation, odd days method, leap year rules'),
-    'clock':               ('Logical Reasoning',     'Clocks',               'angle between hands, time calculations, fast/slow clocks'),
-    'clocks':              ('Logical Reasoning',     'Clocks',               'angle between hands, time calculations, fast/slow clocks'),
-    'data interpretation': ('Quantitative Aptitude', 'Data Interpretation',  'bar charts, pie charts, tables, line graphs, data analysis questions'),
-    'data interp':         ('Quantitative Aptitude', 'Data Interpretation',  'bar charts, pie charts, tables, line graphs, data analysis questions'),
+    "Trees": {
+        "category": "Technical",
+        "subcategory": "Trees",
+        "ai_context": (
+            "Trees: binary tree, binary search tree (BST), AVL tree, red-black tree, "
+            "B-tree, B+ tree; tree traversals (inorder, preorder, postorder, "
+            "level order), height, diameter, LCA, tree DP, segment tree - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "tree", "trees", "binary tree", "bst", "binary search tree",
+            "avl tree", "avl", "red black tree", "b tree", "b+ tree",
+            "segment tree", "fenwick tree", "binary indexed tree",
+            "tree traversal", "inorder", "preorder", "postorder",
+            "level order traversal", "tree height",
+            "tree diameter", "lca", "lowest common ancestor",
+        ],
+    },
 
-    'blood relation':      ('Logical Reasoning',     'Blood Relations',      'family tree, relationships, coded blood relations'),
-    'blood relations':     ('Logical Reasoning',     'Blood Relations',      'family tree, relationships, coded blood relations'),
-    'family':              ('Logical Reasoning',     'Blood Relations',      'family tree, relationships, coded blood relations'),
+    "Heaps": {
+        "category": "Technical",
+        "subcategory": "Heaps",
+        "ai_context": (
+            "Heaps: min heap, max heap, heapify, insertion, deletion, "
+            "heap sort, priority queue implementation using heap, "
+            "k-th largest/smallest element, merge k sorted lists - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "heap", "heaps", "min heap", "max heap",
+            "heap sort", "heapify", "priority heap",
+        ],
+    },
 
-    'seating':             ('Logical Reasoning',     'Seating Arrangement',  'linear, circular, rectangular arrangement puzzles'),
-    'seating arrangement': ('Logical Reasoning',     'Seating Arrangement',  'linear, circular, rectangular arrangement puzzles'),
+    "Hashing": {
+        "category": "Technical",
+        "subcategory": "Hashing",
+        "ai_context": (
+            "Hashing: hash functions, hash tables, collision resolution "
+            "(chaining, open addressing - linear probing, quadratic probing, "
+            "double hashing), load factor, rehashing, applications of hashing, "
+            "string hashing - as tested in placement exams."
+        ),
+        "aliases": [
+            "hashing", "hash table", "hash map", "hashmap",
+            "hash set", "hash function",
+            "collision resolution", "chaining", "open addressing",
+        ],
+    },
 
-    'coding decoding':     ('Logical Reasoning',     'Coding-Decoding',      'letter/number coding, pattern finding, reverse coding'),
-    'coding':              ('Logical Reasoning',     'Coding-Decoding',      'letter/number coding, pattern finding, reverse coding'),
+    "Graphs": {
+        "category": "Technical",
+        "subcategory": "Graphs",
+        "ai_context": (
+            "Graphs: directed/undirected graphs, weighted graphs, adjacency matrix, "
+            "adjacency list, BFS, DFS, topological sort, cycle detection, "
+            "connected components, strongly connected components (Kosaraju, Tarjan), "
+            "shortest path (Dijkstra, Bellman-Ford, Floyd-Warshall), "
+            "minimum spanning tree (Kruskal, Prim) - as tested in placement exams."
+        ),
+        "aliases": [
+            "graph", "graphs", "graph theory", "graph data structure",
+            "directed graph", "undirected graph", "weighted graph",
+            "adjacency matrix", "adjacency list",
+            "bfs", "breadth first search", "breadth-first search",
+            "dfs", "depth first search", "depth-first search",
+            "dijkstra", "dijkstra algorithm", "dijkstra's algorithm",
+            "bellman ford", "bellman-ford", "floyd warshall", "floyd-warshall",
+            "kruskal", "prim", "prim's algorithm", "kruskal's algorithm",
+            "topological sort", "topological sorting",
+            "cycle detection in graph", "connected components",
+            "strongly connected components", "scc",
+            "graph traversal",
+        ],
+    },
 
-    'syllogism':           ('Logical Reasoning',     'Syllogisms',           'Venn diagram method, all/some/no statements, conclusions'),
-    'syllogisms':          ('Logical Reasoning',     'Syllogisms',           'Venn diagram method, all/some/no statements, conclusions'),
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Algorithms
+    # -------------------------------------------------------------------------
 
-    'direction':           ('Logical Reasoning',     'Direction Sense',      'compass directions, distance from starting point, turns'),
-    'direction sense':     ('Logical Reasoning',     'Direction Sense',      'compass directions, distance from starting point, turns'),
+    "Algorithms": {
+        "category": "Technical",
+        "subcategory": "Algorithms",
+        "ai_context": (
+            "Algorithms: sorting (bubble, selection, insertion, merge, quick, heap), "
+            "searching (linear, binary), recursion, divide and conquer, "
+            "time/space complexity, Big O notation - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "algorithms", "algorithm", "algo", "algos",
+        ],
+    },
 
-    'series':              ('Logical Reasoning',     'Number Series',        'missing number in series, letter series, alphanumeric series'),
-    'number series':       ('Logical Reasoning',     'Number Series',        'missing number in series, letter series, alphanumeric series'),
-    'pattern':             ('Logical Reasoning',     'Number Series',        'missing number in series, letter series, alphanumeric series'),
+    "Sorting Algorithms": {
+        "category": "Technical",
+        "subcategory": "Sorting",
+        "ai_context": (
+            "Sorting Algorithms: bubble sort, selection sort, insertion sort, "
+            "merge sort, quick sort (pivot, partition), heap sort, "
+            "counting sort, radix sort, bucket sort; "
+            "stability, time and space complexity comparison - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "sorting", "sorting algorithms", "sorting techniques",
+            "bubble sort", "selection sort", "insertion sort",
+            "merge sort", "quick sort", "heap sort",
+            "radix sort", "counting sort", "bucket sort",
+            "stable sort", "unstable sort",
+        ],
+    },
 
-    'puzzle':              ('Logical Reasoning',     'Puzzles',              'logical puzzles, grid-based puzzles, constraint satisfaction'),
-    'puzzles':             ('Logical Reasoning',     'Puzzles',              'logical puzzles, grid-based puzzles, constraint satisfaction'),
+    "Searching Algorithms": {
+        "category": "Technical",
+        "subcategory": "Searching",
+        "ai_context": (
+            "Searching Algorithms: linear search, binary search, "
+            "ternary search, jump search, interpolation search, "
+            "exponential search; binary search on answer, "
+            "applications of binary search - as tested in placement exams."
+        ),
+        "aliases": [
+            "searching", "searching algorithms", "linear search", "binary search",
+            "ternary search", "jump search", "interpolation search",
+            "binary search problems",
+        ],
+    },
 
-    # ── VERBAL ────────────────────────────────────────────────────────────
-    'synonym':             ('Verbal Ability', 'Synonyms & Antonyms',   'words with similar meaning, choosing correct synonym from options'),
-    'antonym':             ('Verbal Ability', 'Synonyms & Antonyms',   'words with opposite meaning, choosing correct antonym from options'),
-    'synonyms':            ('Verbal Ability', 'Synonyms & Antonyms',   'words with similar meaning, choosing correct synonym from options'),
-    'antonyms':            ('Verbal Ability', 'Synonyms & Antonyms',   'words with opposite meaning, choosing correct antonym from options'),
-    'vocabulary':          ('Verbal Ability', 'Synonyms & Antonyms',   'word meanings, synonyms, antonyms, contextual vocabulary'),
+    "Dynamic Programming": {
+        "category": "Technical",
+        "subcategory": "Dynamic Programming",
+        "ai_context": (
+            "Dynamic Programming: overlapping subproblems, optimal substructure, "
+            "memoization, tabulation, classic DP problems - "
+            "0/1 knapsack, unbounded knapsack, LCS, LIS, edit distance, "
+            "coin change, matrix chain multiplication, DP on trees, "
+            "DP on strings - as tested in placement exams."
+        ),
+        "aliases": [
+            "dynamic programming", "dp", "dp problems",
+            "memoization", "tabulation", "bottom up dp", "top down dp",
+            "knapsack", "0/1 knapsack", "unbounded knapsack",
+            "lcs", "longest common subsequence",
+            "lis", "longest increasing subsequence",
+            "edit distance", "coin change dp",
+            "matrix chain multiplication",
+        ],
+    },
 
-    'reading comprehension': ('Verbal Ability', 'Reading Comprehension', 'passage-based questions, inference, main idea, author tone'),
-    'comprehension':         ('Verbal Ability', 'Reading Comprehension', 'passage-based questions, inference, main idea, author tone'),
-    'passage':               ('Verbal Ability', 'Reading Comprehension', 'passage-based questions, inference, main idea, author tone'),
+    "Greedy Algorithms": {
+        "category": "Technical",
+        "subcategory": "Greedy",
+        "ai_context": (
+            "Greedy Algorithms: greedy choice property, optimal substructure, "
+            "activity selection, fractional knapsack, job scheduling, "
+            "Huffman coding, minimum coin change (greedy), "
+            "interval scheduling - as tested in placement exams."
+        ),
+        "aliases": [
+            "greedy", "greedy algorithms", "greedy method", "greedy approach",
+            "activity selection", "fractional knapsack",
+            "huffman coding", "job scheduling greedy",
+        ],
+    },
 
-    'fill in the blank':   ('Verbal Ability', 'Fill in the Blanks',    'choosing correct word/phrase to complete sentence, prepositions, articles'),
-    'fill in blanks':      ('Verbal Ability', 'Fill in the Blanks',    'choosing correct word/phrase to complete sentence, prepositions, articles'),
-    'blanks':              ('Verbal Ability', 'Fill in the Blanks',    'choosing correct word/phrase to complete sentence, prepositions, articles'),
+    "Backtracking": {
+        "category": "Technical",
+        "subcategory": "Backtracking",
+        "ai_context": (
+            "Backtracking: N-queens problem, Sudoku solver, subset sum, "
+            "generating permutations and combinations, rat in a maze, "
+            "graph coloring, Hamiltonian cycle - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "backtracking", "backtrack",
+            "n queens", "n-queens", "sudoku solver",
+            "subset sum", "graph coloring", "hamiltonian cycle",
+        ],
+    },
 
-    'error':               ('Verbal Ability', 'Error Detection',       'spotting grammatical errors in sentences, subject-verb agreement, tense errors'),
-    'error detection':     ('Verbal Ability', 'Error Detection',       'spotting grammatical errors in sentences, subject-verb agreement, tense errors'),
-    'spot the error':      ('Verbal Ability', 'Error Detection',       'spotting grammatical errors in sentences, subject-verb agreement, tense errors'),
+    "Recursion": {
+        "category": "Technical",
+        "subcategory": "Recursion",
+        "ai_context": (
+            "Recursion: base case, recursive call, call stack, "
+            "tail recursion, recursion vs iteration, "
+            "classic problems (factorial, Fibonacci, Tower of Hanoi, "
+            "flood fill, power function), tree recursion - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "recursion", "recursive", "recursive algorithms",
+            "tail recursion", "tower of hanoi",
+            "fibonacci recursion", "factorial recursion",
+        ],
+    },
 
-    'para jumble':         ('Verbal Ability', 'Para Jumbles',          'rearranging sentences to form coherent paragraph, finding correct order'),
-    'para jumbles':        ('Verbal Ability', 'Para Jumbles',          'rearranging sentences to form coherent paragraph, finding correct order'),
-    'sentence order':      ('Verbal Ability', 'Para Jumbles',          'rearranging sentences to form coherent paragraph, finding correct order'),
+    "Time and Space Complexity": {
+        "category": "Technical",
+        "subcategory": "Complexity Analysis",
+        "ai_context": (
+            "Time and Space Complexity: Big O, Big Theta, Big Omega, "
+            "best/average/worst case, amortized analysis, "
+            "P vs NP, common complexities (O(1), O(log n), O(n), O(n log n), "
+            "O(n^2), O(2^n)) - as tested in placement exams."
+        ),
+        "aliases": [
+            "time complexity", "space complexity", "big o", "big o notation",
+            "complexity analysis", "asymptotic analysis",
+            "big theta", "big omega", "amortized analysis",
+            "p vs np", "np complete", "np hard",
+        ],
+    },
 
-    'idiom':               ('Verbal Ability', 'Idioms & Phrases',      'meaning of idiomatic expressions, usage in sentences'),
-    'idioms':              ('Verbal Ability', 'Idioms & Phrases',      'meaning of idiomatic expressions, usage in sentences'),
-    'phrase':              ('Verbal Ability', 'Idioms & Phrases',      'meaning of idiomatic expressions, usage in sentences'),
+    # -------------------------------------------------------------------------
+    # TECHNICAL - DBMS
+    # -------------------------------------------------------------------------
 
-    'one word':            ('Verbal Ability', 'One Word Substitution', 'single word for a given phrase or definition'),
-    'one word substitution': ('Verbal Ability', 'One Word Substitution', 'single word for a given phrase or definition'),
+    "DBMS": {
+        "category": "Technical",
+        "subcategory": "DBMS",
+        "ai_context": (
+            "Database Management Systems: ER model, relational model, keys "
+            "(primary, foreign, candidate, super), SQL joins (inner, outer, left, right, "
+            "self, cross), normalization (1NF/2NF/3NF/BCNF), functional dependencies, "
+            "ACID properties, transactions, concurrency control, indexing (B-tree), "
+            "views, triggers, stored procedures - as tested in placement exams."
+        ),
+        "aliases": [
+            "dbms", "database", "databases", "database management",
+            "database management system", "rdbms",
+            "relational database",
+        ],
+    },
 
-    'grammar':             ('Verbal Ability', 'Grammar',               'tenses, articles, prepositions, conjunctions, subject-verb agreement, voice, narration'),
-    'tense':               ('Verbal Ability', 'Grammar',               'all tenses: simple, continuous, perfect, perfect continuous; usage rules'),
-    'tenses':              ('Verbal Ability', 'Grammar',               'all tenses: simple, continuous, perfect, perfect continuous; usage rules'),
-    'preposition':         ('Verbal Ability', 'Grammar',               'use of prepositions: in, on, at, by, with, for, since, until'),
-    'voice':               ('Verbal Ability', 'Grammar',               'active and passive voice transformation rules'),
-    'narration':           ('Verbal Ability', 'Grammar',               'direct and indirect speech conversion rules'),
-    'speech':              ('Verbal Ability', 'Grammar',               'direct and indirect speech conversion rules'),
+    "Database Joins": {
+        "category": "Technical",
+        "subcategory": "Joins",
+        "ai_context": (
+            "SQL Joins: INNER JOIN, LEFT OUTER JOIN, RIGHT OUTER JOIN, "
+            "FULL OUTER JOIN, CROSS JOIN, SELF JOIN, NATURAL JOIN; "
+            "join conditions, join on multiple columns, join with subqueries - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "joins", "join", "sql joins", "inner join", "outer join",
+            "left join", "right join", "full outer join",
+            "self join", "cross join", "natural join",
+            "database joins",
+        ],
+    },
 
-    'sentence improvement': ('Verbal Ability', 'Sentence Improvement', 'identifying incorrect part of sentence and choosing correct replacement'),
-    'sentence correction':  ('Verbal Ability', 'Sentence Improvement', 'identifying incorrect part of sentence and choosing correct replacement'),
+    "Normalization": {
+        "category": "Technical",
+        "subcategory": "Normalization",
+        "ai_context": (
+            "Database Normalization: functional dependencies, partial dependency, "
+            "transitive dependency, 1NF (atomic values), 2NF (no partial dependency), "
+            "3NF (no transitive dependency), BCNF, 4NF, 5NF; "
+            "anomalies (insertion, deletion, update), decomposition - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "normalization", "database normalization",
+            "1nf", "2nf", "3nf", "bcnf", "4nf",
+            "first normal form", "second normal form", "third normal form",
+            "functional dependency", "functional dependencies",
+            "partial dependency", "transitive dependency",
+        ],
+    },
 
-    'analogy':             ('Verbal Ability', 'Analogies',             'word relationship pairs, completing analogies, verbal analogies'),
-    'analogies':           ('Verbal Ability', 'Analogies',             'word relationship pairs, completing analogies, verbal analogies'),
+    "ACID and Transactions": {
+        "category": "Technical",
+        "subcategory": "Transactions",
+        "ai_context": (
+            "ACID Properties and Transactions: Atomicity, Consistency, Isolation, "
+            "Durability; commit, rollback, savepoint; isolation levels "
+            "(read uncommitted, read committed, repeatable read, serializable); "
+            "concurrency control (2PL, timestamp ordering), deadlock in DBMS - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "acid", "acid properties", "transactions", "transaction",
+            "commit rollback", "isolation levels", "concurrency control",
+            "two phase locking", "2pl", "deadlock dbms",
+        ],
+    },
 
-    # ── TECHNICAL: Algorithms ─────────────────────────────────────────────
-    'dynamic programming': ('Algorithms', 'Dynamic Programming',      'memoization, tabulation, overlapping subproblems, optimal substructure, classic DP problems'),
-    'dp':                  ('Algorithms', 'Dynamic Programming',      'memoization, tabulation, overlapping subproblems, optimal substructure, classic DP problems'),
-    'greedy':              ('Algorithms', 'Greedy Algorithms',        'greedy choice property, activity selection, fractional knapsack, Huffman coding'),
-    'greedy algorithm':    ('Algorithms', 'Greedy Algorithms',        'greedy choice property, activity selection, fractional knapsack, Huffman coding'),
-    'backtracking':        ('Algorithms', 'Backtracking',             'N-queens, Sudoku solver, subset sum, permutations using backtracking'),
-    'divide and conquer':  ('Algorithms', 'Divide & Conquer',         'merge sort, quick sort, binary search, Strassen matrix multiplication'),
-    'graph algorithm':     ('Algorithms', 'Graph Algorithms',         'BFS, DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, Prim, Kruskal'),
-    'graph algorithms':    ('Algorithms', 'Graph Algorithms',         'BFS, DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, Prim, Kruskal'),
-    'dijkstra':            ('Algorithms', 'Graph Algorithms',         "Dijkstra's shortest path algorithm, priority queue, weighted graphs"),
-    'sorting':             ('Algorithms', 'Sorting Algorithms',       'bubble, selection, insertion, merge, quick, heap sort; time complexity comparison'),
-    'searching':           ('Algorithms', 'Searching Algorithms',     'linear search, binary search, interpolation search, time complexity'),
-    'binary search':       ('Algorithms', 'Searching Algorithms',     'binary search algorithm, conditions, time complexity O(log n), variants'),
-    'complexity':          ('Algorithms', 'Time Complexity',          'Big O notation, best/average/worst case, space complexity, amortized analysis'),
-    'big o':               ('Algorithms', 'Time Complexity',          'Big O notation, best/average/worst case, space complexity, amortized analysis'),
-    'time complexity':     ('Algorithms', 'Time Complexity',          'Big O notation, best/average/worst case, space complexity, amortized analysis'),
+    "Indexing": {
+        "category": "Technical",
+        "subcategory": "Indexing",
+        "ai_context": (
+            "Database Indexing: clustered index, non-clustered index, "
+            "B-tree index, B+ tree index, hash index, "
+            "dense vs sparse index, multi-level indexing, "
+            "query optimization using indexes - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "indexing", "database indexing", "b tree index", "b+ tree index",
+            "clustered index", "non clustered index",
+            "dense index", "sparse index",
+        ],
+    },
 
-    # ── TECHNICAL: Data Structures ────────────────────────────────────────
-    'linked list':         ('Data Structures', 'Linked Lists',        'singly, doubly, circular linked lists; insertion, deletion, reversal'),
-    'doubly linked list':  ('Data Structures', 'Linked Lists',        'doubly linked list operations, prev/next pointers, advantages over singly'),
-    'stack':               ('Data Structures', 'Stacks',              'LIFO, push, pop, peek, infix/postfix conversion, balanced parentheses'),
-    'queue':               ('Data Structures', 'Queues',              'FIFO, enqueue, dequeue, circular queue, priority queue, deque'),
-    'binary tree':         ('Data Structures', 'Trees (Binary, BST)', 'binary tree traversals, BST operations, height, diameter, balanced trees'),
-    'bst':                 ('Data Structures', 'Trees (Binary, BST)', 'binary search tree, insert/delete/search, inorder gives sorted output'),
-    'binary search tree':  ('Data Structures', 'Trees (Binary, BST)', 'binary search tree, insert/delete/search, inorder gives sorted output'),
-    'heap':                ('Data Structures', 'Heaps',               'min heap, max heap, heapify, heap sort, priority queue implementation'),
-    'hashing':             ('Data Structures', 'Hashing',             'hash functions, collision resolution, chaining, open addressing, load factor'),
-    'hash table':          ('Data Structures', 'Hashing',             'hash tables, hash maps, collision handling, time complexity O(1) average'),
-    'graph':               ('Data Structures', 'Graphs',              'directed/undirected graphs, adjacency matrix/list, BFS, DFS, connected components'),
-    'trie':                ('Data Structures', 'Tries',               'prefix tree, insert/search/delete in trie, autocomplete, word problems'),
-    # Direct topic aliases for common searches
-    'data structures':     ('Data Structures', '',                    'arrays, linked lists, stacks, queues, trees, graphs, hashing, heaps, tries'),
-    'algorithms':          ('Algorithms',      '',                    'sorting, searching, recursion, dynamic programming, greedy, graph algorithms'),
-    'database':            ('DBMS',            '',                    'SQL, normalization, transactions, indexing, joins, ER model'),
-    'databases':           ('DBMS',            '',                    'SQL, normalization, transactions, indexing, joins, ER model'),
-    'operating system':    ('OS',              '',                    'processes, threads, CPU scheduling, deadlock, memory management, file systems'),
-    'computer network':    ('Computer Networks', '',                  'OSI model, TCP/IP, IP addressing, routing, network security'),
-    'computer networks':   ('Computer Networks', '',                  'OSI model, TCP/IP, IP addressing, routing, network security'),
-    'object oriented':     ('OOP',             '',                    'classes, objects, inheritance, polymorphism, encapsulation, abstraction'),
-    'oop concepts':        ('OOP',             '',                    'classes, objects, inheritance, polymorphism, encapsulation, abstraction'),
+    "ER Model": {
+        "category": "Technical",
+        "subcategory": "ER Model",
+        "ai_context": (
+            "Entity-Relationship Model: entities, attributes, relationships, "
+            "cardinality (1:1, 1:N, M:N), participation constraints, "
+            "weak entities, extended ER (ISA hierarchy), "
+            "converting ER to relational schema - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "er model", "entity relationship", "entity relationship model",
+            "erd", "er diagram", "entity relationship diagram",
+            "cardinality", "weak entity",
+        ],
+    },
 
-    # ── TECHNICAL: OS ─────────────────────────────────────────────────────
-    'deadlock':            ('OS', 'Deadlock',           'deadlock conditions, prevention, avoidance (Banker algorithm), detection, recovery'),
-    'banker algorithm':    ('OS', 'Deadlock',           "Banker's algorithm for deadlock avoidance, safe state, resource allocation"),
-    'scheduling':          ('OS', 'CPU Scheduling',     'FCFS, SJF, Round Robin, Priority scheduling, Gantt charts, turnaround time'),
-    'cpu scheduling':      ('OS', 'CPU Scheduling',     'FCFS, SJF, Round Robin, Priority scheduling, Gantt charts, turnaround time'),
-    'round robin':         ('OS', 'CPU Scheduling',     'Round Robin scheduling, time quantum, context switching, preemptive scheduling'),
-    'paging':              ('OS', 'Memory Management',  'paging, page table, page fault, TLB, frame allocation, demand paging'),
-    'page fault':          ('OS', 'Memory Management',  'page fault handling, page replacement algorithms: LRU, FIFO, Optimal'),
-    'virtual memory':      ('OS', 'Virtual Memory',     'virtual memory concept, demand paging, thrashing, working set model'),
-    'thrashing':           ('OS', 'Virtual Memory',     'thrashing, cause, prevention using working set model and page fault frequency'),
-    'semaphore':           ('OS', 'Synchronization',    'semaphores, mutex, binary semaphore, counting semaphore, producer-consumer problem'),
-    'mutex':               ('OS', 'Synchronization',    'mutex locks, critical section, race condition, monitor, synchronization problems'),
-    'process':             ('OS', 'Process Management', 'process states, PCB, context switching, fork, process creation/termination'),
-    'thread':              ('OS', 'Threads',            'multithreading, user/kernel threads, thread synchronization, benefits'),
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Operating Systems
+    # -------------------------------------------------------------------------
 
-    # ── TECHNICAL: DBMS ───────────────────────────────────────────────────
-    'normalization':       ('DBMS', 'Normalization',        '1NF, 2NF, 3NF, BCNF, functional dependencies, anomalies, decomposition'),
-    'bcnf':                ('DBMS', 'Normalization',        'Boyce-Codd Normal Form, when 3NF is not sufficient, lossless decomposition'),
-    'join':                ('DBMS', 'Joins',                'INNER JOIN, LEFT/RIGHT/FULL OUTER JOIN, CROSS JOIN, NATURAL JOIN, self join'),
-    'joins':               ('DBMS', 'Joins',                'INNER JOIN, LEFT/RIGHT/FULL OUTER JOIN, CROSS JOIN, NATURAL JOIN, self join'),
-    'transaction':         ('DBMS', 'Transactions & ACID',  'ACID properties, commit, rollback, savepoint, isolation levels, concurrency control'),
-    'acid':                ('DBMS', 'Transactions & ACID',  'Atomicity, Consistency, Isolation, Durability; transaction management'),
-    'indexing':            ('DBMS', 'Indexing',             'B-tree index, clustered/non-clustered index, index scan vs table scan, query optimization'),
-    'sql':                 ('DBMS', 'SQL Queries',          'SELECT, INSERT, UPDATE, DELETE, GROUP BY, HAVING, ORDER BY, subqueries, aggregate functions'),
-    'trigger':             ('DBMS', 'Views & Triggers',     'SQL triggers, BEFORE/AFTER triggers, use cases, views vs materialized views'),
-    'view':                ('DBMS', 'Views & Triggers',     'SQL views, creating/updating views, advantages, differences from tables'),
+    "Operating Systems": {
+        "category": "Technical",
+        "subcategory": "OS",
+        "ai_context": (
+            "Operating Systems: processes, threads, process states, PCB, "
+            "CPU scheduling, deadlock, memory management, file systems, "
+            "synchronization - as tested in placement exams."
+        ),
+        "aliases": [
+            "os", "operating system", "operating systems",
+        ],
+    },
 
-    # ── TECHNICAL: Networks ───────────────────────────────────────────────
-    'osi model':           ('Computer Networks', 'OSI Model',         '7 layers of OSI, functions of each layer, protocols at each layer'),
-    'tcp ip':              ('Computer Networks', 'TCP/IP Model',      'TCP/IP 4-layer model, comparison with OSI, protocols: TCP, UDP, IP, HTTP'),
-    'tcp':                 ('Computer Networks', 'TCP/IP Model',      'TCP vs UDP, 3-way handshake, connection establishment, reliable transmission'),
-    'udp':                 ('Computer Networks', 'TCP/IP Model',      'UDP protocol, connectionless, use cases: DNS, streaming, gaming'),
-    'subnetting':          ('Computer Networks', 'Subnetting',        'subnet mask, CIDR notation, number of hosts, network address calculation'),
-    'ip addressing':       ('Computer Networks', 'IP Addressing',     'IPv4, IPv6, classes A/B/C/D/E, private IP ranges, NAT'),
-    'dns':                 ('Computer Networks', 'Application Layer', 'DNS resolution, authoritative servers, DNS records: A, MX, CNAME, TTL'),
-    'http':                ('Computer Networks', 'Application Layer', 'HTTP methods GET/POST/PUT/DELETE, status codes, HTTPS, cookies, sessions'),
-    'routing':             ('Computer Networks', 'Routing Protocols', 'RIP, OSPF, BGP, distance vector vs link state, routing table'),
+    "CPU Scheduling": {
+        "category": "Technical",
+        "subcategory": "CPU Scheduling",
+        "ai_context": (
+            "CPU Scheduling algorithms: FCFS, SJF (preemptive/non-preemptive), "
+            "Round Robin (time quantum), Priority scheduling, HRRN; "
+            "Gantt charts, turnaround time, waiting time, response time, "
+            "throughput, CPU utilization - as tested in placement exams."
+        ),
+        "aliases": [
+            "cpu scheduling", "scheduling", "scheduling algorithms",
+            "fcfs", "first come first served",
+            "sjf", "shortest job first", "srtf", "shortest remaining time",
+            "round robin", "rr scheduling",
+            "priority scheduling", "hrrn",
+            "gantt chart", "turnaround time", "waiting time",
+        ],
+    },
 
-    # ── TECHNICAL: OOP / Design ───────────────────────────────────────────
-    'design pattern':      ('OOP', 'Design Patterns',   'Singleton, Factory, Observer, Strategy, Decorator, MVC; GoF patterns'),
-    'design patterns':     ('OOP', 'Design Patterns',   'Singleton, Factory, Observer, Strategy, Decorator, MVC; GoF patterns'),
-    'solid':               ('OOP', 'SOLID Principles',  'Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion'),
-    'singleton':           ('OOP', 'Design Patterns',   'Singleton pattern, thread safety, lazy vs eager initialization'),
-    'factory':             ('OOP', 'Design Patterns',   'Factory and Abstract Factory patterns, object creation without specifying class'),
-    'inheritance':         ('OOP', 'Inheritance',       'single, multiple, multilevel inheritance; method overriding, super keyword'),
-    'polymorphism':        ('OOP', 'Polymorphism',      'compile-time (overloading) and runtime (overriding) polymorphism, virtual functions'),
-    'encapsulation':       ('OOP', 'Encapsulation',     'data hiding, getters/setters, access modifiers, benefits of encapsulation'),
-    'abstraction':         ('OOP', 'Abstraction',       'abstract classes, interfaces, hiding implementation details'),
+    "Deadlock": {
+        "category": "Technical",
+        "subcategory": "Deadlock",
+        "ai_context": (
+            "Deadlock: four necessary conditions (mutual exclusion, hold and wait, "
+            "no preemption, circular wait), deadlock prevention, "
+            "deadlock avoidance (Banker's algorithm, safe state), "
+            "deadlock detection (resource allocation graph), "
+            "deadlock recovery - as tested in placement exams."
+        ),
+        "aliases": [
+            "deadlock", "deadlock prevention", "deadlock avoidance",
+            "banker algorithm", "banker's algorithm",
+            "resource allocation graph", "circular wait",
+            "deadlock detection", "deadlock recovery",
+        ],
+    },
 
-    # ── ML / AI ───────────────────────────────────────────────────────────
-    'neural network':      ('Python', 'Machine Learning Basics', 'perceptron, layers, activation functions, forward/backpropagation, gradient descent'),
-    'machine learning':    ('Python', 'Machine Learning Basics', 'supervised, unsupervised, reinforcement learning; overfitting, bias-variance tradeoff'),
-    'regression':          ('Python', 'Machine Learning Basics', 'linear regression, logistic regression, cost function, gradient descent'),
-    'classification':      ('Python', 'Machine Learning Basics', 'classification algorithms: decision tree, SVM, KNN, Naive Bayes, random forest'),
-    'overfitting':         ('Python', 'Machine Learning Basics', 'overfitting vs underfitting, regularization: L1/L2, dropout, cross-validation'),
+    "Memory Management": {
+        "category": "Technical",
+        "subcategory": "Memory Management",
+        "ai_context": (
+            "Memory Management: contiguous allocation, paging, segmentation, "
+            "virtual memory, demand paging, page fault, "
+            "page replacement algorithms (FIFO, LRU, Optimal, Clock), "
+            "thrashing, working set model, TLB, page table - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "memory management", "paging", "segmentation",
+            "virtual memory", "demand paging", "page fault",
+            "page replacement", "lru", "fifo page", "optimal page replacement",
+            "thrashing", "tlb", "translation lookaside buffer",
+            "page table", "frame allocation",
+        ],
+    },
+
+    "Process Synchronization": {
+        "category": "Technical",
+        "subcategory": "Synchronization",
+        "ai_context": (
+            "Process Synchronization: critical section, race condition, "
+            "mutex, semaphore (binary and counting), monitors, "
+            "producer-consumer problem, readers-writers problem, "
+            "dining philosophers problem - as tested in placement exams."
+        ),
+        "aliases": [
+            "synchronization", "process synchronization",
+            "semaphore", "semaphores", "mutex",
+            "critical section", "race condition", "monitor",
+            "producer consumer", "readers writers", "dining philosophers",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Computer Networks
+    # -------------------------------------------------------------------------
+
+    "Computer Networks": {
+        "category": "Technical",
+        "subcategory": "Computer Networks",
+        "ai_context": (
+            "Computer Networks: OSI model (7 layers), TCP/IP model, "
+            "IP addressing, routing, transport layer, application layer protocols - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "computer networks", "cn", "networking", "network",
+            "computer networking",
+        ],
+    },
+
+    "OSI Model": {
+        "category": "Technical",
+        "subcategory": "OSI Model",
+        "ai_context": (
+            "OSI Model: 7 layers (Physical, Data Link, Network, Transport, "
+            "Session, Presentation, Application), functions of each layer, "
+            "protocols at each layer, PDU names, "
+            "OSI vs TCP/IP comparison - as tested in placement exams."
+        ),
+        "aliases": [
+            "osi model", "osi", "osi layers", "osi 7 layers",
+            "osi reference model", "7 layers",
+            "physical layer", "data link layer", "network layer",
+            "transport layer osi", "session layer", "presentation layer",
+            "application layer osi",
+        ],
+    },
+
+    "TCP/IP and Protocols": {
+        "category": "Technical",
+        "subcategory": "TCP/IP",
+        "ai_context": (
+            "TCP/IP: TCP vs UDP comparison, TCP 3-way handshake, "
+            "TCP connection termination (4-way), TCP flow control, "
+            "congestion control, UDP use cases, "
+            "IP (IPv4 vs IPv6), ICMP, ARP, RARP - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "tcp ip", "tcp/ip", "tcp ip model",
+            "tcp", "udp", "tcp vs udp", "tcp udp",
+            "three way handshake", "3 way handshake",
+            "four way handshake", "tcp handshake",
+            "flow control", "congestion control",
+            "ipv4", "ipv6", "ip protocol",
+            "icmp", "arp", "rarp",
+        ],
+    },
+
+    "IP Addressing and Subnetting": {
+        "category": "Technical",
+        "subcategory": "IP Addressing",
+        "ai_context": (
+            "IP Addressing and Subnetting: IPv4 address classes (A/B/C/D/E), "
+            "subnet mask, CIDR notation, subnetting calculation, "
+            "number of hosts per subnet, network address, broadcast address, "
+            "private IP ranges, NAT, IPv6 basics - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "ip addressing", "ip address", "subnetting", "subnet",
+            "subnet mask", "cidr", "ip classes",
+            "class a", "class b", "class c",
+            "private ip", "nat", "network address translation",
+            "broadcast address",
+        ],
+    },
+
+    "Application Layer Protocols": {
+        "category": "Technical",
+        "subcategory": "Application Layer",
+        "ai_context": (
+            "Application Layer Protocols: HTTP (methods, status codes, "
+            "HTTP vs HTTPS), DNS (resolution, record types: A, MX, CNAME, TXT), "
+            "SMTP, POP3, IMAP, FTP, DHCP, SNMP - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "http", "https", "http protocol", "http methods",
+            "http status codes", "get post put delete",
+            "dns", "domain name system", "dns resolution",
+            "smtp", "pop3", "imap", "email protocols",
+            "ftp", "dhcp", "snmp",
+            "application layer protocols",
+        ],
+    },
+
+    "Routing Protocols": {
+        "category": "Technical",
+        "subcategory": "Routing",
+        "ai_context": (
+            "Routing Protocols: static vs dynamic routing, "
+            "distance vector routing (RIP, Bellman-Ford), "
+            "link state routing (OSPF, Dijkstra), path vector (BGP), "
+            "routing table, routing algorithms - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "routing", "routing protocols", "rip", "ospf", "bgp",
+            "distance vector", "link state routing",
+            "routing table", "static routing", "dynamic routing",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - OOP and Design
+    # -------------------------------------------------------------------------
+
+    "OOP Concepts": {
+        "category": "Technical",
+        "subcategory": "OOP",
+        "ai_context": (
+            "Object-Oriented Programming: classes, objects, encapsulation, "
+            "inheritance (single, multiple, multilevel, hierarchical, hybrid), "
+            "polymorphism (method overloading vs overriding), abstraction, "
+            "interfaces, abstract classes, constructors, "
+            "access modifiers (public, private, protected) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "oop", "oops", "object oriented", "object oriented programming",
+            "object-oriented", "oop concepts", "oops concepts",
+            "encapsulation", "inheritance", "polymorphism", "abstraction",
+            "classes and objects", "class and object",
+            "interface", "abstract class",
+            "method overloading", "method overriding",
+            "constructor", "destructor",
+            "access modifiers",
+        ],
+    },
+
+    "Design Patterns": {
+        "category": "Technical",
+        "subcategory": "Design Patterns",
+        "ai_context": (
+            "Software Design Patterns: Creational (Singleton, Factory, "
+            "Abstract Factory, Builder, Prototype), Structural (Adapter, "
+            "Bridge, Composite, Decorator, Facade), Behavioral (Observer, "
+            "Strategy, Command, Iterator, Template Method); "
+            "SOLID principles - as tested in placement exams."
+        ),
+        "aliases": [
+            "design patterns", "design pattern",
+            "singleton", "singleton pattern",
+            "factory pattern", "factory", "abstract factory",
+            "builder pattern", "prototype pattern",
+            "observer pattern", "observer",
+            "strategy pattern", "strategy",
+            "decorator pattern", "adapter pattern",
+            "facade pattern", "composite pattern",
+            "mvc", "model view controller",
+            "solid", "solid principles",
+            "single responsibility principle", "open closed principle",
+            "liskov substitution", "dependency inversion",
+        ],
+    },
+
+    "Software Engineering": {
+        "category": "Technical",
+        "subcategory": "Software Engineering",
+        "ai_context": (
+            "Software Engineering: SDLC models (waterfall, agile, spiral, V-model), "
+            "Agile/Scrum, software testing types (unit, integration, system, UAT), "
+            "TDD, BDD, version control (Git), CI/CD, UML diagrams, "
+            "software quality metrics, code review - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "software engineering", "se",
+            "software", "software development",
+            "sdlc", "software development life cycle",
+            "agile", "agile methodology", "agile development",
+            "scrum", "scrum framework", "sprint", "kanban",
+            "waterfall", "waterfall model", "spiral model", "v model",
+            "software testing", "testing",
+            "unit testing", "integration testing",
+            "system testing", "acceptance testing", "regression testing",
+            "tdd", "test driven development", "bdd",
+            "git", "version control", "github", "gitlab",
+            "ci cd", "ci/cd", "continuous integration", "continuous deployment",
+            "devops", "dev ops",
+            "uml", "uml diagrams",
+        ],
+    },
+
+    "System Design": {
+        "category": "Technical",
+        "subcategory": "System Design",
+        "ai_context": (
+            "System Design: scalability (horizontal vs vertical), "
+            "load balancing, caching (Redis, Memcached, CDN), "
+            "database sharding and replication, CAP theorem, "
+            "microservices architecture, API gateway, "
+            "message queues (Kafka, RabbitMQ), rate limiting, "
+            "consistent hashing - as tested in placement exams."
+        ),
+        "aliases": [
+            "system design", "hld", "high level design",
+            "lld", "low level design",
+            "scalability", "load balancing", "load balancer",
+            "caching", "cache", "redis", "memcached",
+            "sharding", "database sharding", "replication",
+            "cap theorem", "cap",
+            "microservices", "microservice", "micro services",
+            "api gateway", "message queue", "kafka", "rabbitmq",
+            "cdn", "content delivery network",
+            "rate limiting", "distributed systems",
+            "consistent hashing",
+        ],
+    },
+
+    "Web Development": {
+        "category": "Technical",
+        "subcategory": "Web Development",
+        "ai_context": (
+            "Web Development: HTML5 semantic elements, CSS3 (flexbox, grid, "
+            "responsive design), REST APIs, HTTP methods and status codes, "
+            "JSON, frontend frameworks (React, Angular, Vue), "
+            "backend basics (Node.js/Express, Django, Flask, Spring Boot), "
+            "JWT authentication, cookies/sessions - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "web development", "web dev", "web programming",
+            "html", "html5", "css", "css3",
+            "rest", "rest api", "restful", "restful api",
+            "api", "apis", "web api",
+            "react", "reactjs", "react js",
+            "angular", "angularjs",
+            "vue", "vuejs", "vue js",
+            "express", "expressjs",
+            "spring boot", "spring",
+            "authentication", "jwt", "json web token",
+            "oauth", "sessions", "cookies",
+            "frontend", "backend", "full stack", "fullstack",
+        ],
+    },
+
+    "Cloud Computing": {
+        "category": "Technical",
+        "subcategory": "Cloud Computing",
+        "ai_context": (
+            "Cloud Computing: service models (IaaS, PaaS, SaaS), "
+            "deployment models (public, private, hybrid, multi-cloud), "
+            "AWS core services (EC2, S3, RDS, Lambda), Azure fundamentals, "
+            "GCP basics, Docker and containerization, Kubernetes orchestration, "
+            "serverless computing, cloud storage - as tested in placement exams."
+        ),
+        "aliases": [
+            "cloud computing", "cloud", "cloud services",
+            "aws", "amazon web services",
+            "azure", "microsoft azure",
+            "gcp", "google cloud",
+            "docker", "container", "containers", "containerization",
+            "kubernetes", "k8s",
+            "serverless", "lambda function aws",
+            "iaas", "paas", "saas",
+            "virtualization", "hypervisor",
+        ],
+    },
+
+    "Cybersecurity": {
+        "category": "Technical",
+        "subcategory": "Cybersecurity",
+        "ai_context": (
+            "Cybersecurity: cryptography (symmetric: AES, DES; asymmetric: RSA, ECC), "
+            "hashing (MD5, SHA-256), digital signatures, PKI, SSL/TLS, "
+            "network attacks (SQL injection, XSS, CSRF, MITM, buffer overflow, "
+            "phishing, DDoS), firewalls, IDS/IPS, OWASP Top 10 - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "cybersecurity", "cyber security", "information security", "infosec",
+            "security", "network security",
+            "cryptography", "encryption", "decryption",
+            "symmetric encryption", "asymmetric encryption",
+            "rsa", "aes", "des", "3des",
+            "hashing security", "sha", "sha256", "md5",
+            "digital signature", "ssl", "tls",
+            "firewall", "ids", "ips",
+            "sql injection", "xss", "cross site scripting",
+            "csrf", "buffer overflow", "phishing", "mitm", "ddos",
+            "ethical hacking", "penetration testing", "pen testing",
+            "owasp",
+        ],
+    },
+
+    "Machine Learning": {
+        "category": "Technical",
+        "subcategory": "Machine Learning",
+        "ai_context": (
+            "Machine Learning: supervised learning (classification, regression), "
+            "unsupervised learning (clustering, PCA), reinforcement learning, "
+            "bias-variance tradeoff, overfitting/underfitting, regularization (L1/L2), "
+            "cross-validation, algorithms (linear regression, logistic regression, "
+            "decision trees, random forest, SVM, KNN, K-means, neural networks) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "machine learning", "ml", "ml algorithms",
+            "supervised learning", "unsupervised learning", "reinforcement learning",
+            "regression", "linear regression", "logistic regression",
+            "classification algorithms",
+            "decision tree", "random forest",
+            "svm", "support vector machine",
+            "knn", "k nearest neighbour", "k nearest neighbor",
+            "k means", "k-means", "clustering",
+            "pca", "principal component analysis", "dimensionality reduction",
+            "neural networks", "neural network",
+            "deep learning", "cnn", "rnn", "lstm",
+            "overfitting", "underfitting", "bias variance",
+            "regularization", "cross validation",
+            "natural language processing", "nlp",
+            "computer vision", "image classification",
+            "data science", "data analysis", "data analytics",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Electronics / ECE
+    # -------------------------------------------------------------------------
+
+    "Digital Electronics": {
+        "category": "Technical",
+        "subcategory": "Digital Electronics",
+        "ai_context": (
+            "Digital Electronics: number systems (binary, octal, hex, BCD), "
+            "logic gates (AND, OR, NOT, NAND, NOR, XOR, XNOR), "
+            "Boolean algebra, De Morgan's theorem, K-map simplification, "
+            "combinational circuits (adder, subtractor, MUX, DEMUX, encoder, decoder), "
+            "sequential circuits (flip-flops: SR, JK, D, T; counters, registers), "
+            "ADC/DAC - as tested in placement exams."
+        ),
+        "aliases": [
+            "digital electronics", "digital circuits", "digital logic",
+            "digital systems",
+            "logic gates", "gates", "boolean algebra", "de morgan",
+            "k map", "karnaugh map", "kmap",
+            "combinational circuits", "sequential circuits",
+            "flip flop", "flip-flop", "jk flip flop", "d flip flop", "sr flip flop",
+            "counters", "registers", "shift register",
+            "multiplexer", "mux", "demux", "demultiplexer",
+            "encoder", "decoder", "adder", "subtractor", "half adder", "full adder",
+            "adc", "dac", "analog to digital", "digital to analog",
+            "binary", "octal", "hexadecimal", "hex", "bcd",
+            "number system digital",
+        ],
+    },
+
+    "Analog Electronics": {
+        "category": "Technical",
+        "subcategory": "Analog Electronics",
+        "ai_context": (
+            "Analog Electronics: PN junction diode, Zener diode, "
+            "BJT (NPN/PNP, biasing, common emitter/base/collector amplifiers), "
+            "FET and MOSFET, op-amp characteristics and applications "
+            "(inverting, non-inverting, summing, differentiator, integrator), "
+            "oscillators (RC, LC, Colpitts, Hartley), rectifiers, filters, "
+            "voltage regulators - as tested in placement exams."
+        ),
+        "aliases": [
+            "analog electronics", "analogue electronics", "analog circuits",
+            "diode", "diodes", "pn junction", "zener diode",
+            "bjt", "transistor", "npn", "pnp", "bipolar transistor",
+            "fet", "jfet", "mosfet", "field effect transistor",
+            "amplifier", "amplifiers", "op amp", "op-amp", "operational amplifier",
+            "rectifier", "half wave rectifier", "full wave rectifier",
+            "oscillator", "colpitts", "hartley",
+            "filter analog", "low pass filter", "high pass filter", "band pass filter",
+            "voltage regulator",
+        ],
+    },
+
+    "Signal Processing": {
+        "category": "Technical",
+        "subcategory": "Signal Processing",
+        "ai_context": (
+            "Signal Processing: signals and systems, Fourier series, "
+            "Fourier transform (CTFT, DTFT), Laplace transform, Z-transform, "
+            "sampling theorem (Nyquist rate), aliasing, convolution, "
+            "DFT and FFT, digital filters (FIR, IIR, Butterworth) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "signal processing", "signals and systems", "dsp",
+            "digital signal processing",
+            "fourier", "fourier transform", "fourier series",
+            "laplace", "laplace transform",
+            "z transform", "z-transform",
+            "sampling theorem", "nyquist", "sampling", "aliasing",
+            "convolution", "dft", "fft",
+            "fir filter", "iir filter", "butterworth filter",
+        ],
+    },
+
+    "Embedded Systems": {
+        "category": "Technical",
+        "subcategory": "Embedded Systems",
+        "ai_context": (
+            "Embedded Systems: microcontroller architecture (8051, PIC, ARM Cortex-M), "
+            "peripherals (GPIO, UART, SPI, I2C, PWM, ADC), timers and interrupts, "
+            "RTOS concepts (tasks, scheduling, semaphores), "
+            "embedded C programming, memory types (ROM, RAM, Flash, EEPROM), "
+            "IoT basics - as tested in placement exams."
+        ),
+        "aliases": [
+            "embedded systems", "embedded", "embedded programming",
+            "microcontroller", "microcontrollers", "8051", "arm cortex",
+            "pic microcontroller", "stm32", "arduino",
+            "gpio", "uart", "spi", "i2c", "pwm",
+            "rtos", "real time operating system", "freertos",
+            "embedded c", "firmware",
+            "iot", "internet of things",
+        ],
+    },
+
+    "VLSI Design": {
+        "category": "Technical",
+        "subcategory": "VLSI",
+        "ai_context": (
+            "VLSI Design: CMOS technology (NMOS, PMOS), MOSFET characteristics, "
+            "CMOS logic gates design, propagation delay, power dissipation, "
+            "FPGA architecture and programming, Verilog HDL (modules, "
+            "always blocks, combinational/sequential logic), VHDL basics, "
+            "design for testability - as tested in placement exams."
+        ),
+        "aliases": [
+            "vlsi", "vlsi design", "very large scale integration",
+            "cmos", "fpga", "verilog", "vhdl",
+            "logic design vlsi", "rtl design", "asic",
+            "nmos", "pmos",
+        ],
+    },
+
+    "Communication Systems": {
+        "category": "Technical",
+        "subcategory": "Communication Systems",
+        "ai_context": (
+            "Communication Systems: analog modulation (AM, FM, PM), "
+            "digital modulation (ASK, FSK, PSK, QAM), multiplexing (TDM, FDM, CDM), "
+            "mobile communication (GSM, CDMA, LTE/4G, 5G), "
+            "satellite communication, optical fiber communication, "
+            "antenna basics, noise and bandwidth, Shannon's theorem - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "communication systems", "communication", "wireless communication",
+            "mobile communication", "gsm", "cdma", "lte", "4g", "5g",
+            "satellite communication", "optical fiber", "fiber optics",
+            "antenna", "antennas",
+            "tdm", "fdm", "cdm", "multiplexing",
+            "am modulation", "fm modulation", "ask", "fsk", "psk", "qam",
+            "shannon theorem", "channel capacity",
+        ],
+    },
+
+    "Control Systems": {
+        "category": "Technical",
+        "subcategory": "Control Systems",
+        "ai_context": (
+            "Control Systems: open loop vs closed loop, transfer functions, "
+            "block diagram reduction, signal flow graphs (Mason's gain formula), "
+            "time response (first order, second order), steady state error, "
+            "stability criteria (Routh-Hurwitz, root locus, Bode plot, Nyquist), "
+            "PID controllers, state space representation - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "control systems", "control system",
+            "transfer function", "block diagram", "signal flow graph",
+            "mason's gain", "root locus", "bode plot", "nyquist plot",
+            "pid controller", "pid", "proportional integral derivative",
+            "routh hurwitz", "stability analysis",
+            "state space", "state space analysis",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Electrical (EEE)
+    # -------------------------------------------------------------------------
+
+    "Circuit Theory": {
+        "category": "Technical",
+        "subcategory": "Circuit Theory",
+        "ai_context": (
+            "Circuit Theory: Ohm's law, KCL, KVL, network theorems "
+            "(Thevenin, Norton, Superposition, Maximum Power Transfer, "
+            "Millman's, Reciprocity), AC circuits (phasors, impedance, "
+            "resonance, power factor), three-phase circuits, "
+            "transient analysis (RL, RC, RLC) - as tested in placement exams."
+        ),
+        "aliases": [
+            "circuit theory", "network theory", "electric circuits",
+            "electrical circuits", "basic electrical",
+            "ohm's law", "ohms law", "kcl", "kvl",
+            "kirchhoff", "kirchhoff's laws",
+            "thevenin", "thevenin theorem", "norton", "norton theorem",
+            "superposition", "superposition theorem",
+            "max power transfer", "maximum power transfer",
+            "ac circuits", "phasors", "impedance", "resonance",
+            "three phase", "3 phase", "power factor",
+            "transient analysis", "rl circuit", "rc circuit", "rlc circuit",
+        ],
+    },
+
+    "Power Systems": {
+        "category": "Technical",
+        "subcategory": "Power Systems",
+        "ai_context": (
+            "Power Systems: power generation (thermal, hydro, nuclear, solar, wind), "
+            "transmission lines (short/medium/long, ABCD parameters), "
+            "distribution systems, load flow analysis (Gauss-Seidel, Newton-Raphson), "
+            "fault analysis (symmetrical, unsymmetrical), symmetrical components, "
+            "protection (relays, circuit breakers, fuses) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "power systems", "power system", "electrical power",
+            "transmission lines", "power transmission",
+            "distribution system", "power distribution",
+            "load flow", "load flow analysis", "power flow",
+            "fault analysis", "symmetrical components", "short circuit",
+            "protection", "relay", "circuit breaker", "switchgear",
+            "facts", "power quality", "power generation",
+        ],
+    },
+
+    "Electrical Machines": {
+        "category": "Technical",
+        "subcategory": "Electrical Machines",
+        "ai_context": (
+            "Electrical Machines: DC generators (types, EMF equation, characteristics), "
+            "DC motors (types, torque, speed control, starting), "
+            "transformers (construction, equivalent circuit, efficiency, regulation), "
+            "three-phase induction motors (rotating magnetic field, slip, torque-speed), "
+            "synchronous generators and motors - as tested in placement exams."
+        ),
+        "aliases": [
+            "electrical machines", "electric machines",
+            "dc motor", "dc generator", "dc machine",
+            "transformer", "transformers",
+            "induction motor", "induction machine", "3 phase motor",
+            "synchronous motor", "synchronous generator", "alternator",
+            "motor control", "speed control", "starting methods",
+        ],
+    },
+
+    "Power Electronics": {
+        "category": "Technical",
+        "subcategory": "Power Electronics",
+        "ai_context": (
+            "Power Electronics: power semiconductor devices (diode, thyristor/SCR, "
+            "IGBT, power MOSFET), uncontrolled and controlled rectifiers, "
+            "inverters (single-phase, three-phase), DC-DC converters (chopper: "
+            "Buck, Boost, Buck-Boost), AC voltage controllers, PWM techniques, "
+            "SMPS - as tested in placement exams."
+        ),
+        "aliases": [
+            "power electronics", "power electronic",
+            "thyristor", "scr", "silicon controlled rectifier",
+            "igbt", "power mosfet",
+            "controlled rectifier", "uncontrolled rectifier",
+            "inverter power", "chopper", "dc dc converter",
+            "buck converter", "boost converter",
+            "pwm", "pulse width modulation",
+            "smps", "switched mode power supply",
+            "ac voltage controller",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Mechanical (MECH)
+    # -------------------------------------------------------------------------
+
+    "Thermodynamics": {
+        "category": "Technical",
+        "subcategory": "Thermodynamics",
+        "ai_context": (
+            "Thermodynamics: zeroth, first, second and third laws, "
+            "thermodynamic properties (enthalpy, entropy, Gibbs free energy), "
+            "ideal gas law, processes (isothermal, adiabatic, isobaric, isochoric), "
+            "Carnot cycle, Rankine cycle (steam), Otto cycle (petrol), "
+            "Diesel cycle, refrigeration cycles (VCR, absorption) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "thermodynamics", "thermo", "thermal engineering",
+            "first law", "second law", "third law of thermodynamics",
+            "carnot cycle", "rankine cycle", "otto cycle", "diesel cycle",
+            "refrigeration", "refrigeration cycle", "vcr cycle",
+            "entropy", "enthalpy", "ideal gas",
+            "steam power", "power cycles", "thermodynamic processes",
+        ],
+    },
+
+    "Fluid Mechanics": {
+        "category": "Technical",
+        "subcategory": "Fluid Mechanics",
+        "ai_context": (
+            "Fluid Mechanics: fluid properties (viscosity, density, surface tension), "
+            "fluid statics (Pascal's law, buoyancy), Bernoulli's equation, "
+            "continuity equation, laminar vs turbulent flow, "
+            "Reynolds number, flow through pipes (Darcy-Weisbach), "
+            "boundary layer, pumps and turbines - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "fluid mechanics", "fluids", "fluid dynamics",
+            "hydraulics", "hydraulic machines",
+            "bernoulli", "bernoulli's equation", "bernoulli theorem",
+            "continuity equation", "flow through pipes", "pipe flow",
+            "reynolds number", "laminar flow", "turbulent flow",
+            "boundary layer", "pump", "turbine",
+            "venturimeter", "orifice meter", "pitot tube",
+        ],
+    },
+
+    "Strength of Materials": {
+        "category": "Technical",
+        "subcategory": "Strength of Materials",
+        "ai_context": (
+            "Strength of Materials: stress, strain, elastic constants "
+            "(E, G, K, Poisson's ratio), stress-strain diagram, "
+            "shear force and bending moment diagrams, "
+            "bending stress, shear stress in beams, torsion, "
+            "deflection of beams (Macaulay's method, Mohr's theorem), "
+            "columns (Euler's formula, Rankine's formula) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "strength of materials", "som", "mechanics of materials", "mom",
+            "stress", "strain", "stress strain",
+            "shear force", "bending moment", "sfbmd", "sfd bmd",
+            "torsion", "deflection of beams", "columns",
+            "euler formula", "strain energy", "mohr's circle",
+        ],
+    },
+
+    "Manufacturing Technology": {
+        "category": "Technical",
+        "subcategory": "Manufacturing",
+        "ai_context": (
+            "Manufacturing Technology: casting processes (sand casting, die casting, "
+            "investment casting), welding (arc, MIG, TIG, spot, seam), "
+            "machining operations (turning, milling, drilling, grinding, "
+            "boring, shaping), metal forming (forging, rolling, extrusion, drawing), "
+            "powder metallurgy, CNC machining, metrology, quality control (SPC) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "manufacturing", "manufacturing technology", "manufacturing processes",
+            "casting", "welding", "machining",
+            "turning", "milling", "drilling", "grinding", "boring",
+            "cnc", "cnc machining", "cnc programming",
+            "metrology", "quality control", "inspection",
+            "metal forming", "forging", "rolling", "extrusion", "drawing",
+            "powder metallurgy",
+        ],
+    },
+
+    "Machine Design": {
+        "category": "Technical",
+        "subcategory": "Machine Design",
+        "ai_context": (
+            "Machine Design: design process and philosophy, factor of safety, "
+            "failure theories (max normal stress, max shear stress, von Mises), "
+            "stress concentration, fatigue, fasteners (bolts, screws, rivets), "
+            "power screws, shafts and keys, couplings, bearings (rolling and sliding), "
+            "gears (spur, helical, bevel, worm), springs, brakes, clutches - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "machine design", "design of machine elements", "dme",
+            "machine elements", "design of machines",
+            "bearings", "gears", "gear design", "spur gear", "helical gear",
+            "shafts", "keys", "couplings",
+            "clutch", "brakes", "flywheel",
+            "fasteners", "bolts", "screws", "rivets",
+            "spring design", "belt drive", "chain drive",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Civil
+    # -------------------------------------------------------------------------
+
+    "Structural Analysis": {
+        "category": "Technical",
+        "subcategory": "Structural Analysis",
+        "ai_context": (
+            "Structural Analysis: types of structures (beams, trusses, frames, arches), "
+            "static determinacy, analysis of beams (simply supported, cantilever, "
+            "continuous), trusses (method of joints, method of sections), "
+            "influence lines, slope deflection method, moment distribution, "
+            "matrix stiffness method - as tested in placement exams."
+        ),
+        "aliases": [
+            "structural analysis", "structures", "structural engineering",
+            "beams", "trusses", "frames", "arches",
+            "method of joints", "method of sections",
+            "influence lines", "slope deflection", "moment distribution",
+            "indeterminate structures", "propped cantilever",
+        ],
+    },
+
+    "Geotechnical Engineering": {
+        "category": "Technical",
+        "subcategory": "Geotechnical Engineering",
+        "ai_context": (
+            "Geotechnical Engineering: soil classification (IS classification), "
+            "Atterberg limits (LL, PL, SL, PI), compaction (Proctor test), "
+            "permeability (Darcy's law), seepage, consolidation (Terzaghi), "
+            "shear strength (Mohr-Coulomb criterion), bearing capacity "
+            "(Terzaghi, Meyerhof), slope stability, retaining walls, "
+            "pile foundations - as tested in placement exams."
+        ),
+        "aliases": [
+            "geotechnical engineering", "geotechnical", "soil mechanics",
+            "soil", "soil classification", "atterberg limits",
+            "compaction", "proctor test",
+            "permeability", "darcy law", "seepage",
+            "consolidation", "settlement",
+            "shear strength", "mohr coulomb",
+            "bearing capacity", "foundations", "pile foundation",
+            "slope stability", "retaining wall",
+        ],
+    },
+
+    "Surveying": {
+        "category": "Technical",
+        "subcategory": "Surveying",
+        "ai_context": (
+            "Surveying: chain surveying (linear measurements, offsets), "
+            "compass surveying (bearings, traversing), levelling (types, "
+            "reduced level, contouring), theodolite surveying (horizontal "
+            "and vertical angles), tacheometry, total station, GPS/GNSS - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "surveying", "engineering surveying",
+            "chain surveying", "compass surveying",
+            "levelling", "leveling", "dumpy level",
+            "theodolite", "tacheometry", "contouring",
+            "total station", "gps", "gnss",
+        ],
+    },
+
+    "Concrete Technology": {
+        "category": "Technical",
+        "subcategory": "Concrete Technology",
+        "ai_context": (
+            "Concrete Technology: cement types (OPC, PPC, SRC), hydration, "
+            "aggregates (fine, coarse), water-cement ratio, workability "
+            "(slump test, Vee-Bee, compaction factor), IS mix design method, "
+            "durability, curing methods, admixtures (plasticizers, accelerators), "
+            "special concretes (high-strength, self-compacting) - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "concrete technology", "concrete", "cement concrete",
+            "cement", "cement types", "opc", "ppc", "src",
+            "mix design", "water cement ratio", "w/c ratio",
+            "workability", "slump test",
+            "rcc", "reinforced concrete", "prestressed concrete", "psc",
+            "curing", "admixtures",
+        ],
+    },
+
+    "Transportation Engineering": {
+        "category": "Technical",
+        "subcategory": "Transportation Engineering",
+        "ai_context": (
+            "Transportation Engineering: highway planning and alignment, "
+            "geometric design (horizontal curves, vertical curves, "
+            "sight distance, gradient), pavement design (flexible: CBR method, "
+            "rigid: Westergaard method), pavement distresses, "
+            "traffic engineering (volume, speed, density, LOS), "
+            "railway engineering basics - as tested in placement exams."
+        ),
+        "aliases": [
+            "transportation engineering", "highway engineering",
+            "roads", "highways", "road design", "road geometry",
+            "pavement design", "flexible pavement", "rigid pavement",
+            "traffic engineering", "traffic flow", "los",
+            "railway engineering", "railways",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # TECHNICAL - Chemical
+    # -------------------------------------------------------------------------
+
+    "Chemical Engineering": {
+        "category": "Technical",
+        "subcategory": "Chemical Engineering",
+        "ai_context": (
+            "Chemical Engineering: material and energy balances, "
+            "fluid flow (Bernoulli, friction losses), heat transfer "
+            "(conduction, convection, radiation, heat exchangers), "
+            "mass transfer (distillation, absorption, liquid-liquid extraction), "
+            "chemical reaction engineering (batch, CSTR, PFR reactors), "
+            "process control and instrumentation - "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "chemical engineering", "chemical",
+            "process engineering", "chemical process",
+            "mass transfer", "distillation", "absorption", "extraction",
+            "reaction engineering", "cstr", "pfr", "batch reactor",
+            "process control chem", "chemical thermodynamics",
+            "heat exchanger", "fluid flow chemical",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # APTITUDE - Quantitative
+    # -------------------------------------------------------------------------
+
+    "Number System": {
+        "category": "Aptitude",
+        "subcategory": "Number System",
+        "ai_context": (
+            "Number System aptitude: types of numbers (natural, whole, integer, "
+            "rational, irrational), divisibility rules (2,3,4,5,6,7,8,9,10,11), "
+            "HCF and LCM (prime factorization method), prime numbers, "
+            "unit digit, remainders (Fermat's little theorem), cyclicity - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "number system", "numbers", "number theory",
+            "hcf", "lcm", "hcf lcm", "highest common factor",
+            "lowest common multiple", "gcd",
+            "prime numbers", "prime", "prime factorization",
+            "divisibility", "divisibility rules",
+            "remainders", "remainder theorem",
+            "unit digit", "cyclicity", "fermat little theorem",
+        ],
+    },
+
+    "Percentages": {
+        "category": "Aptitude",
+        "subcategory": "Percentages",
+        "ai_context": (
+            "Percentage problems: percentage of a number, "
+            "percentage increase and decrease, successive percentage change, "
+            "percentage to fraction/decimal conversion, "
+            "percentage application in profit/loss/interest - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "percentages", "percentage", "percent",
+            "percentage problems", "percentage increase", "percentage decrease",
+            "successive percentage", "percentage change",
+        ],
+    },
+
+    "Profit and Loss": {
+        "category": "Aptitude",
+        "subcategory": "Profit & Loss",
+        "ai_context": (
+            "Profit and Loss: cost price (CP), selling price (SP), "
+            "profit percent and loss percent formulas, "
+            "marked price, discount, successive discounts, "
+            "equivalent discount, dishonest dealer, "
+            "partnership profit sharing - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "profit and loss", "profit & loss", "profit loss",
+            "profit", "loss", "profit percent", "loss percent",
+            "discount", "marked price", "selling price", "cost price",
+            "successive discounts", "trade discount", "equivalent discount",
+        ],
+    },
+
+    "Simple and Compound Interest": {
+        "category": "Aptitude",
+        "subcategory": "Simple & Compound Interest",
+        "ai_context": (
+            "Simple Interest (SI = PRT/100) and Compound Interest "
+            "(A = P(1+r/n)^nt): difference between SI and CI, "
+            "half-yearly/quarterly/monthly compounding, "
+            "effective rate of interest, population growth, "
+            "depreciation problems - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "simple interest", "compound interest",
+            "simple and compound interest", "si ci",
+            "si", "ci", "interest problems", "interest",
+            "half yearly compounding", "quarterly compounding",
+            "effective rate", "population growth", "depreciation",
+        ],
+    },
+
+    "Time and Work": {
+        "category": "Aptitude",
+        "subcategory": "Time & Work",
+        "ai_context": (
+            "Time and Work: work done formula (work = efficiency x time), "
+            "combined work rate, LCM method, "
+            "A and B together complete work, "
+            "pipes and cisterns (filling/draining), "
+            "work and wages - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "time and work", "work and time", "work problems",
+            "work", "efficiency work",
+            "pipes and cisterns", "pipes cisterns",
+            "pipes", "cisterns", "cistern", "tank filling",
+            "tap", "inlet", "outlet pipe",
+            "work and wages",
+        ],
+    },
+
+    "Time Speed Distance": {
+        "category": "Aptitude",
+        "subcategory": "Time Speed Distance",
+        "ai_context": (
+            "Time, Speed and Distance: speed = distance/time, "
+            "relative speed (same direction: difference, opposite: sum), "
+            "average speed (2S1S2/(S1+S2)), trains crossing problems "
+            "(pole, platform, each other), boats and streams "
+            "(upstream speed = u-v, downstream = u+v), races - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "time speed distance", "speed distance time", "speed and distance",
+            "speed", "distance time", "tsd",
+            "relative speed",
+            "trains", "train problems", "train crossing",
+            "boats and streams", "boats", "boat", "streams", "stream",
+            "upstream", "downstream", "speed of stream",
+            "average speed", "races",
+        ],
+    },
+
+    "Ratio and Proportion": {
+        "category": "Aptitude",
+        "subcategory": "Ratio & Proportion",
+        "ai_context": (
+            "Ratio and Proportion: ratio in simplest form, "
+            "compounded ratio, duplicate/triplicate ratio, "
+            "proportion (direct and inverse), continued proportion, "
+            "variation, partnership problems - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "ratio and proportion", "ratio proportion", "ratio",
+            "proportion", "ratios", "compounded ratio",
+            "direct proportion", "inverse proportion", "variation",
+            "partnership", "partners",
+        ],
+    },
+
+    "Mixtures and Alligation": {
+        "category": "Aptitude",
+        "subcategory": "Mixtures & Alligation",
+        "ai_context": (
+            "Mixtures and Alligation: alligation method (weighted average), "
+            "mixing two items of different prices or concentrations, "
+            "repeated dilution (milk-water problems), "
+            "mean price, rule of alligation - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "mixtures and alligation", "mixtures and alligations",
+            "mixture", "mixtures", "alligation", "alligations",
+            "rule of alligation", "dilution", "milk water problem",
+            "mixture problems",
+        ],
+    },
+
+    "Average": {
+        "category": "Aptitude",
+        "subcategory": "Average",
+        "ai_context": (
+            "Average: arithmetic mean, weighted average, "
+            "average of consecutive numbers, "
+            "effect of including/excluding a number, "
+            "average speed, age-based average problems - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "average", "averages", "mean",
+            "weighted average", "average problems",
+            "arithmetic mean", "average age",
+        ],
+    },
+
+    "Permutation and Combination": {
+        "category": "Aptitude",
+        "subcategory": "Permutations & Combinations",
+        "ai_context": (
+            "Permutations and Combinations: factorial notation, "
+            "nPr (arrangements), nCr (selections), "
+            "circular permutation, repeated objects, "
+            "word arrangement problems, selection of teams/committees, "
+            "distribution problems - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "permutation and combination", "permutations and combinations",
+            "permutation", "combination", "permutations", "combinations",
+            "p and c", "pnc", "p&c",
+            "factorial", "npr", "ncr",
+            "circular permutation", "word arrangement",
+            "selection problems", "arrangement problems",
+        ],
+    },
+
+    "Probability": {
+        "category": "Aptitude",
+        "subcategory": "Probability",
+        "ai_context": (
+            "Probability: sample space, events, classical probability, "
+            "complementary events (P(A') = 1 - P(A)), "
+            "mutually exclusive events, independent events, "
+            "conditional probability, Bayes' theorem, "
+            "problems on dice, cards (deck of 52), coins - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "probability", "probability problems",
+            "classical probability", "conditional probability",
+            "bayes theorem", "bayes", "bayes rule",
+            "dice", "cards probability", "coins probability",
+            "independent events", "mutually exclusive events",
+            "sample space",
+        ],
+    },
+
+    "Problems on Ages": {
+        "category": "Aptitude",
+        "subcategory": "Problems on Ages",
+        "ai_context": (
+            "Problems on Ages: calculating present age, past age, future age, "
+            "ratio of ages at different points in time, "
+            "algebraic equations for ages, "
+            "average age problems - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "problems on ages", "age problems", "ages",
+            "age", "age ratio", "present age", "future age",
+        ],
+    },
+
+    "Data Interpretation": {
+        "category": "Aptitude",
+        "subcategory": "Data Interpretation",
+        "ai_context": (
+            "Data Interpretation: reading bar charts (simple and grouped), "
+            "pie charts (percentage and value), line graphs (trends), "
+            "tables, mixed graphs; percentage calculation from graphs, "
+            "ratio comparison, data sufficiency basics - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "data interpretation", "di", "data interp",
+            "bar chart", "bar graph", "pie chart", "pie graph",
+            "line graph", "table di", "mixed graph",
+            "data sufficiency", "graph interpretation",
+        ],
+    },
+
+    "Logical Reasoning": {
+        "category": "Aptitude",
+        "subcategory": "Logical Reasoning",
+        "ai_context": (
+            "Logical Reasoning: number series (find the missing term), "
+            "letter series, coding-decoding (letter shift, number coding), "
+            "blood relations (family tree), direction sense (final position), "
+            "seating arrangement (linear and circular), "
+            "syllogisms (all/some/no statements), puzzles, "
+            "clock and calendar, statement conclusions - "
+            "as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "logical reasoning", "lr", "reasoning", "logical",
+            "number series", "series", "letter series", "alphanumeric series",
+            "coding decoding", "coding-decoding", "coding", "decoding",
+            "blood relations", "blood relation", "family tree",
+            "direction sense", "direction", "directions",
+            "seating arrangement", "seating", "arrangement",
+            "circular arrangement", "linear arrangement",
+            "syllogism", "syllogisms",
+            "puzzles", "puzzle",
+            "clock problems", "clock",
+            "calendar problems", "calendar",
+            "statement conclusion", "statement assumption",
+            "analogy", "analogies", "odd one out",
+            "input output reasoning", "matrix reasoning",
+        ],
+    },
+
+    # -------------------------------------------------------------------------
+    # VERBAL
+    # -------------------------------------------------------------------------
+
+    "Grammar": {
+        "category": "Verbal",
+        "subcategory": "Grammar",
+        "ai_context": (
+            "English Grammar for placement exams: all 12 tenses with usage rules, "
+            "subject-verb agreement, articles (a/an/the), prepositions, "
+            "conjunctions (coordinating, subordinating), active and passive voice "
+            "transformation, direct and indirect speech (narration), "
+            "question tags, conditionals (zero, first, second, third) - "
+            "as tested in placement verbal exams."
+        ),
+        "aliases": [
+            "grammar", "english grammar", "basic grammar", "advanced grammar",
+            "tenses", "tense", "all tenses", "12 tenses",
+            "subject verb agreement", "sva",
+            "articles", "article usage", "a an the",
+            "prepositions", "preposition usage",
+            "conjunctions", "coordinating conjunctions",
+            "active voice", "passive voice", "active passive",
+            "direct speech", "indirect speech", "narration",
+            "question tags", "tag questions",
+            "conditionals", "if clauses",
+            "parts of speech", "nouns", "verbs", "adjectives", "adverbs",
+            "pronouns", "interjections",
+        ],
+    },
+
+    "Vocabulary": {
+        "category": "Verbal",
+        "subcategory": "Synonyms & Antonyms",
+        "ai_context": (
+            "Vocabulary for placement exams: synonyms (words with similar meaning), "
+            "antonyms (words with opposite meaning), contextual word usage, "
+            "one-word substitution (a single word for a phrase), "
+            "idioms and phrases (meaning and usage), "
+            "commonly confused words (affect/effect, accept/except), "
+            "verbal analogies - as tested in placement verbal exams."
+        ),
+        "aliases": [
+            "vocabulary", "vocab",
+            "synonyms", "synonym",
+            "antonyms", "antonym",
+            "synonyms and antonyms", "synonyms antonyms",
+            "one word substitution", "one word",
+            "idioms", "idiom", "idioms and phrases", "phrases",
+            "word meaning", "word meanings",
+            "commonly confused words", "homophones", "homonyms",
+            "analogies verbal", "analogy verbal", "verbal analogy",
+        ],
+    },
+
+    "Reading Comprehension": {
+        "category": "Verbal",
+        "subcategory": "Reading Comprehension",
+        "ai_context": (
+            "Reading Comprehension for placement exams: passage-based questions, "
+            "identifying the main idea, inferential questions, "
+            "vocabulary in context, author's tone and purpose "
+            "(critical, humorous, sarcastic, objective, subjective), "
+            "true/false based on passage, title selection - "
+            "as tested in placement verbal exams."
+        ),
+        "aliases": [
+            "reading comprehension", "rc", "comprehension",
+            "passage", "passages", "passage reading",
+            "reading passage", "unseen passage",
+        ],
+    },
+
+    "Sentence Correction": {
+        "category": "Verbal",
+        "subcategory": "Sentence Correction",
+        "ai_context": (
+            "Sentence Correction for placement exams: spotting grammatical errors "
+            "(subject-verb agreement, tense errors, pronoun errors, article errors, "
+            "preposition errors), sentence improvement (choosing the correct option "
+            "to replace underlined part), fill in the blanks (choosing the most "
+            "appropriate word), cloze test - as tested in placement verbal exams."
+        ),
+        "aliases": [
+            "sentence correction", "error detection", "error spotting",
+            "spot the error", "find the error", "error identification",
+            "sentence improvement", "improve the sentence",
+            "fill in the blanks", "fill in blanks", "fill in the blank",
+            "blanks", "cloze test", "cloze passage",
+            "error correction", "grammatical errors",
+        ],
+    },
+
+    "Para Jumbles": {
+        "category": "Verbal",
+        "subcategory": "Para Jumbles",
+        "ai_context": (
+            "Para Jumbles for placement exams: rearranging jumbled sentences "
+            "to form a coherent and logical paragraph; "
+            "finding the opening sentence (topic sentence), "
+            "connecting sentences using transition words, "
+            "finding the concluding sentence - "
+            "as tested in placement verbal exams."
+        ),
+        "aliases": [
+            "para jumbles", "para jumble", "paragraph jumbles",
+            "jumbled sentences", "sentence rearrangement",
+            "sentence order", "rearrange sentences",
+            "paragraph formation",
+        ],
+    },
+
+    "Soft Skills": {
+        "category": "Verbal",
+        "subcategory": "Soft Skills",
+        "ai_context": (
+            "Soft Skills and Communication for placement: effective communication "
+            "(verbal, non-verbal, written), group discussion tips, "
+            "interpersonal skills, teamwork, leadership, "
+            "time management, problem-solving, adaptability, "
+            "email and professional writing etiquette - "
+            "as tested in placement behavioral rounds."
+        ),
+        "aliases": [
+            "soft skills", "soft", "communication skills",
+            "communication", "interpersonal skills",
+            "leadership", "teamwork", "group discussion", "gd",
+            "professional communication", "email writing",
+            "time management", "adaptability", "problem solving skills",
+        ],
+    },
 }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 2: MULTI-TOPIC MAP
-# keyword → list of (topic, subtopic, description)
-# ═══════════════════════════════════════════════════════════════════════════
+# ===========================================================================
+# SECTION 2 - BUILD LOOKUP INDEX (runs once at import time)
+# alias (lowercase) -> canonical name
+# ===========================================================================
 
-MULTI_TOPIC_MAP = {
-    'recursion': [
-        ('Algorithms',       'Recursion',             'recursive algorithms, base case, recursive tree, tail recursion, complexity'),
-        ('C',                'Functions',             'recursive functions in C, stack frames, factorial, fibonacci, tower of Hanoi'),
-        ('Java',             'OOP Concepts',          'recursion in Java, recursive methods, call stack, examples: tree traversal, DFS'),
-        ('Python',           'Functions & Lambda',    'recursive functions in Python, sys.setrecursionlimit, examples: quicksort, tree problems'),
-        ('Data Structures',  'Trees (Binary, BST)',   'tree traversal using recursion, inorder/preorder/postorder, recursive tree problems'),
-    ],
-    'sorting algorithm': [
-        ('Algorithms',       'Sorting Algorithms',        'all sorting algorithms: bubble, merge, quick, heap, radix; time/space complexity'),
-        ('C',                'Arrays',                    'sorting arrays in C: bubble sort, selection sort implementation'),
-        ('Java',             'Collections Framework',     'Arrays.sort, Collections.sort, Comparator, comparable interface in Java'),
-        ('Python',           'Lists & Tuples',            'sorted(), list.sort(), key parameter, custom sort in Python'),
-    ],
-    'sorting': [
-        ('Algorithms',       'Sorting Algorithms',        'all sorting algorithms: bubble, merge, quick, heap, radix; time/space complexity'),
-        ('C',                'Arrays',                    'sorting arrays in C: bubble sort, selection sort, qsort()'),
-        ('Java',             'Collections Framework',     'Arrays.sort, Collections.sort, Comparator interface'),
-        ('Python',           'Lists & Tuples',            'sorted(), list.sort(), custom comparator, stability of sort'),
-    ],
-    'exception handling': [
-        ('Java',   'Exception Handling', 'try-catch-finally, checked/unchecked exceptions, custom exceptions, throws keyword'),
-        ('Python', 'Exception Handling', 'try-except-finally, raising exceptions, custom exception classes, context managers'),
-        ('C++',    'Exception Handling', 'try-catch, throw, exception hierarchy, standard exceptions in C++'),
-    ],
-    'file handling': [
-        ('C',      'File Handling',      'fopen, fclose, fread, fwrite, fprintf, fscanf, file modes in C'),
-        ('Java',   'Java 8 Features',    'FileReader, FileWriter, BufferedReader, Scanner, NIO files in Java'),
-        ('Python', 'File Handling',      'open(), read/write/append modes, with statement, CSV handling in Python'),
-    ],
-    'linked list': [
-        ('Data Structures', 'Linked Lists',          'singly, doubly, circular; insertion, deletion, reversal, cycle detection'),
-        ('C',               'Pointers',              'linked list implementation using pointers in C, struct-based nodes'),
-        ('Java',            'Collections Framework', 'LinkedList class in Java, Deque interface, comparison with ArrayList'),
-        ('Python',          'OOP in Python',         'implementing linked list in Python using classes, custom node class'),
-    ],
-    'tree': [
-        ('Data Structures', 'Trees (Binary, BST)', 'binary tree, BST, AVL, Red-Black tree; traversals, height, diameter'),
-        ('Algorithms',      'Graph Algorithms',    'spanning trees, minimum spanning tree, tree in graph theory'),
-        ('DBMS',            'Indexing',            'B-tree and B+ tree indexing in databases, tree structure for indexes'),
-    ],
-    'pointer': [
-        ('C',   'Pointers',          'pointer basics, pointer arithmetic, pointer to pointer, void pointer, function pointer'),
-        ('C++', 'Classes & Objects', 'this pointer, pointers to objects, smart pointers: unique_ptr, shared_ptr'),
-    ],
-    'pointer arithmetic': [
-        ('C',   'Pointers',          'pointer arithmetic, incrementing pointers, array-pointer relationship in C'),
-        ('C++', 'Classes & Objects', 'pointer arithmetic in C++, iterator arithmetic'),
-    ],
-    'multithreading': [
-        ('Java',   'Multithreading',   'Thread class, Runnable, synchronized, wait/notify, ExecutorService in Java'),
-        ('Python', 'Modules & Packages', 'threading module, GIL, multiprocessing, concurrent.futures in Python'),
-        ('OS',     'Threads',          'user/kernel threads, thread scheduling, thread synchronization, race conditions'),
-        ('C++',    'Templates',        'std::thread, mutex, lock_guard, condition_variable in C++'),
-    ],
-    'array': [
-        ('C',               'Arrays',                'array declaration, 1D/2D arrays, passing arrays to functions, string as char array'),
-        ('Java',            'Collections Framework', 'arrays in Java, Arrays class, array vs ArrayList, multidimensional arrays'),
-        ('Python',          'Lists & Tuples',        'lists as dynamic arrays in Python, NumPy arrays, list operations'),
-        ('Data Structures', 'Arrays',                'array operations, time complexity, dynamic arrays, circular arrays'),
-    ],
-    'string': [
-        ('C',               'Arrays',       'string as char array in C, string functions: strlen, strcpy, strcat, strcmp'),
-        ('Java',            'OOP Concepts', 'String class in Java, StringBuilder, StringBuffer, immutability, string pool'),
-        ('Python',          'Data Types & Variables', 'string methods in Python, slicing, formatting, f-strings, raw strings'),
-        ('Data Structures', 'Hashing',      'string hashing, rolling hash, string matching algorithms: KMP, Rabin-Karp'),
-    ],
-    'class': [
-        ('Java',  'Classes & Objects', 'class definition, constructors, access modifiers, static members in Java'),
-        ('Python', 'OOP in Python',    'class definition, __init__, self, class vs instance variables in Python'),
-        ('C++',   'Classes & Objects', 'class vs struct in C++, access specifiers, member functions, friend functions'),
-        ('OOP',   'Classes & Objects', 'OOP concept of class, object, instantiation, responsibilities of a class'),
-    ],
-    'constructor': [
-        ('Java',  'Classes & Objects',         'constructor overloading, this(), super(), default constructor, copy constructor'),
-        ('Python', 'OOP in Python',            '__init__ method, __new__, constructor behavior in Python'),
-        ('C++',   'Constructors & Destructors', 'constructor types, copy constructor, move constructor, destructor in C++'),
-    ],
-    'interface': [
-        ('Java', 'OOP Concepts',      'interface vs abstract class, default methods, functional interfaces, multiple inheritance'),
-        ('OOP',  'Interfaces',        'interface concept, contract, implementation, difference from abstract class'),
-        ('C++',  'Classes & Objects', 'pure virtual functions as interfaces in C++, abstract base class'),
-    ],
-    'operator overloading': [
-        ('C++',   'Operator Overloading', 'overloading +,-,*,/, comparison, stream operators, rules of overloading'),
-        ('Python', 'OOP in Python',       'dunder methods: __add__, __eq__, __str__, __len__ for operator overloading'),
-    ],
-    'lambda': [
-        ('Python', 'Functions & Lambda', 'lambda expressions in Python, map, filter, reduce with lambda'),
-        ('Java',   'Java 8 Features',    'lambda expressions, functional interfaces, method references in Java 8'),
-        ('C++',    'Templates',          'lambda functions in C++11, capture list, auto parameters'),
-    ],
-    'closure': [
-        ('Python', 'Functions & Lambda', 'closures in Python, nonlocal keyword, factory functions'),
-        ('Java',   'Java 8 Features',    'closures via lambda in Java, effectively final variables'),
-    ],
-    'generator': [
-        ('Python', 'Functions & Lambda', 'generators in Python, yield keyword, generator expressions, lazy evaluation'),
-        ('Java',   'Java 8 Features',    'Stream API as lazy sequences, similar concept to generators'),
-    ],
+_ALIAS_INDEX: Dict[str, str] = {}
+
+for _canon, _meta in CANONICAL_TOPICS.items():
+    for _alias in _meta["aliases"]:
+        _al = _alias.strip().lower()
+        if _al in _ALIAS_INDEX:
+            existing = _ALIAS_INDEX[_al]
+            if existing != _canon and not existing.startswith("__MULTI__"):
+                _ALIAS_INDEX[_al] = f"__MULTI__{existing}||{_canon}"
+            elif existing.startswith("__MULTI__") and _canon not in existing:
+                _ALIAS_INDEX[_al] = f"{existing}||{_canon}"
+        else:
+            _ALIAS_INDEX[_al] = _canon
+
+
+# ===========================================================================
+# SECTION 3 - PURE NOISE / GARBAGE
+# ===========================================================================
+
+_NOISE = {
+    # Single letters that are NOT valid topics
+    # NOTE: "c" is excluded here because "C" is a programming language
+    "b", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+    "n", "o", "p", "q", "r", "t", "u", "v", "w", "x", "y", "z",
+    "hello", "hi", "hey", "ok", "okay", "yes", "no", "yep", "nope",
+    "what", "how", "why", "when", "where", "who", "which",
+    "this", "that", "these", "those", "is", "are", "was", "were",
+    "good", "bad", "easy", "hard", "difficult",
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "test", "quiz", "exam", "question", "answer",
+    "abc", "xyz", "asdf", "qwerty", "aaa", "bbb", "ccc",
+    "lol", "idk", "omg", "wtf", "lmao",
 }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 3: NOISE WORDS — reject these outright
-# ═══════════════════════════════════════════════════════════════════════════
+# ===========================================================================
+# SECTION 4 - VALIDITY CHECK
+# ===========================================================================
 
-NOISE_WORDS = {
-    'test', 'quiz', 'exam', 'question', 'answer', 'study', 'learn', 'help',
-    'chapter', 'unit', 'lesson', 'subject', 'course', 'tutorial', 'notes',
-    'abc', 'xyz', 'asdf', 'qwerty', 'hello', 'hi', 'hey', 'ok', 'okay',
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    'what', 'how', 'why', 'when', 'where', 'who', 'which', 'this', 'that',
-    'good', 'bad', 'easy', 'hard', 'difficult', 'simple', 'basic', 'advanced',
-    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-}
-
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 4: KNOWN GOOD 3-LETTER ACRONYMS
-# ═══════════════════════════════════════════════════════════════════════════
-
-_VALID_ACRONYMS_3 = {
-    'sql', 'orm', 'api', 'oop', 'dns', 'tcp', 'udp', 'osi', 'css', 'git',
-    'xml', 'jwt', 'ssh', 'ftp', 'nlp', 'llm', 'gan', 'cnn', 'rnn', 'dfs',
-    'bfs', 'dsa', 'hcf', 'lcm', 'bst', 'avl', 'rbt', 'adc', 'dac', 'plc',
-    'pid', 'rpc', 'ipc', 'mmu', 'tlb', 'ram', 'rom', 'cpu', 'gpu', 'alu',
-    'ide', 'uml', 'mvc', 'mvp', 'mvvm', 'spa', 'pwa', 'cdn', 'vpc', 'iam',
-    'acl', 'rbac', 'otp', 'rsa', 'aes', 'des', 'xss', 'csrf', 'cors', 'dom',
-    'erd', 'etl', 'eda', 'kpi', 'sdlc', 'tdd', 'bdd', 'ddd', 'cqrs', 'cap',
-    'jvm', 'jre', 'jdk', 'jit', 'gcc', 'oop', 'orm', 'pep',
-}
-
-_VALID_ACRONYMS_4 = {
-    'acid', 'fifo', 'lifo', 'ajax', 'rest', 'soap', 'grpc', 'http', 'smtp',
-    'imap', 'cidr', 'ospf', 'eigr', 'vlan', 'mpls', 'raid', 'bios', 'uefi',
-    'risc', 'cisc', 'simd', 'cuda', 'open', 'ieee', 'ansi', 'mime', 'json',
-    'yaml', 'toml', 'html', 'xhtml', 'scss', 'sass', 'less', 'wasm', 'webgl',
-    'linq', 'jdbc', 'odbc', 'crud', 'olap', 'oltp', 'nosql', 'hdfs', 'yarn',
-    'hive', 'hbase', 'kube', 'helm', 'tofu', 'pulumi',
-}
+_GIBBERISH = re.compile(r'(.)\1{3,}|^[\W\d]+$', re.I)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 5: BUILD VOCABULARY STEM SET (first 4 chars of every known key)
-# Built once at module load time for fast lookup.
-# ═══════════════════════════════════════════════════════════════════════════
+_SINGLE_LETTER_TOPICS = {"c", "a"}  # valid single-letter topics
 
-def _build_known_stems():
-    stems = set()
-    for key in ALIAS_MAP:
-        for word in key.split():
-            w = word.lower().strip('.,;:')
-            if len(w) >= 4:
-                stems.add(w[:4])
-            elif len(w) == 3 and w in _VALID_ACRONYMS_3:
-                stems.add(w)
-    for key in MULTI_TOPIC_MAP:
-        for word in key.split():
-            w = word.lower().strip('.,;:')
-            if len(w) >= 4:
-                stems.add(w[:4])
-    # Add extra stems for common placement/CS vocabulary
-    # that may not appear directly in alias/multi-topic keys
-    extra = [
-        'algo', 'algor', 'data', 'prog', 'code', 'comp', 'syst', 'netw',
-        'data', 'soft', 'hard', 'arch', 'desi', 'test', 'debu', 'optim',
-        'mach', 'lear', 'deep', 'rein', 'stat', 'math', 'calc', 'line',
-        'algo', 'func', 'obje', 'clas', 'modu', 'libr', 'fram', 'tool',
-        'web', 'mobi', 'clou', 'secu', 'cryp', 'bloc', 'iote', 'robo',
-        'auto', 'cont', 'proc', 'memo', 'file', 'data', 'netw', 'wire',
-        'wire', 'sign', 'circ', 'elec', 'mech', 'ther', 'flui', 'heat',
-        'stru', 'surv', 'geot', 'conc', 'tran', 'envi', 'chem', 'reac',
-        'mass', 'dist', 'java', 'pyth', 'ruby', 'rust', 'gola', 'kotl',
-        'swif', 'type', 'java', 'scal', 'perl', 'bash', 'shel', 'make',
-        'dock', 'kube', 'jenk', 'gitl', 'awse', 'azur', 'gcpe', 'terr',
-        'ansi', 'chef', 'pupp', 'vaga', 'ngin', 'apac', 'tomc', 'guni',
-        'djan', 'flas', 'fast', 'spri', 'node', 'expr', 'reac', 'angu',
-        'vue', 'next', 'nust', 'gate', 'grap', 'rest', 'soap', 'grpc',
-        'micr', 'mono', 'serv', 'cont', 'kuber', 'helm', 'argo', 'isit',
-        'logi', 'reas', 'verb', 'engl', 'comp', 'read', 'writ', 'gram',
-        'voca', 'syno', 'anto', 'fill', 'erro', 'sent', 'para', 'idio',
-        'anal', 'quant', 'arit', 'numb', 'prim', 'frac', 'deci', 'alge',
-        'geom', 'trig', 'vect', 'matr', 'prob', 'stat', 'perm', 'comb',
-        'sequ', 'seri', 'puzz', 'logi', 'blood', 'seat', 'dire', 'codi',
-        'syll', 'venn', 'set', 'prop', 'rati', 'aver', 'simp', 'comp',
-        'prof', 'loss', 'disc', 'time', 'work', 'spee', 'dist', 'pipe',
-        'mixt', 'part', 'cale', 'cloc', 'age',
-    ]
-    for s in extra:
-        if len(s) >= 3:
-            stems.add(s[:4] if len(s) >= 4 else s)
-    return stems
-
-
-_KNOWN_STEMS = _build_known_stems()
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 6: STRICT TOPIC VALIDATOR
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Patterns that are definitely gibberish
-_GIBBERISH_RE = re.compile(
-    r'^[^aeiou\s]+$'       # no vowels at all (for single-word queries)
-    r'|(.)\1{2,}'          # same character repeated 3+ times consecutively
-    r'|^[0-9\W]+$',        # only digits and non-word characters
-    re.I
-)
-
-
-def _looks_like_real_topic(text: str) -> bool:
-    """
-    Strict heuristic: does this string look like a real academic/placement topic?
-
-    Key rules:
-    1. Reject obvious gibberish (no vowels, repeated chars, etc.)
-    2. For single words: must exactly match a known word/acronym OR be a
-       prefix of a known alias key word (so "sort" → "sorting" passes)
-    3. For multi-word queries: the COMBINATION must make sense as a placement
-       topic. We check if the full phrase is a prefix of any alias key,
-       or if all individual words are known topic words.
-       We do NOT allow random word combinations like "data introduce".
-    """
-    stripped = text.replace(' ', '').lower()
-
-    # Minimum length
-    if len(stripped) < 3:
-        return False
-
-    # All digits
-    if stripped.isdigit():
-        return False
-
-    # Must have at least one letter
-    if not re.search(r'[a-z]', stripped, re.I):
-        return False
-
-    words = re.split(r'[\s\-/&]+', text.lower())
-    words = [w.strip('.,;:()[]') for w in words if w.strip('.,;:()[]')]
-
-    # Basic gibberish check for single words
-    if len(words) == 1:
-        word = words[0]
-        vowels = sum(1 for c in word if c in 'aeiou')
-        letters = sum(1 for c in word if c.isalpha())
-        if letters == 0:
-            return False
-        if vowels == 0 and len(word) > 2:
-            return False
-        if letters > 4 and (vowels / letters) < 0.15:
-            return False
-        if _GIBBERISH_RE.search(word):
-            return False
-
-    # ── Known acronyms (exact) ─────────────────────────────────────────────
-    for word in words:
-        wl = word.lower()
-        if len(wl) == 3 and wl in _VALID_ACRONYMS_3:
-            return True
-        if len(wl) <= 6 and wl in _VALID_ACRONYMS_4:
-            return True
-
-    # ── Full phrase prefix check against alias keys ────────────────────────
-    # "sort" → alias key "sorting" → valid
-    # "time and" → alias key "time and work" → valid
-    # "data intro" → no alias key starts with "data intro" → fails
+def _is_valid_query(text: str) -> bool:
+    """Return True if the string is worth trying to resolve."""
     clean = text.strip().lower()
-    for alias_key in ALIAS_MAP:
-        if alias_key.startswith(clean) and len(clean) >= 3:
-            return True
-        if clean.startswith(alias_key):  # query contains a full alias
-            return True
 
-    for multi_key in MULTI_TOPIC_MAP:
-        if multi_key.startswith(clean) and len(clean) >= 3:
-            return True
-        if clean.startswith(multi_key):
-            return True
+    if len(clean.replace(' ', '')) < 1:
+        return False
 
-    # ── Known full words (curated placement vocabulary) ───────────────────
-    # For single-word queries: word must be in this set OR be a prefix of
-    # any word in this set that is >= 6 chars (to allow "sort"→"sorting").
-    # For multi-word queries: ALL words must be in the set (no random combos).
-    _FULL_WORDS = {
-        # Programming languages
-        'c','cpp','java','python','javascript','typescript','golang','rust',
-        'kotlin','swift','ruby','php','scala','perl','matlab','assembly','dart',
-        # CS topics (single words)
-        'algorithms','algorithm','recursion','sorting','searching','hashing',
-        'queues','stacks','trees','graphs','pointers','arrays','array',
-        'structures','structure','networks','network','database','databases',
-        'threads','processes','memory','paging','deadlock','scheduling',
-        'normalization','indexing','transactions','joins','sql','nosql',
-        'programming','software','hardware','architecture','design','analysis',
-        'management','control','signal','processing','communication',
-        'embedded','thermodynamics','mechanics','fluid','heat','concrete',
-        'surveying','structural','environmental','transportation',
-        'chemical','reaction','transfer','manufacturing','automobile',
-        'microprocessors','microprocessor','transistor','amplifier',
-        'transformer','machine','machines','materials','electronics',
-        # Languages/frameworks
-        'python','java','javascript','typescript','golang','rust','kotlin',
-        'swift','ruby','scala','perl','matlab','docker','kubernetes',
-        'linux','bash','cloud','react','angular','django','flask','spring',
-        'mongodb','postgresql','mysql','redis','numpy','pandas','tensorflow',
-        # AI/ML
-        'learning','neural','intelligence','artificial','vision','natural',
-        'language','statistics','probability','regression','classification',
-        'clustering','deep','machine',
-        # Aptitude
-        'arithmetic','number','percentage','profit','ratio','average',
-        'interest','simple','compound','probability','permutations',
-        'combinations','mixtures','alligations','partnership','calendar',
-        'clocks','reasoning','logical','interpretation','aptitude',
-        'percentage','boats','streams','trains','pipes','cisterns',
-        'speed','distance','time','work','ages','series','puzzles',
-        'blood','direction','syllogisms','seating','coding','calendar',
-        # Verbal
-        'grammar','vocabulary','comprehension','synonyms','antonyms',
-        'sentence','paragraph','jumbles','substitution','idioms',
-        'phrases','prepositions','conjunctions','narration','completion',
-        'tenses','voice','analogies','synonyms',
-        # Connector words allowed in multi-word topic names
-        'and','&','of','in','to','for','with','vs',
+    if not re.search(r'[a-zA-Z]', clean):
+        return False
+
+    if clean in _NOISE:
+        return False
+
+    # Allow known single-letter topics
+    if clean in _SINGLE_LETTER_TOPICS:
+        return True
+
+    # Allow short known acronyms (2-4 chars all letters) if in alias index
+    if len(clean) <= 4 and clean.isalpha() and clean in _ALIAS_INDEX:
+        return True
+
+    if len(clean.replace(' ', '')) < 2:
+        return False
+
+    for word in re.split(r'[\s\-/&]+', clean):
+        word = word.strip('.,;:')
+        if len(word) <= 2:
+            continue
+        if _GIBBERISH.search(word):
+            return False
+        letters = [c for c in word if c.isalpha()]
+        if len(letters) > 4:
+            vowels = sum(1 for c in letters if c in 'aeiou')
+            if vowels / len(letters) < 0.1:
+                return False
+
+    return True
+
+
+# ===========================================================================
+# SECTION 5 - CORE RESOLVER
+# ===========================================================================
+
+def _make_result(canonical: str) -> dict:
+    """Build a 'single' result dict from a canonical topic name."""
+    meta = CANONICAL_TOPICS[canonical]
+    return {
+        "status":        "single",
+        "topic":         meta["subcategory"],
+        "canonical":     canonical,
+        "subtopic":      "",
+        "category":      meta["category"],
+        "ai_context":    meta["ai_context"],
+        "display_label": canonical,
     }
 
-    # All alias key words (for prefix matching on single words)
-    _alias_words = set()
-    for key in ALIAS_MAP:
-        for w in key.split():
-            _alias_words.add(w)
-    for key in MULTI_TOPIC_MAP:
-        for w in key.split():
-            _alias_words.add(w)
-
-    if len(words) == 1:
-        wl = words[0].lower()
-        # Exact match in known words
-        if wl in _FULL_WORDS:
-            return True
-        # Prefix of any alias word (min 4 chars, word must be >= 5 chars long)
-        for aw in _alias_words:
-            if len(wl) >= 4 and len(aw) >= 5 and aw.startswith(wl):
-                return True
-        # Prefix of any known full word
-        for fw in _FULL_WORDS:
-            if len(wl) >= 4 and len(fw) >= 5 and fw.startswith(wl):
-                return True
-        return False
-
-    else:
-        # Multi-word: ALL non-connector words must be known
-        connectors = {'and','&','of','in','to','for','with','vs','a','an','the'}
-        meaningful_words = [w for w in words if w not in connectors]
-        if not meaningful_words:
-            return False
-
-        all_known = all(
-            w in _FULL_WORDS or w in _alias_words or
-            any(fw.startswith(w) for fw in _FULL_WORDS if len(w) >= 4 and len(fw) >= 5)
-            for w in meaningful_words
-        )
-        return all_known
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 7: CORE RESOLVER
-# ═══════════════════════════════════════════════════════════════════════════
 
 def resolve_topic(user_input: str) -> dict:
     """
-    Resolves a user's search input to the correct topic/subtopic.
+    Resolve a user search query to a canonical placement topic.
 
-    Returns a dict with:
-        status: 'single'   → one definitive match, go directly to quiz
-                'multi'    → multiple contexts, show picker to user
-                'new'      → genuinely new topic, add silently and quiz
-                'invalid'  → not a real topic, show friendly error
-
-        For 'single':
-            topic, subtopic, ai_context, display_label
-
-        For 'multi':
-            options: list of {topic, subtopic, ai_context, display_label}
-
-        For 'new':
-            topic (= user input, title-cased), ai_context
-
-        For 'invalid':
-            message
+    Returns one of:
+        { status: 'single',  topic, canonical, subtopic, category,
+                             ai_context, display_label }
+        { status: 'multi',   options: [...], query }
+        { status: 'new',     topic, ai_context }
+        { status: 'invalid', message }
     """
     raw   = user_input.strip()
-    clean = raw.lower()
-    clean = re.sub(r'\s+', ' ', clean)   # normalise whitespace
+    clean = re.sub(r'\s+', ' ', raw.lower()).strip()
 
-    # ── 1. Reject empty / too short ───────────────────────────────────────
-    if len(clean.replace(' ', '')) < 2:
-        return {'status': 'invalid', 'message': 'Please type at least 2 characters.'}
-
-    # ── 2. Reject noise words ─────────────────────────────────────────────
-    if clean in NOISE_WORDS:
-        return {'status': 'invalid', 'message': f'"{raw}" is too generic to be a topic. Try something more specific.'}
-
-    # ── 3. Check multi-topic map (exact) ──────────────────────────────────
-    if clean in MULTI_TOPIC_MAP:
-        options = []
-        for (topic, subtopic, ctx) in MULTI_TOPIC_MAP[clean]:
-            options.append({
-                'topic':         topic,
-                'subtopic':      subtopic,
-                'ai_context':    ctx,
-                'display_label': f'{topic} → {subtopic}',
-            })
-        return {'status': 'multi', 'options': options, 'query': raw}
-
-    # ── 4. Check multi-topic map (prefix / contained) ─────────────────────
-    # "recur" matches "recursion", "sort" matches "sorting algorithm" etc.
-    for key, entries in MULTI_TOPIC_MAP.items():
-        # Exact containment
-        if key in clean or clean in key:
-            options = []
-            for (topic, subtopic, ctx) in entries:
-                options.append({
-                    'topic':         topic,
-                    'subtopic':      subtopic,
-                    'ai_context':    ctx,
-                    'display_label': f'{topic} → {subtopic}',
-                })
-            return {'status': 'multi', 'options': options, 'query': raw}
-        # Prefix: query is a prefix of the key ("recur" → "recursion")
-        if len(clean) >= 4 and key.startswith(clean):
-            options = []
-            for (topic, subtopic, ctx) in entries:
-                options.append({
-                    'topic':         topic,
-                    'subtopic':      subtopic,
-                    'ai_context':    ctx,
-                    'display_label': f'{topic} → {subtopic}',
-                })
-            return {'status': 'multi', 'options': options, 'query': raw}
-
-    # ── 5. Check alias map (exact) ────────────────────────────────────────
-    if clean in ALIAS_MAP:
-        topic, subtopic, ctx = ALIAS_MAP[clean]
+    # 1. Basic validity
+    if not _is_valid_query(clean):
+        if len(clean.replace(' ', '')) < 2:
+            return {"status": "invalid", "message": "Please type at least 2 characters."}
         return {
-            'status':        'single',
-            'topic':         topic,
-            'subtopic':      subtopic,
-            'ai_context':    ctx,
-            'display_label': f'{topic} → {subtopic}',
-        }
-
-    # ── 6. Check alias map (partial / contained match) ────────────────────
-    # Priority: longer key match wins (most specific).
-    # For prefix matching: query must be a prefix of a key word (sort→sorting).
-    # Reject if query matches only a substring in the middle of a key word.
-    best      = None
-    best_score = 0
-
-    for key, (topic, subtopic, ctx) in ALIAS_MAP.items():
-        score = 0
-
-        # a) Key is fully contained in the query ("boats" in "boats and rivers")
-        if key in clean:
-            score = len(key) * 10  # exact substring wins
-
-        # b) Query is a PREFIX of the key ("sort" is prefix of "sorting")
-        #    Only match if query >= 4 chars to avoid too-short prefixes
-        elif len(clean) >= 4 and key.startswith(clean):
-            score = len(clean) * 8  # prefix match
-
-        # c) Query is fully contained in a key ("sort" in "sorting algorithms")
-        #    But only if the query forms a word boundary (starts at word start)
-        elif len(clean) >= 4:
-            key_words = key.split()
-            for kw in key_words:
-                if kw.startswith(clean):
-                    score = len(clean) * 6
-                    break
-
-        if score > best_score:
-            best_score = score
-            best = (topic, subtopic, ctx)
-
-    if best:
-        topic, subtopic, ctx = best
-        return {
-            'status':        'single',
-            'topic':         topic,
-            'subtopic':      subtopic,
-            'ai_context':    ctx,
-            'display_label': f'{topic} → {subtopic}',
-        }
-
-    # ── 7. Vocabulary check — is this even a real topic? ──────────────────
-    if not _looks_like_real_topic(clean):
-        return {
-            'status':  'invalid',
-            'message': (
-                f'"{raw}" doesn\'t look like a recognisable placement topic. '
-                'Try terms like "pointers", "SQL joins", "time complexity", '
+            "status":  "invalid",
+            "message": (
+                f'"{raw}" doesn\'t look like a placement topic. '
+                'Try something like "sorting algorithms", "SQL joins", '
                 '"boats and streams", or "reading comprehension".'
             ),
         }
 
-    # ── 8. Genuinely new topic — return for user to confirm ───────────────
+    # 2. Exact alias match
+    hit = _ALIAS_INDEX.get(clean)
+    if hit:
+        if hit.startswith("__MULTI__"):
+            canons = [c for c in hit[len("__MULTI__"):].split("||")
+                      if c in CANONICAL_TOPICS]
+            options = [_make_result(c) for c in canons]
+            return {"status": "multi", "options": options, "query": raw}
+        return _make_result(hit)
+
+    # 3. Prefix match (query is prefix of an alias, min 4 chars)
+    if len(clean) >= 4:
+        prefix_hits: List[str] = []
+        seen: set = set()
+        for alias, canon in _ALIAS_INDEX.items():
+            if not alias.startswith(clean):
+                continue
+            entries = ([c for c in canon[len("__MULTI__"):].split("||")]
+                       if canon.startswith("__MULTI__") else [canon])
+            for c in entries:
+                if c not in seen and c in CANONICAL_TOPICS:
+                    prefix_hits.append(c)
+                    seen.add(c)
+
+        if len(prefix_hits) == 1:
+            return _make_result(prefix_hits[0])
+        if len(prefix_hits) > 1:
+            options = [_make_result(c) for c in prefix_hits]
+            return {"status": "multi", "options": options, "query": raw}
+
+    # 4. Substring match (alias contains the query, min 5 chars)
+    if len(clean) >= 5:
+        sub_hits: List[str] = []
+        seen2: set = set()
+        for alias, canon in _ALIAS_INDEX.items():
+            if clean not in alias:
+                continue
+            entries = ([c for c in canon[len("__MULTI__"):].split("||")]
+                       if canon.startswith("__MULTI__") else [canon])
+            for c in entries:
+                if c not in seen2 and c in CANONICAL_TOPICS:
+                    sub_hits.append(c)
+                    seen2.add(c)
+
+        if len(sub_hits) == 1:
+            return _make_result(sub_hits[0])
+        if len(sub_hits) > 1:
+            options = [_make_result(c) for c in sub_hits]
+            return {"status": "multi", "options": options, "query": raw}
+
+    # 5. Genuinely new topic
     title_cased = raw.title()
     return {
-        'status':      'new',
-        'topic':       title_cased,
-        'ai_context':  (
-            f'{title_cased} — core concepts, fundamentals, and applied problems '
-            f'as tested in engineering placement exams and technical interviews.'
+        "status":     "new",
+        "topic":      title_cased,
+        "ai_context": (
+            f"{title_cased} — core concepts, theory, and applied problems "
+            f"as tested in engineering placement exams and technical interviews."
         ),
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# SECTION 8: AI CONTEXT BUILDER
-# ═══════════════════════════════════════════════════════════════════════════
+# ===========================================================================
+# SECTION 6 - AI CONTEXT BUILDER
+# ===========================================================================
 
 def build_ai_context(topic: str, subtopic: str, ai_context: str = '') -> str:
-    """
-    Returns a rich context string to inject into the AI prompt so questions
-    are about the right concept, not just the keyword.
-    """
+    """Compose the context string injected into the AI prompt."""
     if ai_context:
+        first_word = subtopic.split()[0] if subtopic else topic.split()[0]
         return (
             f"Topic: {topic}\n"
             f"Subtopic: {subtopic}\n"
-            f"Context: Generate questions specifically about {ai_context}. "
-            f"Do NOT generate generic questions about the word '{subtopic.split()[0]}' — "
-            f"focus strictly on the placement/aptitude/CS context described above."
+            f"Context: Generate questions ONLY about: {ai_context}\n"
+            f"Do NOT generate questions about the literal/everyday meaning of "
+            f'"{first_word}" - focus strictly on the placement exam context above.'
         )
-    return f"Topic: {topic}\nSubtopic: {subtopic}"
+    return f"Topic: {topic}\nSubtopic: {subtopic if subtopic else topic}"
+
+
+# ===========================================================================
+# SECTION 7 - QUICK SELF-TEST
+# ===========================================================================
+
+if __name__ == "__main__":
+    tests = [
+        # Technical - languages
+        "c", "java", "python", "cpp", "golang", "js", "sql",
+        # Technical - CS core
+        "dsa", "os", "dbms", "cn", "oop",
+        "dp", "greedy", "bst", "heap", "bfs", "dfs",
+        "dijkstra", "sorting", "binary search",
+        "normalization", "bcnf", "joins", "inner join",
+        "acid", "indexing",
+        "deadlock", "paging", "semaphore", "round robin",
+        "osi", "tcp", "dns", "subnetting",
+        "design patterns", "singleton", "solid",
+        "system design", "microservices", "kafka",
+        "agile", "sdlc", "git",
+        "machine learning", "nlp", "cnn",
+        "docker", "kubernetes",
+        # ECE/EEE
+        "vlsi", "verilog", "fpga",
+        "op amp", "bjt", "mosfet",
+        "pid", "root locus", "bode",
+        # MECH
+        "thermodynamics", "bernoulli", "som",
+        # CIVIL
+        "rcc", "geotechnical", "surveying",
+        # Aptitude
+        "hcf", "percentage", "profit",
+        "si ci", "pipes", "trains", "boats",
+        "permutation", "probability", "syllogism",
+        "seating", "blood relation", "coding decoding",
+        "data interpretation", "bar chart",
+        # Verbal
+        "grammar", "synonyms", "comprehension",
+        "error detection", "para jumbles", "soft skills",
+        # Prefix matches
+        "sort", "sorti", "perm", "prob",
+        "boat", "encap", "inherit",
+        # Invalid
+        "aaaa", "1234", "hello", "xyz", "qwerty",
+        # New
+        "quantum computing", "blockchain",
+    ]
+
+    print(f"\n{'─'*75}")
+    print(f"{'QUERY':<35} {'STATUS':<10} RESULT")
+    print(f"{'─'*75}")
+    for q in tests:
+        r = resolve_topic(q)
+        st = r["status"]
+        if st == "single":
+            detail = r["canonical"]
+        elif st == "multi":
+            detail = "MULTI: " + " | ".join(o["canonical"] for o in r["options"][:3])
+        elif st == "new":
+            detail = "NEW: " + r["topic"]
+        else:
+            detail = "INVALID"
+        print(f"{q:<35} {st:<10} {detail}")
+    print(f"{'─'*75}\n")
