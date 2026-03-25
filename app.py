@@ -441,14 +441,14 @@ def grand_test():
         from ai_question_generator import determine_difficulty_level
         difficulty = determine_difficulty_level(user_scores, 'Grand Test', '')
 
-        supabase.table('user_scores').insert({
+        supabase.table('user_scores').upsert({
             'user_email': user_email,
             'topic': 'Grand Test',
             'subtopic': '',
             'score': score,
             'total_questions': len(all_questions),
             'difficulty': difficulty
-        }).execute()
+        }, on_conflict='user_email,topic,subtopic').execute()
 
         # Clean up saved progress and server-side store
         try:
