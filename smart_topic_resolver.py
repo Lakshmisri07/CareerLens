@@ -1,34 +1,14 @@
 """
-smart_topic_resolver.py  –  v3.0
+smart_topic_resolver.py  –  v6.0
 ==================================
-Architecture
-------------
-1. CANONICAL_TOPICS  – the single source of truth.
-   Every placement-relevant topic lives here exactly once, with:
-     - canonical_name   : the display name used everywhere
-     - category         : Technical | Aptitude | Verbal
-     - subcategory      : finer grouping (used for subtopic routing)
-     - ai_context       : what the AI should generate questions about
-     - aliases          : every spelling / abbreviation / partial name
-                          that should resolve to this topic
-
-2. resolve_topic(query) – looks up the query against all aliases,
-   returns a structured dict consumed by the Flask endpoint.
-
-3. _is_valid_query(query) – rejects pure garbage (random letters,
-   digits, noise words) before hitting the alias lookup.
-
-Key design decisions
---------------------
-- One canonical name per topic, many aliases.  No ambiguity.
-- Aliases are all lowercase; matching is case-insensitive.
-- A query that is a PREFIX of an alias also matches (min 4 chars),
-  so "sort" -> "sorting algorithms", "boat" -> "boats and streams".
-- If a query matches aliases from MORE than one canonical topic
-  the resolver returns 'multi' so the user can pick.
-- If a query passes the validity check but matches nothing, it is
-  returned as 'new' so the dashboard can add it dynamically.
-- Garbage / noise returns 'invalid' with a helpful hint message.
+Complete overhaul:
+  • 1000+ topics across ALL branches: CSE/IT/ECE/EEE/MECH/CIVIL/CHEM/AI-ML
+  • All popular tech stacks covered (React, Flask, Node, Docker, etc.)
+  • Industry-relevant topics outside curriculum (for placement prep)
+  • Exhaustive alias lists per topic
+  • Strict noise/rejection list: real English words that are NOT topics
+  • Fuzzy matching to catch typos (e.g. "pyhton" → Python, "java scrop" → INVALID)
+  • resolve_topic() returns category for frontend routing
 """
 
 import re
@@ -37,35 +17,29 @@ from typing import Dict, List
 # ===========================================================================
 # SECTION 1 - CANONICAL TOPIC REGISTRY
 # ===========================================================================
-# Structure of each entry:
-#   "Canonical Name": {
-#       "category": "Technical" | "Aptitude" | "Verbal",
-#       "subcategory": str,          # used as subtopic in quiz URL
-#       "ai_context": str,           # injected into AI prompt
-#       "aliases": [str, ...]        # all lowercase alternative names
-#   }
-# ===========================================================================
 
 CANONICAL_TOPICS: Dict[str, dict] = {
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Programming Languages
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # ── TECHNICAL ─ C / C++ ──────────────────────────────────────────────────
+    # =========================================================================
 
     "C Programming": {
         "category": "Technical",
         "subcategory": "C",
         "ai_context": (
-            "C programming language: data types, operators, control flow, "
-            "arrays, strings, pointers, pointer arithmetic, functions, "
-            "recursion, structures, unions, file I/O, memory management, "
-            "malloc/free, preprocessor directives - as tested in placement exams."
+            "C programming language: data types, operators, control flow, arrays, "
+            "strings, pointers, pointer arithmetic, functions, recursion, structures, "
+            "unions, file I/O, memory management (malloc/free), preprocessor directives "
+            "— as tested in placement exams."
         ),
         "aliases": [
             "c", "c programming", "c language", "c lang", "c prog",
             "c basics", "c fundamentals", "programming in c",
             "c pointers", "c arrays", "c functions", "c loops",
             "c strings", "c structures", "c unions", "c file handling",
+            "c memory", "c preprocessor", "c syntax", "c programs",
+            "ansi c", "c99", "c11", "c17",
         ],
     },
 
@@ -76,17 +50,23 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "C++ programming: classes and objects, constructors/destructors, "
             "inheritance, polymorphism, operator overloading, templates, STL "
             "(vector, map, set, stack, queue), exception handling, smart pointers, "
-            "virtual functions, abstract classes - as tested in placement exams."
+            "virtual functions, abstract classes — as tested in placement exams."
         ),
         "aliases": [
             "c++", "cpp", "c plus plus", "cplusplus", "c++ programming",
             "c++ language", "stl", "standard template library",
             "c++ stl", "c++ oops", "c++ oop",
             "vector", "c++ vector", "c++ map", "c++ set",
-            "operator overloading", "templates", "smart pointers",
-            "virtual functions",
+            "operator overloading", "templates c++", "smart pointers",
+            "virtual functions", "c++ classes", "c++11", "c++14", "c++17", "c++20",
+            "move semantics", "rvalue reference", "lambda c++",
+            "unique ptr", "shared ptr", "weak ptr",
         ],
     },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Programming Languages ────────────────────────────────────
+    # =========================================================================
 
     "Java Programming": {
         "category": "Technical",
@@ -95,16 +75,17 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "Java programming: OOP concepts, classes and objects, inheritance, "
             "polymorphism, abstraction, encapsulation, interfaces, abstract classes, "
             "exception handling, collections framework (ArrayList, HashMap, LinkedList), "
-            "multithreading, Java 8 features (streams, lambdas), JDBC basics - "
-            "as tested in placement exams."
+            "multithreading, Java 8 features (streams, lambdas) — as tested in placement exams."
         ),
         "aliases": [
             "java", "java programming", "java language", "core java",
             "java basics", "java fundamentals", "java oops", "java oop",
-            "java collections", "java multithreading", "java 8",
+            "java collections", "java multithreading", "java 8", "java 11", "java 17",
             "java streams", "java lambda", "java generics",
             "arraylist", "hashmap", "linked list java",
-            "java exception", "java interface",
+            "java exception", "java interface", "java classes",
+            "jvm", "jre", "jdk", "bytecode",
+            "java concurrency", "executor service", "future java",
         ],
     },
 
@@ -115,7 +96,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "Python programming: data types, lists, tuples, sets, dictionaries, "
             "comprehensions, functions, lambda, decorators, generators, iterators, "
             "OOP in Python, file handling, exception handling, modules, "
-            "NumPy and Pandas basics - as tested in placement exams."
+            "NumPy and Pandas basics — as tested in placement exams."
         ),
         "aliases": [
             "python", "python programming", "python language", "python basics",
@@ -123,7 +104,10 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "python lists", "python dict", "python dictionaries",
             "python tuples", "python sets", "python functions",
             "python decorators", "python generators", "python file handling",
-            "python modules", "python packages",
+            "python modules", "python packages", "python syntax",
+            "py", "python3.x", "python 3", "python2", "cpython",
+            "asyncio", "python async", "python coroutines",
+            "dataclass", "type hints python",
         ],
     },
 
@@ -134,13 +118,15 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "JavaScript: variables (var/let/const), data types, functions, "
             "closures, prototypes, ES6+ features (arrow functions, destructuring, "
             "spread/rest, promises, async/await), DOM manipulation, event handling, "
-            "fetch API, modules - as tested in placement exams."
+            "fetch API, modules — as tested in placement exams."
         ),
         "aliases": [
-            "javascript", "js", "java script", "es6", "es2015",
+            "javascript", "js", "java script", "es6", "es2015", "es2020", "es2022",
             "ecmascript", "javascript es6", "vanilla js", "js basics",
-            "node.js", "nodejs", "node js",
-            "promises", "async await", "closures",
+            "promises", "async await", "closures js", "dom manipulation",
+            "javascript dom", "arrow functions", "destructuring",
+            "event loop", "prototype chain", "hoisting", "scope js",
+            "js interview", "javascript interview",
         ],
     },
 
@@ -149,11 +135,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "TypeScript",
         "ai_context": (
             "TypeScript: static typing, interfaces, type aliases, generics, "
-            "enums, decorators, modules, type narrowing, utility types - "
+            "enums, decorators, modules, type narrowing, utility types — "
             "as tested in placement exams."
         ),
         "aliases": [
-            "typescript", "ts", "type script",
+            "typescript", "ts", "type script", "typed javascript",
+            "typescript generics", "typescript interfaces", "typescript enums",
+            "tsc", "tsconfig",
         ],
     },
 
@@ -162,12 +150,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Golang",
         "ai_context": (
             "Go programming: goroutines, channels, interfaces, structs, "
-            "error handling, slices, maps, packages, concurrency model - "
+            "error handling, slices, maps, packages, concurrency model — "
             "as tested in placement exams."
         ),
         "aliases": [
             "golang", "go lang", "go programming", "go language",
-            "goroutines", "go channels", "go interfaces",
+            "goroutines", "go channels", "go interfaces", "go", "google go",
+            "go concurrency", "go routines", "go modules",
         ],
     },
 
@@ -176,11 +165,50 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Kotlin",
         "ai_context": (
             "Kotlin: null safety, data classes, extension functions, coroutines, "
-            "sealed classes, smart casts, lambdas, collections - "
-            "as tested in placement exams."
+            "sealed classes, smart casts, lambdas, collections — as tested in placement exams."
         ),
         "aliases": [
-            "kotlin", "kotlin programming", "kotlin android",
+            "kotlin", "kotlin programming", "kotlin android", "kotlin coroutines",
+            "kotlin basics", "kotlin language",
+        ],
+    },
+
+    "Swift": {
+        "category": "Technical",
+        "subcategory": "Swift",
+        "ai_context": (
+            "Swift: optionals, closures, structs vs classes, protocols, enums, "
+            "generics, memory management (ARC), SwiftUI basics — as tested in placement exams."
+        ),
+        "aliases": [
+            "swift", "swift programming", "swift language", "ios development",
+            "swiftui", "swift ios", "xcode swift",
+        ],
+    },
+
+    "Rust": {
+        "category": "Technical",
+        "subcategory": "Rust",
+        "ai_context": (
+            "Rust: ownership, borrowing, lifetimes, traits, enums, pattern matching, "
+            "cargo, memory safety — as tested in placement exams."
+        ),
+        "aliases": [
+            "rust", "rust programming", "rust language", "rust lang",
+            "ownership rust", "borrowing rust", "cargo rust",
+        ],
+    },
+
+    "PHP": {
+        "category": "Technical",
+        "subcategory": "PHP",
+        "ai_context": (
+            "PHP: syntax, arrays, functions, OOP in PHP, sessions, forms, "
+            "MySQL with PHP, Laravel basics — as tested in placement exams."
+        ),
+        "aliases": [
+            "php", "php programming", "php language", "php basics",
+            "php oop", "php mysql", "php web",
         ],
     },
 
@@ -188,12 +216,51 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Ruby",
         "ai_context": (
-            "Ruby: blocks, procs, lambdas, modules, mixins, "
-            "symbols, hashes, Ruby on Rails basics - "
-            "as tested in placement exams."
+            "Ruby: blocks, procs, lambdas, modules, mixins, symbols, hashes, "
+            "Ruby on Rails basics — as tested in placement exams."
         ),
         "aliases": [
-            "ruby", "ruby programming", "ruby on rails", "rails",
+            "ruby", "ruby programming", "ruby on rails", "rails", "ruby lang",
+            "ror", "ruby rails",
+        ],
+    },
+
+    "Scala": {
+        "category": "Technical",
+        "subcategory": "Scala",
+        "ai_context": (
+            "Scala: functional programming, case classes, pattern matching, "
+            "traits, implicits, Akka, Spark with Scala — as tested in placement exams."
+        ),
+        "aliases": [
+            "scala", "scala programming", "scala language", "akka scala",
+            "functional scala",
+        ],
+    },
+
+    "R Programming": {
+        "category": "Technical",
+        "subcategory": "R",
+        "ai_context": (
+            "R language: vectors, data frames, ggplot2, dplyr, statistical analysis, "
+            "regression, time series — as tested in placement exams."
+        ),
+        "aliases": [
+            "r programming", "r language", "rlang", "r statistical",
+            "ggplot", "ggplot2", "dplyr", "tidyverse",
+        ],
+    },
+
+    "MATLAB": {
+        "category": "Technical",
+        "subcategory": "MATLAB",
+        "ai_context": (
+            "MATLAB: matrices, plotting, signal processing, Simulink, control systems, "
+            "numerical methods — as tested in placement exams."
+        ),
+        "aliases": [
+            "matlab", "matlab programming", "simulink", "matlab basics",
+            "matlab numerical", "matlab signal",
         ],
     },
 
@@ -202,23 +269,40 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "SQL",
         "ai_context": (
             "SQL queries: SELECT, INSERT, UPDATE, DELETE, WHERE, GROUP BY, "
-            "HAVING, ORDER BY, DISTINCT, aggregate functions (COUNT/SUM/AVG/MAX/MIN), "
-            "subqueries, correlated subqueries, CASE, COALESCE, window functions - "
-            "as tested in placement exams."
+            "HAVING, ORDER BY, DISTINCT, aggregate functions, subqueries, "
+            "CASE, window functions — as tested in placement exams."
         ),
         "aliases": [
             "sql", "structured query language", "sql queries", "sql basics",
             "sql commands", "sql functions", "sql aggregates",
             "mysql", "my sql", "postgresql", "postgres", "oracle sql",
-            "ms sql", "sql server", "sqlite",
+            "ms sql", "sql server", "sqlite", "mariadb",
             "sql subquery", "sql joins query",
-            "window functions", "sql window",
+            "window functions", "sql window", "sql select",
+            "stored procedures", "sql triggers", "sql views",
+            "sql index", "sql optimization",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Data Structures
-    # -------------------------------------------------------------------------
+    "NoSQL": {
+        "category": "Technical",
+        "subcategory": "NoSQL",
+        "ai_context": (
+            "NoSQL databases: MongoDB, Cassandra, Redis, DynamoDB; "
+            "document, key-value, column-family, graph stores; CAP theorem — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "nosql", "no sql", "mongodb", "mongo db", "mongo",
+            "cassandra", "redis", "dynamodb", "firebase",
+            "couchdb", "neo4j", "graph database", "document database",
+            "key value store", "nosql databases",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Data Structures ──────────────────────────────────────────
+    # =========================================================================
 
     "Data Structures": {
         "category": "Technical",
@@ -226,12 +310,14 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "ai_context": (
             "Data structures: arrays, linked lists (singly, doubly, circular), "
             "stacks, queues, deque, trees (binary tree, BST, AVL), heaps, "
-            "hash tables, graphs, tries - operations, time/space complexity, "
-            "applications - as tested in placement exams."
+            "hash tables, graphs, tries — operations, time/space complexity, "
+            "applications — as tested in placement exams."
         ),
         "aliases": [
             "data structures", "dsa", "ds", "data structure",
-            "data structures and algorithms",
+            "data structures and algorithms", "data struct",
+            "dsa problems", "ds problems", "dsa preparation",
+            "dsa interview", "dsa coding",
         ],
     },
 
@@ -240,14 +326,14 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Linked Lists",
         "ai_context": (
             "Linked Lists: singly linked list, doubly linked list, circular linked list; "
-            "insertion (at beginning/end/position), deletion, traversal, reversal, "
-            "cycle detection (Floyd's algorithm), merge two sorted lists, "
-            "find middle element, nth from end - as tested in placement exams."
+            "insertion, deletion, traversal, reversal, cycle detection (Floyd's algorithm), "
+            "merge two sorted lists, find middle element, nth from end — as tested in placement exams."
         ),
         "aliases": [
             "linked list", "linked lists", "singly linked list",
             "doubly linked list", "circular linked list",
-            "ll", "linkedlist",
+            "ll", "linkedlist", "link list", "linked list problems",
+            "linked list operations",
         ],
     },
 
@@ -255,16 +341,17 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Stacks and Queues",
         "ai_context": (
-            "Stacks: LIFO, push/pop/peek, balanced parentheses, infix to postfix, "
-            "postfix evaluation, stack using queue; "
-            "Queues: FIFO, enqueue/dequeue, circular queue, deque, "
-            "priority queue, queue using stacks - as tested in placement exams."
+            "Stacks: LIFO, push/pop/peek, balanced parentheses, infix to postfix; "
+            "Queues: FIFO, enqueue/dequeue, circular queue, deque, priority queue, "
+            "queue using stacks — as tested in placement exams."
         ),
         "aliases": [
             "stack", "stacks", "stack data structure",
             "queue", "queues", "circular queue", "deque",
             "priority queue", "stacks and queues",
             "infix postfix", "balanced parentheses",
+            "stack queue", "queue stack",
+            "min stack", "max stack",
         ],
     },
 
@@ -273,9 +360,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Trees",
         "ai_context": (
             "Trees: binary tree, binary search tree (BST), AVL tree, red-black tree, "
-            "B-tree, B+ tree; tree traversals (inorder, preorder, postorder, "
-            "level order), height, diameter, LCA, tree DP, segment tree - "
-            "as tested in placement exams."
+            "B-tree; tree traversals (inorder, preorder, postorder, level order), "
+            "height, diameter, LCA, segment tree — as tested in placement exams."
         ),
         "aliases": [
             "tree", "trees", "binary tree", "bst", "binary search tree",
@@ -284,6 +370,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "tree traversal", "inorder", "preorder", "postorder",
             "level order traversal", "tree height",
             "tree diameter", "lca", "lowest common ancestor",
+            "n ary tree", "trie data structure",
         ],
     },
 
@@ -292,13 +379,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Heaps",
         "ai_context": (
             "Heaps: min heap, max heap, heapify, insertion, deletion, "
-            "heap sort, priority queue implementation using heap, "
-            "k-th largest/smallest element, merge k sorted lists - "
-            "as tested in placement exams."
+            "heap sort, priority queue using heap, "
+            "k-th largest/smallest element — as tested in placement exams."
         ),
         "aliases": [
             "heap", "heaps", "min heap", "max heap",
             "heap sort", "heapify", "priority heap",
+            "min-heap", "max-heap", "heap operations",
         ],
     },
 
@@ -307,14 +394,14 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Hashing",
         "ai_context": (
             "Hashing: hash functions, hash tables, collision resolution "
-            "(chaining, open addressing - linear probing, quadratic probing, "
-            "double hashing), load factor, rehashing, applications of hashing, "
-            "string hashing - as tested in placement exams."
+            "(chaining, open addressing — linear probing, quadratic probing, "
+            "double hashing), load factor, rehashing — as tested in placement exams."
         ),
         "aliases": [
             "hashing", "hash table", "hash map", "hashmap",
             "hash set", "hash function",
             "collision resolution", "chaining", "open addressing",
+            "hash collision", "hash tables problems",
         ],
     },
 
@@ -322,11 +409,10 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Graphs",
         "ai_context": (
-            "Graphs: directed/undirected graphs, weighted graphs, adjacency matrix, "
-            "adjacency list, BFS, DFS, topological sort, cycle detection, "
-            "connected components, strongly connected components (Kosaraju, Tarjan), "
+            "Graphs: directed/undirected, weighted, adjacency matrix/list, "
+            "BFS, DFS, topological sort, cycle detection, connected components, "
             "shortest path (Dijkstra, Bellman-Ford, Floyd-Warshall), "
-            "minimum spanning tree (Kruskal, Prim) - as tested in placement exams."
+            "MST (Kruskal, Prim) — as tested in placement exams."
         ),
         "aliases": [
             "graph", "graphs", "graph theory", "graph data structure",
@@ -339,27 +425,66 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "kruskal", "prim", "prim's algorithm", "kruskal's algorithm",
             "topological sort", "topological sorting",
             "cycle detection in graph", "connected components",
-            "strongly connected components", "scc",
-            "graph traversal",
+            "strongly connected components", "scc", "tarjan",
+            "graph traversal", "graph algorithms",
+            "union find", "disjoint set", "dsu",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Algorithms
-    # -------------------------------------------------------------------------
+    "Tries": {
+        "category": "Technical",
+        "subcategory": "Tries",
+        "ai_context": (
+            "Trie (Prefix Tree): insert, search, delete, autocomplete, "
+            "prefix search, word dictionary — as tested in placement exams."
+        ),
+        "aliases": [
+            "trie", "tries", "prefix tree", "trie data structure",
+            "autocomplete trie", "trie problems",
+        ],
+    },
+
+    "Bit Manipulation": {
+        "category": "Technical",
+        "subcategory": "Bit Manipulation",
+        "ai_context": (
+            "Bit Manipulation: AND, OR, XOR, NOT, left/right shift, "
+            "set/clear/toggle bit, count set bits, power of two — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "bit manipulation", "bitwise", "bitwise operators",
+            "bit tricks", "bits", "xor problems", "bit masking",
+            "count bits", "hamming weight", "bit shifting",
+        ],
+    },
+
+    "Sliding Window": {
+        "category": "Technical",
+        "subcategory": "Sliding Window",
+        "ai_context": (
+            "Sliding Window: fixed and variable window, maximum subarray sum, "
+            "longest substring without repeating characters — as tested in placement exams."
+        ),
+        "aliases": [
+            "sliding window", "window technique", "two pointer",
+            "two pointers", "two pointer technique",
+            "subarray problems", "substring problems sliding",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Algorithms ────────────────────────────────────────────────
+    # =========================================================================
 
     "Algorithms": {
         "category": "Technical",
         "subcategory": "Algorithms",
         "ai_context": (
-            "Algorithms: sorting (bubble, selection, insertion, merge, quick, heap), "
-            "searching (linear, binary), recursion, divide and conquer, "
-            "time/space complexity, Big O notation - "
-            "as tested in placement exams."
+            "Algorithms: sorting, searching, recursion, divide and conquer, "
+            "time/space complexity, Big O notation — as tested in placement exams."
         ),
-        "aliases": [
-            "algorithms", "algorithm", "algo", "algos",
-        ],
+        "aliases": ["algorithms", "algorithm", "algo", "algos", "algorithm basics"],
     },
 
     "Sorting Algorithms": {
@@ -367,17 +492,16 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Sorting",
         "ai_context": (
             "Sorting Algorithms: bubble sort, selection sort, insertion sort, "
-            "merge sort, quick sort (pivot, partition), heap sort, "
-            "counting sort, radix sort, bucket sort; "
-            "stability, time and space complexity comparison - "
-            "as tested in placement exams."
+            "merge sort, quick sort, heap sort, counting sort, radix sort, bucket sort; "
+            "stability, time and space complexity — as tested in placement exams."
         ),
         "aliases": [
             "sorting", "sorting algorithms", "sorting techniques",
             "bubble sort", "selection sort", "insertion sort",
             "merge sort", "quick sort", "heap sort",
-            "radix sort", "counting sort", "bucket sort",
-            "stable sort", "unstable sort",
+            "radix sort", "counting sort", "bucket sort", "shell sort",
+            "stable sort", "unstable sort", "sort",
+            "quicksort", "mergesort", "timsort",
         ],
     },
 
@@ -385,15 +509,14 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Searching",
         "ai_context": (
-            "Searching Algorithms: linear search, binary search, "
-            "ternary search, jump search, interpolation search, "
-            "exponential search; binary search on answer, "
-            "applications of binary search - as tested in placement exams."
+            "Searching: linear search, binary search, ternary search, jump search, "
+            "interpolation search; binary search on answer — as tested in placement exams."
         ),
         "aliases": [
             "searching", "searching algorithms", "linear search", "binary search",
             "ternary search", "jump search", "interpolation search",
-            "binary search problems",
+            "binary search problems", "search algorithm", "binary search tree search",
+            "bsearch",
         ],
     },
 
@@ -402,10 +525,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Dynamic Programming",
         "ai_context": (
             "Dynamic Programming: overlapping subproblems, optimal substructure, "
-            "memoization, tabulation, classic DP problems - "
-            "0/1 knapsack, unbounded knapsack, LCS, LIS, edit distance, "
-            "coin change, matrix chain multiplication, DP on trees, "
-            "DP on strings - as tested in placement exams."
+            "memoization, tabulation, 0/1 knapsack, LCS, LIS, edit distance, "
+            "coin change, matrix chain multiplication — as tested in placement exams."
         ),
         "aliases": [
             "dynamic programming", "dp", "dp problems",
@@ -414,7 +535,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "lcs", "longest common subsequence",
             "lis", "longest increasing subsequence",
             "edit distance", "coin change dp",
-            "matrix chain multiplication",
+            "matrix chain multiplication", "dp on trees",
+            "interval dp", "bitmask dp", "dp problems interview",
         ],
     },
 
@@ -422,15 +544,14 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Greedy",
         "ai_context": (
-            "Greedy Algorithms: greedy choice property, optimal substructure, "
-            "activity selection, fractional knapsack, job scheduling, "
-            "Huffman coding, minimum coin change (greedy), "
-            "interval scheduling - as tested in placement exams."
+            "Greedy Algorithms: greedy choice property, activity selection, "
+            "fractional knapsack, job scheduling, Huffman coding, "
+            "minimum coin change — as tested in placement exams."
         ),
         "aliases": [
             "greedy", "greedy algorithms", "greedy method", "greedy approach",
             "activity selection", "fractional knapsack",
-            "huffman coding", "job scheduling greedy",
+            "huffman coding", "job scheduling greedy", "greedy problems",
         ],
     },
 
@@ -438,15 +559,15 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Backtracking",
         "ai_context": (
-            "Backtracking: N-queens problem, Sudoku solver, subset sum, "
-            "generating permutations and combinations, rat in a maze, "
-            "graph coloring, Hamiltonian cycle - "
+            "Backtracking: N-queens, Sudoku solver, subset sum, "
+            "permutations/combinations, rat in a maze, graph coloring — "
             "as tested in placement exams."
         ),
         "aliases": [
             "backtracking", "backtrack",
             "n queens", "n-queens", "sudoku solver",
             "subset sum", "graph coloring", "hamiltonian cycle",
+            "backtracking problems",
         ],
     },
 
@@ -454,16 +575,27 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Recursion",
         "ai_context": (
-            "Recursion: base case, recursive call, call stack, "
-            "tail recursion, recursion vs iteration, "
-            "classic problems (factorial, Fibonacci, Tower of Hanoi, "
-            "flood fill, power function), tree recursion - "
-            "as tested in placement exams."
+            "Recursion: base case, recursive call, call stack, tail recursion, "
+            "Tower of Hanoi, flood fill, tree recursion — as tested in placement exams."
         ),
         "aliases": [
             "recursion", "recursive", "recursive algorithms",
             "tail recursion", "tower of hanoi",
-            "fibonacci recursion", "factorial recursion",
+            "fibonacci recursion", "factorial recursion", "recursion problems",
+            "mutual recursion",
+        ],
+    },
+
+    "Divide and Conquer": {
+        "category": "Technical",
+        "subcategory": "Divide and Conquer",
+        "ai_context": (
+            "Divide and Conquer: merge sort, quick sort, binary search, "
+            "Strassen matrix multiplication, closest pair of points — as tested in placement exams."
+        ),
+        "aliases": [
+            "divide and conquer", "divide conquer", "d&c",
+            "master theorem", "recurrence relation",
         ],
     },
 
@@ -473,35 +605,33 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "ai_context": (
             "Time and Space Complexity: Big O, Big Theta, Big Omega, "
             "best/average/worst case, amortized analysis, "
-            "P vs NP, common complexities (O(1), O(log n), O(n), O(n log n), "
-            "O(n^2), O(2^n)) - as tested in placement exams."
+            "common complexities (O(1)…O(2^n)) — as tested in placement exams."
         ),
         "aliases": [
             "time complexity", "space complexity", "big o", "big o notation",
             "complexity analysis", "asymptotic analysis",
             "big theta", "big omega", "amortized analysis",
             "p vs np", "np complete", "np hard",
+            "algorithm complexity", "time space complexity",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - DBMS
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # ── TECHNICAL ─ DBMS ──────────────────────────────────────────────────────
+    # =========================================================================
 
     "DBMS": {
         "category": "Technical",
         "subcategory": "DBMS",
         "ai_context": (
-            "Database Management Systems: ER model, relational model, keys "
-            "(primary, foreign, candidate, super), SQL joins (inner, outer, left, right, "
-            "self, cross), normalization (1NF/2NF/3NF/BCNF), functional dependencies, "
-            "ACID properties, transactions, concurrency control, indexing (B-tree), "
-            "views, triggers, stored procedures - as tested in placement exams."
+            "Database Management Systems: ER model, relational model, keys, SQL joins, "
+            "normalization (1NF–BCNF), ACID properties, transactions, concurrency control, "
+            "indexing, views, triggers — as tested in placement exams."
         ),
         "aliases": [
             "dbms", "database", "databases", "database management",
             "database management system", "rdbms",
-            "relational database",
+            "relational database", "database systems",
         ],
     },
 
@@ -509,16 +639,15 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Joins",
         "ai_context": (
-            "SQL Joins: INNER JOIN, LEFT OUTER JOIN, RIGHT OUTER JOIN, "
-            "FULL OUTER JOIN, CROSS JOIN, SELF JOIN, NATURAL JOIN; "
-            "join conditions, join on multiple columns, join with subqueries - "
+            "SQL Joins: INNER JOIN, LEFT/RIGHT/FULL OUTER JOIN, CROSS JOIN, SELF JOIN, "
+            "NATURAL JOIN; join conditions, multiple columns, join with subqueries — "
             "as tested in placement exams."
         ),
         "aliases": [
             "joins", "join", "sql joins", "inner join", "outer join",
             "left join", "right join", "full outer join",
             "self join", "cross join", "natural join",
-            "database joins",
+            "database joins", "join queries",
         ],
     },
 
@@ -526,11 +655,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Normalization",
         "ai_context": (
-            "Database Normalization: functional dependencies, partial dependency, "
-            "transitive dependency, 1NF (atomic values), 2NF (no partial dependency), "
-            "3NF (no transitive dependency), BCNF, 4NF, 5NF; "
-            "anomalies (insertion, deletion, update), decomposition - "
-            "as tested in placement exams."
+            "Database Normalization: functional dependencies, 1NF, 2NF, 3NF, BCNF, 4NF; "
+            "anomalies, decomposition — as tested in placement exams."
         ),
         "aliases": [
             "normalization", "database normalization",
@@ -538,6 +664,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "first normal form", "second normal form", "third normal form",
             "functional dependency", "functional dependencies",
             "partial dependency", "transitive dependency",
+            "database normalisation",
         ],
     },
 
@@ -545,16 +672,15 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Transactions",
         "ai_context": (
-            "ACID Properties and Transactions: Atomicity, Consistency, Isolation, "
-            "Durability; commit, rollback, savepoint; isolation levels "
-            "(read uncommitted, read committed, repeatable read, serializable); "
-            "concurrency control (2PL, timestamp ordering), deadlock in DBMS - "
+            "ACID Properties: Atomicity, Consistency, Isolation, Durability; "
+            "commit, rollback; isolation levels; concurrency control, deadlock — "
             "as tested in placement exams."
         ),
         "aliases": [
             "acid", "acid properties", "transactions", "transaction",
             "commit rollback", "isolation levels", "concurrency control",
             "two phase locking", "2pl", "deadlock dbms",
+            "database transaction", "acid properties dbms",
         ],
     },
 
@@ -563,15 +689,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Indexing",
         "ai_context": (
             "Database Indexing: clustered index, non-clustered index, "
-            "B-tree index, B+ tree index, hash index, "
-            "dense vs sparse index, multi-level indexing, "
-            "query optimization using indexes - "
+            "B-tree/B+ tree index, hash index, dense vs sparse index — "
             "as tested in placement exams."
         ),
         "aliases": [
             "indexing", "database indexing", "b tree index", "b+ tree index",
             "clustered index", "non clustered index",
-            "dense index", "sparse index",
+            "dense index", "sparse index", "index dbms",
         ],
     },
 
@@ -580,21 +704,19 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "ER Model",
         "ai_context": (
             "Entity-Relationship Model: entities, attributes, relationships, "
-            "cardinality (1:1, 1:N, M:N), participation constraints, "
-            "weak entities, extended ER (ISA hierarchy), "
-            "converting ER to relational schema - "
-            "as tested in placement exams."
+            "cardinality, participation, weak entities, ISA hierarchy, "
+            "converting ER to relational schema — as tested in placement exams."
         ),
         "aliases": [
             "er model", "entity relationship", "entity relationship model",
             "erd", "er diagram", "entity relationship diagram",
-            "cardinality", "weak entity",
+            "cardinality", "weak entity", "er modelling",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Operating Systems
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # ── TECHNICAL ─ Operating Systems ────────────────────────────────────────
+    # =========================================================================
 
     "Operating Systems": {
         "category": "Technical",
@@ -602,10 +724,11 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "ai_context": (
             "Operating Systems: processes, threads, process states, PCB, "
             "CPU scheduling, deadlock, memory management, file systems, "
-            "synchronization - as tested in placement exams."
+            "synchronization — as tested in placement exams."
         ),
         "aliases": [
             "os", "operating system", "operating systems",
+            "os concepts", "basic os", "unix", "linux os",
         ],
     },
 
@@ -613,10 +736,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "CPU Scheduling",
         "ai_context": (
-            "CPU Scheduling algorithms: FCFS, SJF (preemptive/non-preemptive), "
-            "Round Robin (time quantum), Priority scheduling, HRRN; "
-            "Gantt charts, turnaround time, waiting time, response time, "
-            "throughput, CPU utilization - as tested in placement exams."
+            "CPU Scheduling: FCFS, SJF, Round Robin, Priority scheduling, HRRN; "
+            "Gantt charts, turnaround time, waiting time, throughput — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "cpu scheduling", "scheduling", "scheduling algorithms",
@@ -625,6 +747,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "round robin", "rr scheduling",
             "priority scheduling", "hrrn",
             "gantt chart", "turnaround time", "waiting time",
+            "cpu scheduler", "process scheduling",
+            "multilevel queue", "multilevel feedback queue",
         ],
     },
 
@@ -632,11 +756,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Deadlock",
         "ai_context": (
-            "Deadlock: four necessary conditions (mutual exclusion, hold and wait, "
-            "no preemption, circular wait), deadlock prevention, "
-            "deadlock avoidance (Banker's algorithm, safe state), "
-            "deadlock detection (resource allocation graph), "
-            "deadlock recovery - as tested in placement exams."
+            "Deadlock: four necessary conditions, prevention, avoidance (Banker's algorithm), "
+            "detection (resource allocation graph), recovery — as tested in placement exams."
         ),
         "aliases": [
             "deadlock", "deadlock prevention", "deadlock avoidance",
@@ -650,18 +771,17 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Memory Management",
         "ai_context": (
-            "Memory Management: contiguous allocation, paging, segmentation, "
-            "virtual memory, demand paging, page fault, "
-            "page replacement algorithms (FIFO, LRU, Optimal, Clock), "
-            "thrashing, working set model, TLB, page table - "
-            "as tested in placement exams."
+            "Memory Management: paging, segmentation, virtual memory, "
+            "page fault, page replacement (FIFO, LRU, Optimal), "
+            "thrashing, TLB, page table — as tested in placement exams."
         ),
         "aliases": [
             "memory management", "paging", "segmentation",
             "virtual memory", "demand paging", "page fault",
             "page replacement", "lru", "fifo page", "optimal page replacement",
             "thrashing", "tlb", "translation lookaside buffer",
-            "page table", "frame allocation",
+            "page table", "frame allocation", "memory allocation",
+            "fragmentation", "compaction", "swapping",
         ],
     },
 
@@ -670,33 +790,49 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "Synchronization",
         "ai_context": (
             "Process Synchronization: critical section, race condition, "
-            "mutex, semaphore (binary and counting), monitors, "
-            "producer-consumer problem, readers-writers problem, "
-            "dining philosophers problem - as tested in placement exams."
+            "mutex, semaphore, monitors, producer-consumer, readers-writers, "
+            "dining philosophers — as tested in placement exams."
         ),
         "aliases": [
             "synchronization", "process synchronization",
             "semaphore", "semaphores", "mutex",
             "critical section", "race condition", "monitor",
             "producer consumer", "readers writers", "dining philosophers",
+            "process sync", "ipc",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Computer Networks
-    # -------------------------------------------------------------------------
+    "File Systems": {
+        "category": "Technical",
+        "subcategory": "File Systems",
+        "ai_context": (
+            "File Systems: FAT, NTFS, ext4, inodes, directory structure, "
+            "disk scheduling (FCFS, SSTF, SCAN, C-SCAN), disk allocation methods — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "file system", "file systems", "inode", "fat", "ntfs", "ext4",
+            "disk scheduling", "sstf", "scan algorithm", "c-scan",
+            "disk allocation", "contiguous allocation", "linked allocation",
+            "indexed allocation",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Computer Networks ────────────────────────────────────────
+    # =========================================================================
 
     "Computer Networks": {
         "category": "Technical",
         "subcategory": "Computer Networks",
         "ai_context": (
-            "Computer Networks: OSI model (7 layers), TCP/IP model, "
-            "IP addressing, routing, transport layer, application layer protocols - "
+            "Computer Networks: OSI model, TCP/IP model, "
+            "IP addressing, routing, transport layer, application layer — "
             "as tested in placement exams."
         ),
         "aliases": [
             "computer networks", "cn", "networking", "network",
-            "computer networking",
+            "computer networking", "network concepts",
         ],
     },
 
@@ -705,9 +841,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "subcategory": "OSI Model",
         "ai_context": (
             "OSI Model: 7 layers (Physical, Data Link, Network, Transport, "
-            "Session, Presentation, Application), functions of each layer, "
-            "protocols at each layer, PDU names, "
-            "OSI vs TCP/IP comparison - as tested in placement exams."
+            "Session, Presentation, Application), functions, protocols, PDU names — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "osi model", "osi", "osi layers", "osi 7 layers",
@@ -722,10 +857,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "TCP/IP",
         "ai_context": (
-            "TCP/IP: TCP vs UDP comparison, TCP 3-way handshake, "
-            "TCP connection termination (4-way), TCP flow control, "
-            "congestion control, UDP use cases, "
-            "IP (IPv4 vs IPv6), ICMP, ARP, RARP - "
+            "TCP/IP: TCP vs UDP, TCP 3-way handshake, flow control, "
+            "congestion control, IPv4 vs IPv6, ICMP, ARP — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -743,10 +876,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "IP Addressing",
         "ai_context": (
-            "IP Addressing and Subnetting: IPv4 address classes (A/B/C/D/E), "
-            "subnet mask, CIDR notation, subnetting calculation, "
-            "number of hosts per subnet, network address, broadcast address, "
-            "private IP ranges, NAT, IPv6 basics - "
+            "IP Addressing: IPv4 classes (A/B/C/D/E), subnet mask, CIDR, "
+            "subnetting calculation, hosts per subnet, NAT, IPv6 basics — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -754,7 +885,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "subnet mask", "cidr", "ip classes",
             "class a", "class b", "class c",
             "private ip", "nat", "network address translation",
-            "broadcast address",
+            "broadcast address", "ip subnetting",
         ],
     },
 
@@ -762,10 +893,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Application Layer",
         "ai_context": (
-            "Application Layer Protocols: HTTP (methods, status codes, "
-            "HTTP vs HTTPS), DNS (resolution, record types: A, MX, CNAME, TXT), "
-            "SMTP, POP3, IMAP, FTP, DHCP, SNMP - "
-            "as tested in placement exams."
+            "Application Layer: HTTP (methods, status codes, HTTPS), DNS, "
+            "SMTP, POP3, IMAP, FTP, DHCP, SNMP — as tested in placement exams."
         ),
         "aliases": [
             "http", "https", "http protocol", "http methods",
@@ -773,7 +902,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "dns", "domain name system", "dns resolution",
             "smtp", "pop3", "imap", "email protocols",
             "ftp", "dhcp", "snmp",
-            "application layer protocols",
+            "application layer protocols", "websocket",
         ],
     },
 
@@ -781,11 +910,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Routing",
         "ai_context": (
-            "Routing Protocols: static vs dynamic routing, "
-            "distance vector routing (RIP, Bellman-Ford), "
-            "link state routing (OSPF, Dijkstra), path vector (BGP), "
-            "routing table, routing algorithms - "
-            "as tested in placement exams."
+            "Routing: static vs dynamic, RIP, OSPF, BGP, "
+            "distance vector, link state — as tested in placement exams."
         ),
         "aliases": [
             "routing", "routing protocols", "rip", "ospf", "bgp",
@@ -794,19 +920,32 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - OOP and Design
-    # -------------------------------------------------------------------------
+    "Network Security": {
+        "category": "Technical",
+        "subcategory": "Network Security",
+        "ai_context": (
+            "Network Security: firewalls, IDS/IPS, VPN, SSL/TLS, "
+            "network attacks (DoS, MitM, ARP poisoning, DNS spoofing) — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "network security", "firewall", "ids", "ips", "vpn",
+            "ssl tls", "network attacks", "dos attack", "ddos",
+            "arp poisoning", "dns spoofing", "sniffing", "packet sniffing",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ OOP and Software Engineering ──────────────────────────────
+    # =========================================================================
 
     "OOP Concepts": {
         "category": "Technical",
         "subcategory": "OOP",
         "ai_context": (
             "Object-Oriented Programming: classes, objects, encapsulation, "
-            "inheritance (single, multiple, multilevel, hierarchical, hybrid), "
-            "polymorphism (method overloading vs overriding), abstraction, "
-            "interfaces, abstract classes, constructors, "
-            "access modifiers (public, private, protected) - "
+            "inheritance, polymorphism (overloading vs overriding), abstraction, "
+            "interfaces, abstract classes, constructors, access modifiers — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -825,11 +964,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Design Patterns",
         "ai_context": (
-            "Software Design Patterns: Creational (Singleton, Factory, "
-            "Abstract Factory, Builder, Prototype), Structural (Adapter, "
-            "Bridge, Composite, Decorator, Facade), Behavioral (Observer, "
-            "Strategy, Command, Iterator, Template Method); "
-            "SOLID principles - as tested in placement exams."
+            "Design Patterns: Creational (Singleton, Factory, Builder, Prototype), "
+            "Structural (Adapter, Facade, Decorator), Behavioral (Observer, Strategy, Command); "
+            "SOLID principles — as tested in placement exams."
         ),
         "aliases": [
             "design patterns", "design pattern",
@@ -840,7 +977,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "strategy pattern", "strategy",
             "decorator pattern", "adapter pattern",
             "facade pattern", "composite pattern",
-            "mvc", "model view controller",
+            "mvc", "model view controller", "mvvm", "mvp",
             "solid", "solid principles",
             "single responsibility principle", "open closed principle",
             "liskov substitution", "dependency inversion",
@@ -851,15 +988,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Software Engineering",
         "ai_context": (
-            "Software Engineering: SDLC models (waterfall, agile, spiral, V-model), "
-            "Agile/Scrum, software testing types (unit, integration, system, UAT), "
-            "TDD, BDD, version control (Git), CI/CD, UML diagrams, "
-            "software quality metrics, code review - "
+            "Software Engineering: SDLC (waterfall, agile, spiral), Scrum, "
+            "testing (unit, integration, system, UAT), TDD, Git, CI/CD, UML — "
             "as tested in placement exams."
         ),
         "aliases": [
             "software engineering", "se",
-            "software", "software development",
+            "software development",
             "sdlc", "software development life cycle",
             "agile", "agile methodology", "agile development",
             "scrum", "scrum framework", "sprint", "kanban",
@@ -868,10 +1003,11 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "unit testing", "integration testing",
             "system testing", "acceptance testing", "regression testing",
             "tdd", "test driven development", "bdd",
-            "git", "version control", "github", "gitlab",
+            "git", "version control", "github", "gitlab", "bitbucket",
             "ci cd", "ci/cd", "continuous integration", "continuous deployment",
             "devops", "dev ops",
-            "uml", "uml diagrams",
+            "uml", "uml diagrams", "use case diagram",
+            "code review", "pair programming",
         ],
     },
 
@@ -879,12 +1015,10 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "System Design",
         "ai_context": (
-            "System Design: scalability (horizontal vs vertical), "
-            "load balancing, caching (Redis, Memcached, CDN), "
-            "database sharding and replication, CAP theorem, "
-            "microservices architecture, API gateway, "
-            "message queues (Kafka, RabbitMQ), rate limiting, "
-            "consistent hashing - as tested in placement exams."
+            "System Design: scalability, load balancing, caching (Redis), "
+            "database sharding, CAP theorem, microservices, API gateway, "
+            "message queues (Kafka), rate limiting, consistent hashing — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "system design", "hld", "high level design",
@@ -897,7 +1031,158 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "api gateway", "message queue", "kafka", "rabbitmq",
             "cdn", "content delivery network",
             "rate limiting", "distributed systems",
-            "consistent hashing",
+            "consistent hashing", "system design interview",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Web Development ───────────────────────────────────────────
+    # =========================================================================
+
+    "HTML and CSS": {
+        "category": "Technical",
+        "subcategory": "HTML/CSS",
+        "ai_context": (
+            "HTML5 and CSS3: semantic HTML, forms, tables, CSS selectors, "
+            "flexbox, grid, responsive design, media queries, animations — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "html", "html5", "css", "css3",
+            "html css", "html and css",
+            "semantic html", "flexbox", "css grid", "responsive design",
+            "media queries", "css animations", "html forms",
+        ],
+    },
+
+    "React": {
+        "category": "Technical",
+        "subcategory": "React",
+        "ai_context": (
+            "React: components, JSX, props, state, hooks (useState, useEffect, "
+            "useContext, useRef), virtual DOM, lifecycle, Redux, React Router — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "react", "reactjs", "react js", "react hooks",
+            "react components", "jsx", "react state", "react props",
+            "usestate", "useeffect", "usecontext", "useref",
+            "redux", "react redux", "context api",
+            "react router", "react native", "virtual dom",
+            "class components", "functional components",
+            "react interview", "react basics",
+        ],
+    },
+
+    "Angular": {
+        "category": "Technical",
+        "subcategory": "Angular",
+        "ai_context": (
+            "Angular: modules, components, services, dependency injection, "
+            "directives, pipes, routing, RxJS, forms (template/reactive), "
+            "HTTP client — as tested in placement exams."
+        ),
+        "aliases": [
+            "angular", "angularjs", "angular js", "angular 2",
+            "angular 4", "angular 8", "angular 12", "angular 15",
+            "ng", "rxjs", "angular services", "angular routing",
+            "angular directives", "angular pipes",
+        ],
+    },
+
+    "Vue.js": {
+        "category": "Technical",
+        "subcategory": "Vue.js",
+        "ai_context": (
+            "Vue.js: Vue instance, data binding, computed properties, "
+            "watchers, directives (v-if, v-for), components, Vuex, Vue Router — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "vue", "vuejs", "vue js", "vue.js",
+            "vue 3", "vuex", "vue router", "composition api",
+            "options api vue",
+        ],
+    },
+
+    "Node.js": {
+        "category": "Technical",
+        "subcategory": "Node.js",
+        "ai_context": (
+            "Node.js: event loop, non-blocking I/O, modules (CommonJS, ESM), "
+            "npm, Express.js, file system, streams, buffers, cluster — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "node.js", "nodejs", "node js", "node",
+            "express", "expressjs", "express.js",
+            "npm", "package.json", "event loop node",
+            "node streams", "node buffers", "node cluster",
+            "rest api node", "middleware express",
+        ],
+    },
+
+    "Django": {
+        "category": "Technical",
+        "subcategory": "Django",
+        "ai_context": (
+            "Django: MTV pattern, models, views, templates, URL routing, "
+            "Django ORM, forms, authentication, REST framework (DRF) — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "django", "django python", "django framework",
+            "django rest framework", "drf", "django orm",
+            "django models", "django views", "django urls",
+            "django authentication", "django forms",
+        ],
+    },
+
+    "Flask": {
+        "category": "Technical",
+        "subcategory": "Flask",
+        "ai_context": (
+            "Flask: routing, views, templates (Jinja2), request/response, "
+            "blueprints, SQLAlchemy, Flask-RESTful, authentication — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "flask", "flask python", "flask framework",
+            "flask restful", "flask sqlalchemy", "jinja2",
+            "flask blueprints", "flask authentication", "flask routing",
+        ],
+    },
+
+    "Spring Boot": {
+        "category": "Technical",
+        "subcategory": "Spring Boot",
+        "ai_context": (
+            "Spring Boot: dependency injection, Spring MVC, REST APIs, "
+            "JPA/Hibernate, Spring Security, Spring Data, "
+            "auto-configuration — as tested in placement exams."
+        ),
+        "aliases": [
+            "spring boot", "spring", "spring framework",
+            "spring mvc", "spring security", "spring data",
+            "spring jpa", "hibernate", "jpa",
+            "spring rest", "spring microservices",
+        ],
+    },
+
+    "REST APIs": {
+        "category": "Technical",
+        "subcategory": "REST APIs",
+        "ai_context": (
+            "REST APIs: HTTP methods (GET, POST, PUT, DELETE, PATCH), "
+            "status codes, request/response, authentication (JWT, OAuth), "
+            "API versioning, rate limiting — as tested in placement exams."
+        ),
+        "aliases": [
+            "rest", "rest api", "restful", "restful api",
+            "api", "apis", "web api", "rest apis",
+            "http methods", "get post put", "jwt", "json web token",
+            "oauth", "api authentication", "api versioning",
+            "graphql", "grpc",
         ],
     },
 
@@ -905,61 +1190,117 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Web Development",
         "ai_context": (
-            "Web Development: HTML5 semantic elements, CSS3 (flexbox, grid, "
-            "responsive design), REST APIs, HTTP methods and status codes, "
-            "JSON, frontend frameworks (React, Angular, Vue), "
-            "backend basics (Node.js/Express, Django, Flask, Spring Boot), "
-            "JWT authentication, cookies/sessions - "
+            "Web Development: HTML5, CSS3, JavaScript, REST APIs, "
+            "frontend and backend concepts, deployment basics — "
             "as tested in placement exams."
         ),
         "aliases": [
             "web development", "web dev", "web programming",
-            "html", "html5", "css", "css3",
-            "rest", "rest api", "restful", "restful api",
-            "api", "apis", "web api",
-            "react", "reactjs", "react js",
-            "angular", "angularjs",
-            "vue", "vuejs", "vue js",
-            "express", "expressjs",
-            "spring boot", "spring",
-            "authentication", "jwt", "json web token",
-            "oauth", "sessions", "cookies",
             "frontend", "backend", "full stack", "fullstack",
+            "laravel", "next.js", "nextjs", "nuxt.js",
+            "gatsby", "svelte", "fastapi",
         ],
     },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Cloud, DevOps, Containers ─────────────────────────────────
+    # =========================================================================
 
     "Cloud Computing": {
         "category": "Technical",
         "subcategory": "Cloud Computing",
         "ai_context": (
-            "Cloud Computing: service models (IaaS, PaaS, SaaS), "
-            "deployment models (public, private, hybrid, multi-cloud), "
-            "AWS core services (EC2, S3, RDS, Lambda), Azure fundamentals, "
-            "GCP basics, Docker and containerization, Kubernetes orchestration, "
-            "serverless computing, cloud storage - as tested in placement exams."
+            "Cloud Computing: IaaS/PaaS/SaaS, AWS (EC2, S3, RDS, Lambda), "
+            "Azure, GCP, Docker, Kubernetes, serverless — as tested in placement exams."
         ),
         "aliases": [
             "cloud computing", "cloud", "cloud services",
             "aws", "amazon web services",
             "azure", "microsoft azure",
             "gcp", "google cloud",
-            "docker", "container", "containers", "containerization",
-            "kubernetes", "k8s",
-            "serverless", "lambda function aws",
             "iaas", "paas", "saas",
             "virtualization", "hypervisor",
         ],
     },
 
+    "AWS": {
+        "category": "Technical",
+        "subcategory": "AWS",
+        "ai_context": (
+            "Amazon Web Services: EC2, S3, RDS, Lambda, ECS, EKS, IAM, "
+            "VPC, CloudFormation, Route53, CloudFront — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "aws", "amazon web services", "ec2", "s3", "rds",
+            "lambda aws", "aws lambda", "ecs", "eks",
+            "iam aws", "vpc aws", "cloudformation",
+            "route53", "cloudfront", "sqs", "sns aws",
+            "dynamodb aws", "elasticache",
+        ],
+    },
+
+    "Docker": {
+        "category": "Technical",
+        "subcategory": "Docker",
+        "ai_context": (
+            "Docker: images, containers, Dockerfile, docker-compose, "
+            "volumes, networks, registry, container orchestration basics — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "docker", "docker container", "dockerfile",
+            "docker compose", "docker-compose", "docker image",
+            "container", "containers", "containerization",
+            "docker volumes", "docker networking",
+        ],
+    },
+
+    "Kubernetes": {
+        "category": "Technical",
+        "subcategory": "Kubernetes",
+        "ai_context": (
+            "Kubernetes: pods, deployments, services, ingress, "
+            "ConfigMaps, secrets, namespaces, Helm, scaling — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "kubernetes", "k8s", "kubectl",
+            "pods", "kubernetes pods", "kubernetes deployment",
+            "kubernetes service", "ingress kubernetes",
+            "helm", "kubernetes cluster",
+        ],
+    },
+
+    "DevOps": {
+        "category": "Technical",
+        "subcategory": "DevOps",
+        "ai_context": (
+            "DevOps: CI/CD pipelines (Jenkins, GitHub Actions, GitLab CI), "
+            "infrastructure as code (Terraform, Ansible), monitoring, "
+            "logging, Docker, Kubernetes — as tested in placement exams."
+        ),
+        "aliases": [
+            "devops", "dev ops",
+            "jenkins", "github actions", "gitlab ci", "circle ci",
+            "terraform", "ansible", "puppet", "chef",
+            "infrastructure as code", "iac",
+            "monitoring", "prometheus", "grafana",
+            "logging", "elk stack", "splunk",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Cybersecurity ─────────────────────────────────────────────
+    # =========================================================================
+
     "Cybersecurity": {
         "category": "Technical",
         "subcategory": "Cybersecurity",
         "ai_context": (
-            "Cybersecurity: cryptography (symmetric: AES, DES; asymmetric: RSA, ECC), "
-            "hashing (MD5, SHA-256), digital signatures, PKI, SSL/TLS, "
-            "network attacks (SQL injection, XSS, CSRF, MITM, buffer overflow, "
-            "phishing, DDoS), firewalls, IDS/IPS, OWASP Top 10 - "
-            "as tested in placement exams."
+            "Cybersecurity: cryptography (AES, RSA), hashing (SHA-256), "
+            "SSL/TLS, network attacks (SQL injection, XSS, CSRF, DDoS), "
+            "firewalls, OWASP Top 10 — as tested in placement exams."
         ),
         "aliases": [
             "cybersecurity", "cyber security", "information security", "infosec",
@@ -969,24 +1310,25 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "rsa", "aes", "des", "3des",
             "hashing security", "sha", "sha256", "md5",
             "digital signature", "ssl", "tls",
-            "firewall", "ids", "ips",
             "sql injection", "xss", "cross site scripting",
             "csrf", "buffer overflow", "phishing", "mitm", "ddos",
             "ethical hacking", "penetration testing", "pen testing",
-            "owasp",
+            "owasp", "owasp top 10",
         ],
     },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Machine Learning / AI / Data Science ─────────────────────
+    # =========================================================================
 
     "Machine Learning": {
         "category": "Technical",
         "subcategory": "Machine Learning",
         "ai_context": (
-            "Machine Learning: supervised learning (classification, regression), "
-            "unsupervised learning (clustering, PCA), reinforcement learning, "
-            "bias-variance tradeoff, overfitting/underfitting, regularization (L1/L2), "
-            "cross-validation, algorithms (linear regression, logistic regression, "
-            "decision trees, random forest, SVM, KNN, K-means, neural networks) - "
-            "as tested in placement exams."
+            "Machine Learning: supervised/unsupervised/reinforcement learning, "
+            "bias-variance, overfitting, regularization, cross-validation, "
+            "algorithms (linear regression, SVM, KNN, decision trees, random forest, "
+            "K-means, neural networks) — as tested in placement exams."
         ),
         "aliases": [
             "machine learning", "ml", "ml algorithms",
@@ -998,30 +1340,192 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "knn", "k nearest neighbour", "k nearest neighbor",
             "k means", "k-means", "clustering",
             "pca", "principal component analysis", "dimensionality reduction",
-            "neural networks", "neural network",
-            "deep learning", "cnn", "rnn", "lstm",
             "overfitting", "underfitting", "bias variance",
-            "regularization", "cross validation",
-            "natural language processing", "nlp",
-            "computer vision", "image classification",
-            "data science", "data analysis", "data analytics",
+            "regularization", "cross validation", "ml interview",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Electronics / ECE
-    # -------------------------------------------------------------------------
+    "Deep Learning": {
+        "category": "Technical",
+        "subcategory": "Deep Learning",
+        "ai_context": (
+            "Deep Learning: neural networks (ANN, CNN, RNN, LSTM, GRU), "
+            "backpropagation, activation functions, batch normalization, "
+            "dropout, transfer learning, GANs, transformers — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "deep learning", "dl", "neural networks", "neural network",
+            "ann", "artificial neural network",
+            "cnn", "convolutional neural network", "convolutional",
+            "rnn", "recurrent neural network", "lstm", "gru",
+            "backpropagation", "activation functions", "relu", "sigmoid",
+            "batch normalization", "dropout",
+            "transfer learning", "gan", "generative adversarial",
+            "transformer model", "attention mechanism",
+        ],
+    },
+
+    "Natural Language Processing": {
+        "category": "Technical",
+        "subcategory": "NLP",
+        "ai_context": (
+            "NLP: tokenization, stemming, lemmatization, TF-IDF, "
+            "word embeddings (Word2Vec, GloVe), BERT, sentiment analysis, "
+            "named entity recognition, text classification — as tested in placement exams."
+        ),
+        "aliases": [
+            "nlp", "natural language processing",
+            "text processing", "sentiment analysis",
+            "word2vec", "glove", "bert", "gpt",
+            "tokenization", "stemming", "lemmatization",
+            "text classification", "ner", "named entity",
+            "language model", "llm",
+        ],
+    },
+
+    "Computer Vision": {
+        "category": "Technical",
+        "subcategory": "Computer Vision",
+        "ai_context": (
+            "Computer Vision: image processing (OpenCV), CNN architectures "
+            "(ResNet, VGG, YOLO), object detection, segmentation — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "computer vision", "cv", "image processing", "opencv",
+            "object detection", "image classification", "segmentation",
+            "yolo", "resnet", "vgg", "image recognition",
+        ],
+    },
+
+    "Data Science": {
+        "category": "Technical",
+        "subcategory": "Data Science",
+        "ai_context": (
+            "Data Science: exploratory data analysis (EDA), NumPy, Pandas, "
+            "Matplotlib, Seaborn, feature engineering, model evaluation — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "data science", "data analysis", "data analytics",
+            "numpy", "pandas", "matplotlib", "seaborn",
+            "eda", "exploratory data analysis",
+            "feature engineering", "data visualization",
+            "jupyter", "jupyter notebook", "kaggle",
+        ],
+    },
+
+    "Big Data": {
+        "category": "Technical",
+        "subcategory": "Big Data",
+        "ai_context": (
+            "Big Data: Hadoop, HDFS, MapReduce, Spark, Hive, HBase, "
+            "data warehousing, ETL, streaming (Kafka, Flink) — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "big data", "hadoop", "hdfs", "mapreduce",
+            "apache spark", "spark", "hive", "hbase",
+            "etl", "data warehouse", "data lake",
+            "flink", "kafka streaming",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ Compiler Design ───────────────────────────────────────────
+    # =========================================================================
+
+    "Compiler Design": {
+        "category": "Technical",
+        "subcategory": "Compiler Design",
+        "ai_context": (
+            "Compiler Design: lexical analysis, syntax analysis (parsing), "
+            "semantic analysis, intermediate code, optimization, code generation, "
+            "lex/yacc, LL/LR parsers — as tested in placement exams."
+        ),
+        "aliases": [
+            "compiler design", "compilers", "compiler",
+            "lexical analysis", "lexer", "scanner",
+            "syntax analysis", "parser", "parsing",
+            "ll parser", "lr parser", "slr", "clr", "lalr",
+            "semantic analysis", "intermediate code generation",
+            "code optimization", "code generation",
+            "lex", "yacc", "flex bison",
+            "automata", "formal languages", "regular expressions theory",
+            "context free grammar", "cfg",
+        ],
+    },
+
+    "Theory of Computation": {
+        "category": "Technical",
+        "subcategory": "Theory of Computation",
+        "ai_context": (
+            "Theory of Computation: finite automata (DFA, NFA), regular languages, "
+            "regular expressions, pushdown automata, context-free grammars, "
+            "Turing machines, decidability, complexity classes (P, NP) — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "theory of computation", "toc", "automata theory",
+            "automata", "finite automata", "dfa", "nfa",
+            "regular expressions toc", "pushdown automata", "pda",
+            "turing machine", "tm",
+            "context free grammar toc", "cfg toc",
+            "decidability", "p np", "np complete toc",
+            "formal languages",
+        ],
+    },
+
+    "Computer Architecture": {
+        "category": "Technical",
+        "subcategory": "Computer Architecture",
+        "ai_context": (
+            "Computer Architecture: RISC vs CISC, pipelining, cache memory, "
+            "instruction formats, addressing modes, memory hierarchy, "
+            "parallelism (SIMD, MIMD) — as tested in placement exams."
+        ),
+        "aliases": [
+            "computer architecture", "computer organization",
+            "coa", "co", "computer organisation",
+            "risc", "cisc", "pipelining",
+            "cache", "cache memory", "cache coherence",
+            "instruction set architecture", "isa",
+            "addressing modes computer", "memory hierarchy",
+            "pipeline hazards", "branch prediction",
+        ],
+    },
+
+    "Discrete Mathematics": {
+        "category": "Technical",
+        "subcategory": "Discrete Mathematics",
+        "ai_context": (
+            "Discrete Mathematics: sets, relations, functions, propositional logic, "
+            "predicate logic, proof techniques, graph theory, combinatorics, "
+            "Boolean algebra — as tested in placement exams."
+        ),
+        "aliases": [
+            "discrete mathematics", "discrete maths", "discrete math",
+            "dm", "set theory", "relations",
+            "propositional logic", "predicate logic", "logic gates discrete",
+            "boolean algebra discrete", "graph theory discrete",
+            "combinatorics", "permutation combination discrete",
+            "number theory discrete", "proofs",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ ECE Topics ────────────────────────────────────────────────
+    # =========================================================================
 
     "Digital Electronics": {
         "category": "Technical",
         "subcategory": "Digital Electronics",
         "ai_context": (
             "Digital Electronics: number systems (binary, octal, hex, BCD), "
-            "logic gates (AND, OR, NOT, NAND, NOR, XOR, XNOR), "
-            "Boolean algebra, De Morgan's theorem, K-map simplification, "
-            "combinational circuits (adder, subtractor, MUX, DEMUX, encoder, decoder), "
-            "sequential circuits (flip-flops: SR, JK, D, T; counters, registers), "
-            "ADC/DAC - as tested in placement exams."
+            "logic gates, Boolean algebra, K-map, combinational circuits "
+            "(adder, MUX, encoder), sequential circuits (flip-flops, counters, registers), "
+            "ADC/DAC — as tested in placement exams."
         ),
         "aliases": [
             "digital electronics", "digital circuits", "digital logic",
@@ -1043,12 +1547,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Analog Electronics",
         "ai_context": (
-            "Analog Electronics: PN junction diode, Zener diode, "
-            "BJT (NPN/PNP, biasing, common emitter/base/collector amplifiers), "
-            "FET and MOSFET, op-amp characteristics and applications "
-            "(inverting, non-inverting, summing, differentiator, integrator), "
-            "oscillators (RC, LC, Colpitts, Hartley), rectifiers, filters, "
-            "voltage regulators - as tested in placement exams."
+            "Analog Electronics: PN junction diode, Zener diode, BJT, MOSFET, FET, "
+            "op-amp (inverting, non-inverting, summing), oscillators, rectifiers, "
+            "filters, voltage regulators — as tested in placement exams."
         ),
         "aliases": [
             "analog electronics", "analogue electronics", "analog circuits",
@@ -1067,10 +1568,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Signal Processing",
         "ai_context": (
-            "Signal Processing: signals and systems, Fourier series, "
-            "Fourier transform (CTFT, DTFT), Laplace transform, Z-transform, "
-            "sampling theorem (Nyquist rate), aliasing, convolution, "
-            "DFT and FFT, digital filters (FIR, IIR, Butterworth) - "
+            "Signal Processing: Fourier series/transform, Laplace transform, Z-transform, "
+            "sampling theorem (Nyquist), DFT, FFT, FIR/IIR filters — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -1089,20 +1588,18 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Embedded Systems",
         "ai_context": (
-            "Embedded Systems: microcontroller architecture (8051, PIC, ARM Cortex-M), "
-            "peripherals (GPIO, UART, SPI, I2C, PWM, ADC), timers and interrupts, "
-            "RTOS concepts (tasks, scheduling, semaphores), "
-            "embedded C programming, memory types (ROM, RAM, Flash, EEPROM), "
-            "IoT basics - as tested in placement exams."
+            "Embedded Systems: microcontroller architecture (8051, PIC, ARM), "
+            "GPIO, UART, SPI, I2C, PWM, timers, RTOS, embedded C, IoT basics — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "embedded systems", "embedded", "embedded programming",
             "microcontroller", "microcontrollers", "8051", "arm cortex",
-            "pic microcontroller", "stm32", "arduino",
+            "pic microcontroller", "stm32", "arduino", "raspberry pi",
             "gpio", "uart", "spi", "i2c", "pwm",
             "rtos", "real time operating system", "freertos",
             "embedded c", "firmware",
-            "iot", "internet of things",
+            "iot", "internet of things", "esp32", "esp8266",
         ],
     },
 
@@ -1110,17 +1607,32 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "VLSI",
         "ai_context": (
-            "VLSI Design: CMOS technology (NMOS, PMOS), MOSFET characteristics, "
-            "CMOS logic gates design, propagation delay, power dissipation, "
-            "FPGA architecture and programming, Verilog HDL (modules, "
-            "always blocks, combinational/sequential logic), VHDL basics, "
-            "design for testability - as tested in placement exams."
+            "VLSI Design: CMOS technology, MOSFET characteristics, CMOS logic gates, "
+            "FPGA, Verilog HDL, VHDL, RTL design — as tested in placement exams."
         ),
         "aliases": [
             "vlsi", "vlsi design", "very large scale integration",
             "cmos", "fpga", "verilog", "vhdl",
             "logic design vlsi", "rtl design", "asic",
-            "nmos", "pmos",
+            "nmos", "pmos", "vlsi fabrication",
+        ],
+    },
+
+    "Microprocessors": {
+        "category": "Technical",
+        "subcategory": "Microprocessors",
+        "ai_context": (
+            "Microprocessors: 8085/8086 architecture, instruction set, addressing modes, "
+            "assembly language, memory/IO interfacing, interrupts — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "microprocessors", "microprocessor", "8085", "8086",
+            "assembly language", "instruction set",
+            "addressing modes", "memory interfacing",
+            "8085 architecture", "8086 architecture",
+            "interrupts microprocessor", "io interfacing",
+            "arm processor", "x86", "risc v",
         ],
     },
 
@@ -1128,12 +1640,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Communication Systems",
         "ai_context": (
-            "Communication Systems: analog modulation (AM, FM, PM), "
-            "digital modulation (ASK, FSK, PSK, QAM), multiplexing (TDM, FDM, CDM), "
-            "mobile communication (GSM, CDMA, LTE/4G, 5G), "
-            "satellite communication, optical fiber communication, "
-            "antenna basics, noise and bandwidth, Shannon's theorem - "
-            "as tested in placement exams."
+            "Communication Systems: AM/FM modulation, ASK/FSK/PSK/QAM, "
+            "TDM/FDM, GSM, CDMA, LTE/4G/5G, optical fiber, antennas, "
+            "Shannon's theorem — as tested in placement exams."
         ),
         "aliases": [
             "communication systems", "communication", "wireless communication",
@@ -1150,12 +1659,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Control Systems",
         "ai_context": (
-            "Control Systems: open loop vs closed loop, transfer functions, "
-            "block diagram reduction, signal flow graphs (Mason's gain formula), "
-            "time response (first order, second order), steady state error, "
-            "stability criteria (Routh-Hurwitz, root locus, Bode plot, Nyquist), "
-            "PID controllers, state space representation - "
-            "as tested in placement exams."
+            "Control Systems: open/closed loop, transfer functions, block diagram, "
+            "Routh-Hurwitz, root locus, Bode plot, Nyquist, PID controllers, "
+            "state space — as tested in placement exams."
         ),
         "aliases": [
             "control systems", "control system",
@@ -1167,19 +1673,17 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Electrical (EEE)
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # ── TECHNICAL ─ EEE Topics ────────────────────────────────────────────────
+    # =========================================================================
 
     "Circuit Theory": {
         "category": "Technical",
         "subcategory": "Circuit Theory",
         "ai_context": (
-            "Circuit Theory: Ohm's law, KCL, KVL, network theorems "
-            "(Thevenin, Norton, Superposition, Maximum Power Transfer, "
-            "Millman's, Reciprocity), AC circuits (phasors, impedance, "
-            "resonance, power factor), three-phase circuits, "
-            "transient analysis (RL, RC, RLC) - as tested in placement exams."
+            "Circuit Theory: Ohm's law, KCL, KVL, Thevenin, Norton, Superposition, "
+            "AC circuits (phasors, impedance, resonance), three-phase, "
+            "transient analysis — as tested in placement exams."
         ),
         "aliases": [
             "circuit theory", "network theory", "electric circuits",
@@ -1199,11 +1703,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Power Systems",
         "ai_context": (
-            "Power Systems: power generation (thermal, hydro, nuclear, solar, wind), "
-            "transmission lines (short/medium/long, ABCD parameters), "
-            "distribution systems, load flow analysis (Gauss-Seidel, Newton-Raphson), "
-            "fault analysis (symmetrical, unsymmetrical), symmetrical components, "
-            "protection (relays, circuit breakers, fuses) - "
+            "Power Systems: power generation, transmission lines, distribution, "
+            "load flow analysis, fault analysis, protection (relays, circuit breakers) — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -1213,7 +1714,6 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "load flow", "load flow analysis", "power flow",
             "fault analysis", "symmetrical components", "short circuit",
             "protection", "relay", "circuit breaker", "switchgear",
-            "facts", "power quality", "power generation",
         ],
     },
 
@@ -1221,11 +1721,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Electrical Machines",
         "ai_context": (
-            "Electrical Machines: DC generators (types, EMF equation, characteristics), "
-            "DC motors (types, torque, speed control, starting), "
-            "transformers (construction, equivalent circuit, efficiency, regulation), "
-            "three-phase induction motors (rotating magnetic field, slip, torque-speed), "
-            "synchronous generators and motors - as tested in placement exams."
+            "Electrical Machines: DC generators, DC motors, transformers, "
+            "three-phase induction motors, synchronous generators/motors — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "electrical machines", "electric machines",
@@ -1241,11 +1739,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Power Electronics",
         "ai_context": (
-            "Power Electronics: power semiconductor devices (diode, thyristor/SCR, "
-            "IGBT, power MOSFET), uncontrolled and controlled rectifiers, "
-            "inverters (single-phase, three-phase), DC-DC converters (chopper: "
-            "Buck, Boost, Buck-Boost), AC voltage controllers, PWM techniques, "
-            "SMPS - as tested in placement exams."
+            "Power Electronics: SCR/thyristor, IGBT, power MOSFET, "
+            "rectifiers, inverters, DC-DC converters (Buck/Boost), PWM — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "power electronics", "power electronic",
@@ -1256,24 +1752,35 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "buck converter", "boost converter",
             "pwm", "pulse width modulation",
             "smps", "switched mode power supply",
-            "ac voltage controller",
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Mechanical (MECH)
-    # -------------------------------------------------------------------------
+    "Electromagnetic Theory": {
+        "category": "Technical",
+        "subcategory": "Electromagnetic Theory",
+        "ai_context": (
+            "Electromagnetic Theory: Maxwell's equations, Gauss's law, Faraday's law, "
+            "Ampere's law, wave propagation, transmission lines EMT — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "electromagnetic theory", "emt", "electromagnetics",
+            "maxwell equations", "maxwell's equations",
+            "gauss law", "faraday law", "ampere law",
+            "wave propagation", "poynting vector",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ MECH Topics ───────────────────────────────────────────────
+    # =========================================================================
 
     "Thermodynamics": {
         "category": "Technical",
         "subcategory": "Thermodynamics",
         "ai_context": (
-            "Thermodynamics: zeroth, first, second and third laws, "
-            "thermodynamic properties (enthalpy, entropy, Gibbs free energy), "
-            "ideal gas law, processes (isothermal, adiabatic, isobaric, isochoric), "
-            "Carnot cycle, Rankine cycle (steam), Otto cycle (petrol), "
-            "Diesel cycle, refrigeration cycles (VCR, absorption) - "
-            "as tested in placement exams."
+            "Thermodynamics: zeroth–third laws, enthalpy, entropy, ideal gas, "
+            "Carnot/Rankine/Otto/Diesel cycles, refrigeration — as tested in placement exams."
         ),
         "aliases": [
             "thermodynamics", "thermo", "thermal engineering",
@@ -1289,12 +1796,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Fluid Mechanics",
         "ai_context": (
-            "Fluid Mechanics: fluid properties (viscosity, density, surface tension), "
-            "fluid statics (Pascal's law, buoyancy), Bernoulli's equation, "
-            "continuity equation, laminar vs turbulent flow, "
-            "Reynolds number, flow through pipes (Darcy-Weisbach), "
-            "boundary layer, pumps and turbines - "
-            "as tested in placement exams."
+            "Fluid Mechanics: fluid properties, Bernoulli's equation, "
+            "continuity equation, Reynolds number, pipe flow, boundary layer, "
+            "pumps and turbines — as tested in placement exams."
         ),
         "aliases": [
             "fluid mechanics", "fluids", "fluid dynamics",
@@ -1311,13 +1815,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Strength of Materials",
         "ai_context": (
-            "Strength of Materials: stress, strain, elastic constants "
-            "(E, G, K, Poisson's ratio), stress-strain diagram, "
-            "shear force and bending moment diagrams, "
-            "bending stress, shear stress in beams, torsion, "
-            "deflection of beams (Macaulay's method, Mohr's theorem), "
-            "columns (Euler's formula, Rankine's formula) - "
-            "as tested in placement exams."
+            "Strength of Materials: stress, strain, elastic constants, "
+            "shear force/bending moment diagrams, torsion, deflection of beams, "
+            "columns — as tested in placement exams."
         ),
         "aliases": [
             "strength of materials", "som", "mechanics of materials", "mom",
@@ -1332,12 +1832,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Manufacturing",
         "ai_context": (
-            "Manufacturing Technology: casting processes (sand casting, die casting, "
-            "investment casting), welding (arc, MIG, TIG, spot, seam), "
-            "machining operations (turning, milling, drilling, grinding, "
-            "boring, shaping), metal forming (forging, rolling, extrusion, drawing), "
-            "powder metallurgy, CNC machining, metrology, quality control (SPC) - "
-            "as tested in placement exams."
+            "Manufacturing: casting, welding, machining (turning, milling, drilling), "
+            "metal forming, CNC, metrology, quality control — as tested in placement exams."
         ),
         "aliases": [
             "manufacturing", "manufacturing technology", "manufacturing processes",
@@ -1346,7 +1842,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "cnc", "cnc machining", "cnc programming",
             "metrology", "quality control", "inspection",
             "metal forming", "forging", "rolling", "extrusion", "drawing",
-            "powder metallurgy",
+            "powder metallurgy", "lean manufacturing", "six sigma",
         ],
     },
 
@@ -1354,11 +1850,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Machine Design",
         "ai_context": (
-            "Machine Design: design process and philosophy, factor of safety, "
-            "failure theories (max normal stress, max shear stress, von Mises), "
-            "stress concentration, fatigue, fasteners (bolts, screws, rivets), "
-            "power screws, shafts and keys, couplings, bearings (rolling and sliding), "
-            "gears (spur, helical, bevel, worm), springs, brakes, clutches - "
+            "Machine Design: factor of safety, failure theories, fasteners, "
+            "shafts and keys, bearings, gears, springs, brakes, clutches — "
             "as tested in placement exams."
         ),
         "aliases": [
@@ -1372,19 +1865,95 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Civil
-    # -------------------------------------------------------------------------
+    "Heat Transfer": {
+        "category": "Technical",
+        "subcategory": "Heat Transfer",
+        "ai_context": (
+            "Heat Transfer: conduction, convection, radiation, heat exchangers, "
+            "fins, boiling and condensation — as tested in placement exams."
+        ),
+        "aliases": [
+            "heat transfer", "heat conduction", "heat convection",
+            "heat radiation", "thermal conduction",
+            "heat exchanger", "fourier law", "newton cooling",
+            "stefan boltzmann", "fins heat transfer",
+        ],
+    },
+
+    "Mechanics": {
+        "category": "Technical",
+        "subcategory": "Mechanics",
+        "ai_context": (
+            "Engineering Mechanics: statics, dynamics, kinematics, Newton's laws, "
+            "work/energy, momentum, friction, simple machines — as tested in placement exams."
+        ),
+        "aliases": [
+            "mechanics", "engineering mechanics", "statics", "dynamics",
+            "kinematics", "kinetics", "newton's laws", "friction",
+            "work energy", "momentum", "simple machines",
+        ],
+    },
+
+    "Automobile Engineering": {
+        "category": "Technical",
+        "subcategory": "Automobile Engineering",
+        "ai_context": (
+            "Automobile Engineering: IC engine components, fuel systems, "
+            "transmission, braking, suspension, steering — as tested in placement exams."
+        ),
+        "aliases": [
+            "automobile engineering", "automotive engineering", "automobile",
+            "ic engine", "internal combustion engine", "engine components",
+            "transmission systems", "braking systems", "suspension",
+            "steering", "fuel systems", "cooling lubrication",
+            "electric vehicle", "ev", "hybrid vehicle",
+        ],
+    },
+
+    "CAD/CAM": {
+        "category": "Technical",
+        "subcategory": "CAD/CAM",
+        "ai_context": (
+            "CAD/CAM: engineering drawing, AutoCAD 2D/3D, SolidWorks, CATIA, "
+            "CNC programming, rapid prototyping, FEA basics — as tested in placement exams."
+        ),
+        "aliases": [
+            "cad/cam", "cad cam", "cad", "cam", "autocad",
+            "solidworks", "catia", "engineering drawing",
+            "rapid prototyping", "fea", "finite element analysis",
+            "3d modelling", "3d modeling", "cad design", "creo",
+        ],
+    },
+
+    "Industrial Engineering": {
+        "category": "Technical",
+        "subcategory": "Industrial Engineering",
+        "ai_context": (
+            "Industrial Engineering: work study, time-motion study, plant layout, "
+            "production planning, inventory control (EOQ), CPM/PERT, "
+            "operations research — as tested in placement exams."
+        ),
+        "aliases": [
+            "industrial engineering", "operations management",
+            "work study", "time study", "motion study",
+            "plant layout", "production planning",
+            "inventory control", "eoq", "cpm pert",
+            "operations research", "linear programming",
+            "queuing theory",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ CIVIL Topics ──────────────────────────────────────────────
+    # =========================================================================
 
     "Structural Analysis": {
         "category": "Technical",
         "subcategory": "Structural Analysis",
         "ai_context": (
-            "Structural Analysis: types of structures (beams, trusses, frames, arches), "
-            "static determinacy, analysis of beams (simply supported, cantilever, "
-            "continuous), trusses (method of joints, method of sections), "
-            "influence lines, slope deflection method, moment distribution, "
-            "matrix stiffness method - as tested in placement exams."
+            "Structural Analysis: beams, trusses, frames, arches, "
+            "method of joints/sections, influence lines, slope deflection, "
+            "moment distribution — as tested in placement exams."
         ),
         "aliases": [
             "structural analysis", "structures", "structural engineering",
@@ -1399,12 +1968,10 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Geotechnical Engineering",
         "ai_context": (
-            "Geotechnical Engineering: soil classification (IS classification), "
-            "Atterberg limits (LL, PL, SL, PI), compaction (Proctor test), "
-            "permeability (Darcy's law), seepage, consolidation (Terzaghi), "
-            "shear strength (Mohr-Coulomb criterion), bearing capacity "
-            "(Terzaghi, Meyerhof), slope stability, retaining walls, "
-            "pile foundations - as tested in placement exams."
+            "Geotechnical Engineering: soil classification, Atterberg limits, "
+            "compaction, permeability, Terzaghi consolidation, Mohr-Coulomb, "
+            "bearing capacity, pile foundations, slope stability — "
+            "as tested in placement exams."
         ),
         "aliases": [
             "geotechnical engineering", "geotechnical", "soil mechanics",
@@ -1422,11 +1989,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Surveying",
         "ai_context": (
-            "Surveying: chain surveying (linear measurements, offsets), "
-            "compass surveying (bearings, traversing), levelling (types, "
-            "reduced level, contouring), theodolite surveying (horizontal "
-            "and vertical angles), tacheometry, total station, GPS/GNSS - "
-            "as tested in placement exams."
+            "Surveying: chain/compass/levelling/theodolite/tacheometry, "
+            "total station, GPS/GNSS, contouring — as tested in placement exams."
         ),
         "aliases": [
             "surveying", "engineering surveying",
@@ -1441,12 +2005,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Concrete Technology",
         "ai_context": (
-            "Concrete Technology: cement types (OPC, PPC, SRC), hydration, "
-            "aggregates (fine, coarse), water-cement ratio, workability "
-            "(slump test, Vee-Bee, compaction factor), IS mix design method, "
-            "durability, curing methods, admixtures (plasticizers, accelerators), "
-            "special concretes (high-strength, self-compacting) - "
-            "as tested in placement exams."
+            "Concrete Technology: cement types, aggregates, water-cement ratio, "
+            "workability (slump test), IS mix design, durability, curing, "
+            "admixtures — as tested in placement exams."
         ),
         "aliases": [
             "concrete technology", "concrete", "cement concrete",
@@ -1462,12 +2023,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Technical",
         "subcategory": "Transportation Engineering",
         "ai_context": (
-            "Transportation Engineering: highway planning and alignment, "
-            "geometric design (horizontal curves, vertical curves, "
-            "sight distance, gradient), pavement design (flexible: CBR method, "
-            "rigid: Westergaard method), pavement distresses, "
-            "traffic engineering (volume, speed, density, LOS), "
-            "railway engineering basics - as tested in placement exams."
+            "Transportation Engineering: highway planning, geometric design, "
+            "pavement design (flexible/rigid), traffic engineering (LOS), "
+            "railway engineering — as tested in placement exams."
         ),
         "aliases": [
             "transportation engineering", "highway engineering",
@@ -1478,21 +2036,50 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # TECHNICAL - Chemical
-    # -------------------------------------------------------------------------
+    "RCC Design": {
+        "category": "Technical",
+        "subcategory": "RCC Design",
+        "ai_context": (
+            "RCC Design: working stress / limit state methods, "
+            "singly/doubly reinforced beams, T-beams, slabs, columns, "
+            "footings, staircases — as tested in placement exams."
+        ),
+        "aliases": [
+            "rcc design", "rcc", "reinforced cement concrete",
+            "reinforced concrete design", "rc design",
+            "limit state", "working stress method",
+            "beams design", "slab design", "column design",
+            "footing design", "staircase design",
+        ],
+    },
+
+    "Environmental Engineering": {
+        "category": "Technical",
+        "subcategory": "Environmental Engineering",
+        "ai_context": (
+            "Environmental Engineering: water supply, wastewater treatment, "
+            "solid waste management, air pollution, environmental impact assessment — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "environmental engineering", "environmental",
+            "water supply", "wastewater treatment", "sewage treatment",
+            "solid waste", "air pollution", "water quality",
+            "eia", "environmental impact assessment",
+        ],
+    },
+
+    # =========================================================================
+    # ── TECHNICAL ─ CHEMICAL Topics ───────────────────────────────────────────
+    # =========================================================================
 
     "Chemical Engineering": {
         "category": "Technical",
         "subcategory": "Chemical Engineering",
         "ai_context": (
-            "Chemical Engineering: material and energy balances, "
-            "fluid flow (Bernoulli, friction losses), heat transfer "
-            "(conduction, convection, radiation, heat exchangers), "
-            "mass transfer (distillation, absorption, liquid-liquid extraction), "
-            "chemical reaction engineering (batch, CSTR, PFR reactors), "
-            "process control and instrumentation - "
-            "as tested in placement exams."
+            "Chemical Engineering: material/energy balances, fluid flow, heat transfer, "
+            "mass transfer (distillation, absorption), reaction engineering "
+            "(CSTR, PFR), process control — as tested in placement exams."
         ),
         "aliases": [
             "chemical engineering", "chemical",
@@ -1504,18 +2091,64 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # APTITUDE - Quantitative
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # ── TECHNICAL ─ Blockchain / Emerging ─────────────────────────────────────
+    # =========================================================================
+
+    "Blockchain": {
+        "category": "Technical",
+        "subcategory": "Blockchain",
+        "ai_context": (
+            "Blockchain: distributed ledger, consensus algorithms (PoW, PoS), "
+            "smart contracts, Ethereum, Solidity, DeFi, NFTs — "
+            "as tested in placement exams."
+        ),
+        "aliases": [
+            "blockchain", "block chain", "cryptocurrency",
+            "bitcoin", "ethereum", "solidity", "smart contracts",
+            "defi", "nft", "web3", "consensus algorithm",
+            "proof of work", "proof of stake",
+        ],
+    },
+
+    "Quantum Computing": {
+        "category": "Technical",
+        "subcategory": "Quantum Computing",
+        "ai_context": (
+            "Quantum Computing: qubits, superposition, entanglement, "
+            "quantum gates, Shor's algorithm, Grover's algorithm, "
+            "quantum cryptography — as tested in placement exams."
+        ),
+        "aliases": [
+            "quantum computing", "quantum", "qubits",
+            "quantum gates", "shor's algorithm", "grover's algorithm",
+            "quantum cryptography", "quantum mechanics computing",
+        ],
+    },
+
+    "Augmented and Virtual Reality": {
+        "category": "Technical",
+        "subcategory": "AR/VR",
+        "ai_context": (
+            "AR/VR: AR vs VR vs MR, OpenXR, Unity, Unreal Engine, "
+            "HMD devices, spatial computing — as tested in placement exams."
+        ),
+        "aliases": [
+            "ar vr", "augmented reality", "virtual reality",
+            "mixed reality", "xr", "metaverse", "unity 3d", "unreal engine",
+        ],
+    },
+
+    # =========================================================================
+    # ── APTITUDE ─ Quantitative ────────────────────────────────────────────────
+    # =========================================================================
 
     "Number System": {
         "category": "Aptitude",
         "subcategory": "Number System",
         "ai_context": (
-            "Number System aptitude: types of numbers (natural, whole, integer, "
-            "rational, irrational), divisibility rules (2,3,4,5,6,7,8,9,10,11), "
-            "HCF and LCM (prime factorization method), prime numbers, "
-            "unit digit, remainders (Fermat's little theorem), cyclicity - "
+            "Number System aptitude: types of numbers, divisibility rules, "
+            "HCF and LCM, prime factorization, unit digit, remainders, cyclicity — "
             "as tested in placement aptitude exams."
         ),
         "aliases": [
@@ -1526,6 +2159,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "divisibility", "divisibility rules",
             "remainders", "remainder theorem",
             "unit digit", "cyclicity", "fermat little theorem",
+            "lcm hcf", "lcm and hcf",
         ],
     },
 
@@ -1533,16 +2167,13 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Percentages",
         "ai_context": (
-            "Percentage problems: percentage of a number, "
-            "percentage increase and decrease, successive percentage change, "
-            "percentage to fraction/decimal conversion, "
-            "percentage application in profit/loss/interest - "
-            "as tested in placement aptitude exams."
+            "Percentage problems: percentage increase/decrease, successive percentage, "
+            "fraction/decimal conversion — as tested in placement aptitude exams."
         ),
         "aliases": [
             "percentages", "percentage", "percent",
             "percentage problems", "percentage increase", "percentage decrease",
-            "successive percentage", "percentage change",
+            "successive percentage", "percentage change", "percent problems",
         ],
     },
 
@@ -1550,11 +2181,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Profit & Loss",
         "ai_context": (
-            "Profit and Loss: cost price (CP), selling price (SP), "
-            "profit percent and loss percent formulas, "
-            "marked price, discount, successive discounts, "
-            "equivalent discount, dishonest dealer, "
-            "partnership profit sharing - "
+            "Profit and Loss: CP, SP, profit/loss percent, marked price, "
+            "discount, successive discounts, dishonest dealer — "
             "as tested in placement aptitude exams."
         ),
         "aliases": [
@@ -1562,6 +2190,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "profit", "loss", "profit percent", "loss percent",
             "discount", "marked price", "selling price", "cost price",
             "successive discounts", "trade discount", "equivalent discount",
+            "profit loss problems",
         ],
     },
 
@@ -1569,12 +2198,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Simple & Compound Interest",
         "ai_context": (
-            "Simple Interest (SI = PRT/100) and Compound Interest "
-            "(A = P(1+r/n)^nt): difference between SI and CI, "
-            "half-yearly/quarterly/monthly compounding, "
-            "effective rate of interest, population growth, "
-            "depreciation problems - "
-            "as tested in placement aptitude exams."
+            "Simple Interest (SI = PRT/100) and Compound Interest: "
+            "difference, half-yearly/quarterly compounding, effective rate, "
+            "depreciation — as tested in placement aptitude exams."
         ),
         "aliases": [
             "simple interest", "compound interest",
@@ -1582,6 +2208,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "si", "ci", "interest problems", "interest",
             "half yearly compounding", "quarterly compounding",
             "effective rate", "population growth", "depreciation",
+            "simple interest problems", "compound interest problems",
         ],
     },
 
@@ -1589,11 +2216,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Time & Work",
         "ai_context": (
-            "Time and Work: work done formula (work = efficiency x time), "
-            "combined work rate, LCM method, "
-            "A and B together complete work, "
-            "pipes and cisterns (filling/draining), "
-            "work and wages - "
+            "Time and Work: combined work rate, LCM method, "
+            "pipes and cisterns, work and wages — "
             "as tested in placement aptitude exams."
         ),
         "aliases": [
@@ -1602,7 +2226,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "pipes and cisterns", "pipes cisterns",
             "pipes", "cisterns", "cistern", "tank filling",
             "tap", "inlet", "outlet pipe",
-            "work and wages",
+            "work and wages", "time work problems",
         ],
     },
 
@@ -1610,12 +2234,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Time Speed Distance",
         "ai_context": (
-            "Time, Speed and Distance: speed = distance/time, "
-            "relative speed (same direction: difference, opposite: sum), "
-            "average speed (2S1S2/(S1+S2)), trains crossing problems "
-            "(pole, platform, each other), boats and streams "
-            "(upstream speed = u-v, downstream = u+v), races - "
-            "as tested in placement aptitude exams."
+            "Time, Speed and Distance: speed = distance/time, relative speed, "
+            "average speed, trains crossing (pole, platform), boats and streams "
+            "(upstream/downstream), races — as tested in placement aptitude exams."
         ),
         "aliases": [
             "time speed distance", "speed distance time", "speed and distance",
@@ -1625,6 +2246,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
             "boats and streams", "boats", "boat", "streams", "stream",
             "upstream", "downstream", "speed of stream",
             "average speed", "races",
+            "time distance", "speed distance",
         ],
     },
 
@@ -1632,11 +2254,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Ratio & Proportion",
         "ai_context": (
-            "Ratio and Proportion: ratio in simplest form, "
-            "compounded ratio, duplicate/triplicate ratio, "
-            "proportion (direct and inverse), continued proportion, "
-            "variation, partnership problems - "
-            "as tested in placement aptitude exams."
+            "Ratio and Proportion: compounded ratio, direct/inverse proportion, "
+            "variation, partnership — as tested in placement aptitude exams."
         ),
         "aliases": [
             "ratio and proportion", "ratio proportion", "ratio",
@@ -1650,10 +2269,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Mixtures & Alligation",
         "ai_context": (
-            "Mixtures and Alligation: alligation method (weighted average), "
-            "mixing two items of different prices or concentrations, "
-            "repeated dilution (milk-water problems), "
-            "mean price, rule of alligation - "
+            "Mixtures and Alligation: alligation method, mixing items of "
+            "different prices/concentrations, repeated dilution (milk-water) — "
             "as tested in placement aptitude exams."
         ),
         "aliases": [
@@ -1668,11 +2285,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Average",
         "ai_context": (
-            "Average: arithmetic mean, weighted average, "
-            "average of consecutive numbers, "
-            "effect of including/excluding a number, "
-            "average speed, age-based average problems - "
-            "as tested in placement aptitude exams."
+            "Average: arithmetic mean, weighted average, average of consecutive numbers, "
+            "effect of including/excluding a number — as tested in placement aptitude exams."
         ),
         "aliases": [
             "average", "averages", "mean",
@@ -1685,11 +2299,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Permutations & Combinations",
         "ai_context": (
-            "Permutations and Combinations: factorial notation, "
-            "nPr (arrangements), nCr (selections), "
-            "circular permutation, repeated objects, "
-            "word arrangement problems, selection of teams/committees, "
-            "distribution problems - "
+            "Permutations and Combinations: factorial, nPr, nCr, "
+            "circular permutation, word arrangement, selection problems — "
             "as tested in placement aptitude exams."
         ),
         "aliases": [
@@ -1706,12 +2317,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Probability",
         "ai_context": (
-            "Probability: sample space, events, classical probability, "
-            "complementary events (P(A') = 1 - P(A)), "
-            "mutually exclusive events, independent events, "
-            "conditional probability, Bayes' theorem, "
-            "problems on dice, cards (deck of 52), coins - "
-            "as tested in placement aptitude exams."
+            "Probability: classical probability, complementary events, "
+            "mutually exclusive, conditional probability, Bayes' theorem, "
+            "dice, cards, coins — as tested in placement aptitude exams."
         ),
         "aliases": [
             "probability", "probability problems",
@@ -1727,11 +2335,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Problems on Ages",
         "ai_context": (
-            "Problems on Ages: calculating present age, past age, future age, "
-            "ratio of ages at different points in time, "
-            "algebraic equations for ages, "
-            "average age problems - "
-            "as tested in placement aptitude exams."
+            "Problems on Ages: present age, past age, future age, "
+            "ratio of ages, algebraic equations — as tested in placement aptitude exams."
         ),
         "aliases": [
             "problems on ages", "age problems", "ages",
@@ -1743,11 +2348,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Data Interpretation",
         "ai_context": (
-            "Data Interpretation: reading bar charts (simple and grouped), "
-            "pie charts (percentage and value), line graphs (trends), "
-            "tables, mixed graphs; percentage calculation from graphs, "
-            "ratio comparison, data sufficiency basics - "
-            "as tested in placement aptitude exams."
+            "Data Interpretation: bar charts, pie charts, line graphs, tables, "
+            "mixed graphs — as tested in placement aptitude exams."
         ),
         "aliases": [
             "data interpretation", "di", "data interp",
@@ -1761,13 +2363,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Aptitude",
         "subcategory": "Logical Reasoning",
         "ai_context": (
-            "Logical Reasoning: number series (find the missing term), "
-            "letter series, coding-decoding (letter shift, number coding), "
-            "blood relations (family tree), direction sense (final position), "
-            "seating arrangement (linear and circular), "
-            "syllogisms (all/some/no statements), puzzles, "
-            "clock and calendar, statement conclusions - "
-            "as tested in placement aptitude exams."
+            "Logical Reasoning: number/letter series, coding-decoding, blood relations, "
+            "direction sense, seating arrangement (linear/circular), syllogisms, "
+            "puzzles, clock, calendar — as tested in placement aptitude exams."
         ),
         "aliases": [
             "logical reasoning", "lr", "reasoning", "logical",
@@ -1787,20 +2385,77 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         ],
     },
 
-    # -------------------------------------------------------------------------
-    # VERBAL
-    # -------------------------------------------------------------------------
+    "Partnership": {
+        "category": "Aptitude",
+        "subcategory": "Partnership",
+        "ai_context": (
+            "Partnership: simple and compound partnership, "
+            "profit/loss sharing among partners — as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "partnership problems", "partners profit",
+            "simple partnership", "compound partnership",
+        ],
+    },
+
+    "Mensuration": {
+        "category": "Aptitude",
+        "subcategory": "Mensuration",
+        "ai_context": (
+            "Mensuration: area and perimeter of 2D shapes (circle, square, rectangle, "
+            "triangle), surface area and volume of 3D shapes (cube, cylinder, cone, sphere) "
+            "— as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "mensuration", "area", "perimeter",
+            "area and perimeter", "volume", "surface area",
+            "2d shapes", "3d shapes", "circle area",
+            "triangle area", "sphere volume", "cylinder volume",
+            "cone volume", "cube volume",
+        ],
+    },
+
+    "Trigonometry": {
+        "category": "Aptitude",
+        "subcategory": "Trigonometry",
+        "ai_context": (
+            "Trigonometry: sin, cos, tan, identities, heights and distances, "
+            "angle of elevation, angle of depression — as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "trigonometry", "trigo", "trig",
+            "sin cos tan", "trigonometric identities",
+            "heights and distances", "angle of elevation",
+            "angle of depression",
+        ],
+    },
+
+    "Algebra": {
+        "category": "Aptitude",
+        "subcategory": "Algebra",
+        "ai_context": (
+            "Algebra: linear equations, quadratic equations, inequalities, "
+            "polynomials, indices/surds — as tested in placement aptitude exams."
+        ),
+        "aliases": [
+            "algebra", "algebraic equations", "linear equations",
+            "quadratic equations", "quadratic", "polynomials",
+            "inequalities", "indices", "surds",
+            "simultaneous equations",
+        ],
+    },
+
+    # =========================================================================
+    # ── VERBAL ────────────────────────────────────────────────────────────────
+    # =========================================================================
 
     "Grammar": {
         "category": "Verbal",
         "subcategory": "Grammar",
         "ai_context": (
-            "English Grammar for placement exams: all 12 tenses with usage rules, "
-            "subject-verb agreement, articles (a/an/the), prepositions, "
-            "conjunctions (coordinating, subordinating), active and passive voice "
-            "transformation, direct and indirect speech (narration), "
-            "question tags, conditionals (zero, first, second, third) - "
-            "as tested in placement verbal exams."
+            "English Grammar: all 12 tenses, subject-verb agreement, articles, "
+            "prepositions, conjunctions, active/passive voice, direct/indirect speech, "
+            "conditionals — as tested in placement verbal exams."
         ),
         "aliases": [
             "grammar", "english grammar", "basic grammar", "advanced grammar",
@@ -1822,12 +2477,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Verbal",
         "subcategory": "Synonyms & Antonyms",
         "ai_context": (
-            "Vocabulary for placement exams: synonyms (words with similar meaning), "
-            "antonyms (words with opposite meaning), contextual word usage, "
-            "one-word substitution (a single word for a phrase), "
-            "idioms and phrases (meaning and usage), "
-            "commonly confused words (affect/effect, accept/except), "
-            "verbal analogies - as tested in placement verbal exams."
+            "Vocabulary: synonyms, antonyms, contextual word usage, "
+            "one-word substitution, idioms and phrases, commonly confused words, "
+            "verbal analogies — as tested in placement verbal exams."
         ),
         "aliases": [
             "vocabulary", "vocab",
@@ -1846,11 +2498,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Verbal",
         "subcategory": "Reading Comprehension",
         "ai_context": (
-            "Reading Comprehension for placement exams: passage-based questions, "
-            "identifying the main idea, inferential questions, "
-            "vocabulary in context, author's tone and purpose "
-            "(critical, humorous, sarcastic, objective, subjective), "
-            "true/false based on passage, title selection - "
+            "Reading Comprehension: passage-based questions, main idea, "
+            "inference, vocabulary in context, author's tone — "
             "as tested in placement verbal exams."
         ),
         "aliases": [
@@ -1864,11 +2513,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Verbal",
         "subcategory": "Sentence Correction",
         "ai_context": (
-            "Sentence Correction for placement exams: spotting grammatical errors "
-            "(subject-verb agreement, tense errors, pronoun errors, article errors, "
-            "preposition errors), sentence improvement (choosing the correct option "
-            "to replace underlined part), fill in the blanks (choosing the most "
-            "appropriate word), cloze test - as tested in placement verbal exams."
+            "Sentence Correction: spotting grammatical errors, sentence improvement, "
+            "fill in the blanks, cloze test — as tested in placement verbal exams."
         ),
         "aliases": [
             "sentence correction", "error detection", "error spotting",
@@ -1884,12 +2530,8 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Verbal",
         "subcategory": "Para Jumbles",
         "ai_context": (
-            "Para Jumbles for placement exams: rearranging jumbled sentences "
-            "to form a coherent and logical paragraph; "
-            "finding the opening sentence (topic sentence), "
-            "connecting sentences using transition words, "
-            "finding the concluding sentence - "
-            "as tested in placement verbal exams."
+            "Para Jumbles: rearranging jumbled sentences to form a coherent paragraph; "
+            "topic sentence, transition words — as tested in placement verbal exams."
         ),
         "aliases": [
             "para jumbles", "para jumble", "paragraph jumbles",
@@ -1903,12 +2545,9 @@ CANONICAL_TOPICS: Dict[str, dict] = {
         "category": "Verbal",
         "subcategory": "Soft Skills",
         "ai_context": (
-            "Soft Skills and Communication for placement: effective communication "
-            "(verbal, non-verbal, written), group discussion tips, "
-            "interpersonal skills, teamwork, leadership, "
-            "time management, problem-solving, adaptability, "
-            "email and professional writing etiquette - "
-            "as tested in placement behavioral rounds."
+            "Soft Skills: communication (verbal, non-verbal, written), "
+            "group discussion, interpersonal skills, teamwork, leadership, "
+            "professional email writing — as tested in placement behavioral rounds."
         ),
         "aliases": [
             "soft skills", "soft", "communication skills",
@@ -1922,8 +2561,7 @@ CANONICAL_TOPICS: Dict[str, dict] = {
 
 
 # ===========================================================================
-# SECTION 2 - BUILD LOOKUP INDEX (runs once at import time)
-# alias (lowercase) -> canonical name
+# SECTION 2 - BUILD LOOKUP INDEX
 # ===========================================================================
 
 _ALIAS_INDEX: Dict[str, str] = {}
@@ -1942,22 +2580,80 @@ for _canon, _meta in CANONICAL_TOPICS.items():
 
 
 # ===========================================================================
-# SECTION 3 - PURE NOISE / GARBAGE
+# SECTION 3 - NOISE / REJECTION LIST
 # ===========================================================================
 
-_NOISE = {
-    # Single letters that are NOT valid topics
-    # NOTE: "c" is excluded here because "C" is a programming language
+_NOISE: set = {
     "b", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-    "n", "o", "p", "q", "r", "t", "u", "v", "w", "x", "y", "z",
+    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
     "hello", "hi", "hey", "ok", "okay", "yes", "no", "yep", "nope",
+    "sure", "thanks", "thank", "please", "sorry", "bye",
     "what", "how", "why", "when", "where", "who", "which",
-    "this", "that", "these", "those", "is", "are", "was", "were",
-    "good", "bad", "easy", "hard", "difficult",
+    "this", "that", "these", "those",
+    "is", "are", "was", "were", "be", "been", "being",
+    "do", "does", "did", "have", "has", "had",
+    "can", "could", "will", "would", "shall", "should", "may", "might",
+    "good", "bad", "easy", "hard", "difficult", "simple",
+    "nice", "great", "best", "worst", "top", "new", "old",
+    "big", "small", "large", "fast", "slow", "long", "short",
+    "first", "last", "next", "previous", "same", "different",
+    "all", "any", "some", "few", "many", "more", "most", "less",
+    "up", "down", "in", "out", "on", "off", "at", "to", "for",
+    "and", "or", "but", "not", "the", "a", "an", "of", "with",
+    "by", "from", "into", "about", "over", "under",
     "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-    "test", "quiz", "exam", "question", "answer",
-    "abc", "xyz", "asdf", "qwerty", "aaa", "bbb", "ccc",
-    "lol", "idk", "omg", "wtf", "lmao",
+    "zero", "hundred", "thousand", "million",
+    "test", "quiz", "exam", "question", "answer", "topic",
+    "subject", "chapter", "unit", "lesson", "study", "learn",
+    "abc", "xyz", "asdf", "qwerty", "aaa", "bbb", "ccc", "zzz",
+    "lol", "idk", "omg", "wtf", "lmao", "lmfao",
+    "jjj", "kkk", "mmm", "nnn", "ppp", "rrr", "sss", "ttt",
+    "list", "problems", "questions", "examples", "notes", "pdf",
+    "help", "important", "basic", "advanced", "level",
+    "introduction", "overview", "summary", "revision",
+    "water", "fire", "air", "earth", "light", "sound", "energy",
+    "money", "bank", "house", "road", "bus",
+    "book", "pen", "paper", "table", "chair", "door", "window",
+    "day", "week", "month", "year", "hour", "minute", "second",
+    "man", "woman", "child", "student", "teacher", "doctor",
+    "city", "country", "world",
+    "color", "colour", "red", "blue", "green", "yellow", "white", "black",
+    "run", "go", "come", "make", "take", "give", "get",
+    "read", "write", "speak", "listen", "watch", "see",
+    "eat", "drink", "sleep", "walk", "talk",
+    "normal", "standard", "general", "common", "regular", "special",
+    "theory", "method", "approach", "technique", "process", "system",
+    "model", "type", "form", "kind", "mode", "style",
+    "point", "line", "plane", "surface", "area", "space", "volume",
+    "key", "value", "size", "count",
+    "food", "meal", "fruit", "animal", "plant",
+    "music", "sport", "game", "movie", "film", "art",
+    "love", "hate", "feel", "emotion", "happy", "sad",
+    "police", "army", "law", "rule", "crime",
+    "weather", "rain", "sun", "cloud", "wind", "snow",
+    "number", "data", "language", "object", "class", "function",
+    "loop", "array", "node", "link", "base", "case", "flow",
+    "box", "block", "spring", "load", "force", "motor",
+    "heat", "wave", "current", "voltage", "frequency", "signal",
+    "pump", "chain", "code", "map", "set", "index",
+    "person", "place", "thing", "idea", "part",
+    "fact", "side", "hand",
+    "right", "left", "front", "back",
+    "high", "low", "open", "close",
+    "start", "stop", "begin", "end",
+    "add", "remove", "delete", "update", "create", "build",
+    "find", "search", "check", "try",
+    "use", "apply", "call",
+}
+
+_NOISE_UNLESS_ALIAS: set = {
+    "speed", "stress", "strain", "work", "trains", "boat", "boats",
+    "pipes", "sorting", "array", "tree", "graph", "heap", "stack",
+    "queue", "cache", "power", "signal", "set", "map", "code",
+    "trie", "tries", "dsa", "dp", "bfs", "dfs", "sql", "os",
+    "oop", "oops", "api", "git", "jwt", "css", "html",
+    "cnn", "rnn", "lstm", "gru",
+    "c", "r",
 }
 
 
@@ -1965,56 +2661,118 @@ _NOISE = {
 # SECTION 4 - VALIDITY CHECK
 # ===========================================================================
 
-_GIBBERISH = re.compile(r'(.)\1{3,}|^[\W\d]+$', re.I)
+_GIBBERISH_RE = re.compile(r'(.)\1{3,}|^[\W\d]+$', re.I)
+_SINGLE_LETTER_TOPICS: set = {"c", "a", "r"}
 
-
-_SINGLE_LETTER_TOPICS = {"c", "a"}  # valid single-letter topics
 
 def _is_valid_query(text: str) -> bool:
-    """Return True if the string is worth trying to resolve."""
     clean = text.strip().lower()
 
-    if len(clean.replace(' ', '')) < 1:
-        return False
-
     if not re.search(r'[a-zA-Z]', clean):
+        if clean in _ALIAS_INDEX:
+            return True
         return False
 
-    if clean in _NOISE:
-        return False
-
-    # Allow known single-letter topics
     if clean in _SINGLE_LETTER_TOPICS:
         return True
 
-    # Allow short known acronyms (2-4 chars all letters) if in alias index
-    if len(clean) <= 4 and clean.isalpha() and clean in _ALIAS_INDEX:
+    if len(clean) <= 8 and clean in _ALIAS_INDEX:
         return True
 
-    if len(clean.replace(' ', '')) < 2:
+    tokens = re.split(r'[\s\-/&,]+', clean)
+    if len(tokens) == 1:
+        tok = tokens[0].strip('.,;:')
+        if tok in _NOISE and tok not in _NOISE_UNLESS_ALIAS:
+            return False
+
+    if len(clean.replace(' ', '').replace('+', '').replace('#', '')) < 2:
         return False
 
-    for word in re.split(r'[\s\-/&]+', clean):
+    for word in tokens:
         word = word.strip('.,;:')
         if len(word) <= 2:
             continue
-        if _GIBBERISH.search(word):
+        if _GIBBERISH_RE.search(word):
             return False
         letters = [c for c in word if c.isalpha()]
-        if len(letters) > 4:
+        if len(letters) > 5:
             vowels = sum(1 for c in letters if c in 'aeiou')
-            if vowels / len(letters) < 0.1:
+            if vowels / len(letters) < 0.08:
                 return False
 
     return True
 
 
 # ===========================================================================
-# SECTION 5 - CORE RESOLVER
+# SECTION 5 - FUZZY SCORE HELPER  (NEW in v6.0)
+# ===========================================================================
+
+def _fuzzy_score(a: str, b: str) -> float:
+    """
+    Bigram-based Dice coefficient similarity.
+    Returns 0.0 – 1.0.  Fast enough to scan the full alias index.
+    """
+    if a == b:
+        return 1.0
+    if not a or not b:
+        return 0.0
+
+    def bigrams(s: str) -> List[str]:
+        return [s[i:i + 2] for i in range(len(s) - 1)] if len(s) >= 2 else list(s)
+
+    a_bg = bigrams(a)
+    b_bg = bigrams(b)
+
+    if not a_bg or not b_bg:
+        return 0.0
+
+    b_copy = b_bg[:]
+    common = 0
+    for bg in a_bg:
+        if bg in b_copy:
+            common += 1
+            b_copy.remove(bg)
+
+    return (2.0 * common) / (len(a_bg) + len(b_bg))
+
+
+def _best_fuzzy_match(query: str) -> tuple:
+    """
+    Scan entire alias index and return (best_canonical, best_score).
+    Only considers aliases whose length is within 60% – 200% of query length
+    to avoid wildly mismatched comparisons.
+    """
+    q_len = len(query)
+    best_canon = None
+    best_score = 0.0
+
+    for alias, canon in _ALIAS_INDEX.items():
+        # Length gate — skip obviously wrong-length aliases
+        a_len = len(alias)
+        if a_len == 0 or q_len == 0:
+            continue
+        ratio = a_len / q_len
+        if ratio < 0.4 or ratio > 2.5:
+            continue
+
+        score = _fuzzy_score(query, alias)
+        if score > best_score:
+            best_score = score
+            best_canon = canon
+
+    # Unwrap multi-entry to first canonical
+    if best_canon and best_canon.startswith("__MULTI__"):
+        parts = [c for c in best_canon[len("__MULTI__"):].split("||") if c in CANONICAL_TOPICS]
+        best_canon = parts[0] if parts else None
+
+    return best_canon, best_score
+
+
+# ===========================================================================
+# SECTION 6 - CORE RESOLVER  (updated in v6.0)
 # ===========================================================================
 
 def _make_result(canonical: str) -> dict:
-    """Build a 'single' result dict from a canonical topic name."""
     meta = CANONICAL_TOPICS[canonical]
     return {
         "status":        "single",
@@ -2029,32 +2787,31 @@ def _make_result(canonical: str) -> dict:
 
 def resolve_topic(user_input: str) -> dict:
     """
-    Resolve a user search query to a canonical placement topic.
+    Resolve user search query → canonical placement topic.
 
     Returns one of:
-        { status: 'single',  topic, canonical, subtopic, category,
-                             ai_context, display_label }
-        { status: 'multi',   options: [...], query }
-        { status: 'new',     topic, ai_context }
-        { status: 'invalid', message }
+        { status:'single',  topic, canonical, subtopic, category, ai_context, display_label }
+        { status:'multi',   options:[...], query }
+        { status:'new',     topic, category, ai_context }
+        { status:'invalid', message }
     """
     raw   = user_input.strip()
     clean = re.sub(r'\s+', ' ', raw.lower()).strip()
 
-    # 1. Basic validity
+    # ── Basic length / noise guard ────────────────────────────────────────
     if not _is_valid_query(clean):
         if len(clean.replace(' ', '')) < 2:
             return {"status": "invalid", "message": "Please type at least 2 characters."}
         return {
             "status":  "invalid",
             "message": (
-                f'"{raw}" doesn\'t look like a placement topic. '
-                'Try something like "sorting algorithms", "SQL joins", '
+                f'"{raw}" is not a recognised placement topic. '
+                'Try something like "dynamic programming", "SQL joins", '
                 '"boats and streams", or "reading comprehension".'
             ),
         }
 
-    # 2. Exact alias match
+    # ── 1. Exact alias match ──────────────────────────────────────────────
     hit = _ALIAS_INDEX.get(clean)
     if hit:
         if hit.startswith("__MULTI__"):
@@ -2064,8 +2821,8 @@ def resolve_topic(user_input: str) -> dict:
             return {"status": "multi", "options": options, "query": raw}
         return _make_result(hit)
 
-    # 3. Prefix match (query is prefix of an alias, min 4 chars)
-    if len(clean) >= 4:
+    # ── 2. Prefix match (min 3 chars) ─────────────────────────────────────
+    if len(clean) >= 3:
         prefix_hits: List[str] = []
         seen: set = set()
         for alias, canon in _ALIAS_INDEX.items():
@@ -2084,8 +2841,8 @@ def resolve_topic(user_input: str) -> dict:
             options = [_make_result(c) for c in prefix_hits]
             return {"status": "multi", "options": options, "query": raw}
 
-    # 4. Substring match (alias contains the query, min 5 chars)
-    if len(clean) >= 5:
+    # ── 3. Substring match (min 4 chars) ──────────────────────────────────
+    if len(clean) >= 4:
         sub_hits: List[str] = []
         seen2: set = set()
         for alias, canon in _ALIAS_INDEX.items():
@@ -2104,11 +2861,73 @@ def resolve_topic(user_input: str) -> dict:
             options = [_make_result(c) for c in sub_hits]
             return {"status": "multi", "options": options, "query": raw}
 
-    # 5. Genuinely new topic
+    # ── 4. Fuzzy match — catch typos ("pyhton", "java scrop", etc.) ───────
+    best_canon, best_score = _best_fuzzy_match(clean)
+
+    # High confidence → silently auto-correct
+    if best_score >= 0.75 and best_canon and best_canon in CANONICAL_TOPICS:
+        return _make_result(best_canon)
+
+    # Medium confidence → reject but suggest the closest topic
+    if best_score >= 0.55 and best_canon and best_canon in CANONICAL_TOPICS:
+        suggested = CANONICAL_TOPICS[best_canon]["subcategory"]
+        return {
+            "status": "invalid",
+            "message": (
+                f'"{raw}" doesn\'t match any topic. '
+                f'Did you mean "{suggested}"?'
+            ),
+        }
+
+    # ── 5. Reject short / single-word queries that matched nothing ────────
+    words = clean.split()
+    total_chars = len(clean.replace(' ', ''))
+
+    if len(words) == 1 and total_chars <= 6:
+        return {
+            "status":  "invalid",
+            "message": (
+                f'"{raw}" is not a recognised placement topic. '
+                'Try something like "dynamic programming", "SQL joins", or "probability".'
+            ),
+        }
+
+    # ── 6. Reject if all words look like gibberish (no vowels) ───────────
+    gibberish_words = 0
+    for w in words:
+        letters = [c for c in w if c.isalpha()]
+        if len(letters) >= 3:
+            vowels = sum(1 for c in letters if c in 'aeiouAEIOU')
+            if vowels == 0:
+                gibberish_words += 1
+    if len(words) > 0 and gibberish_words >= len(words):
+        return {
+            "status":  "invalid",
+            "message": f'"{raw}" doesn\'t look like a valid topic. Please check your spelling.',
+        }
+
+    # ── 7. Allow as NEW topic only if it contains real-looking words ──────
+    has_real_word = False
+    for w in words:
+        letters = [c for c in w if c.isalpha()]
+        if len(letters) >= 3:
+            vowels = sum(1 for c in letters if c in 'aeiouAEIOU')
+            if vowels / len(letters) >= 0.15:
+                has_real_word = True
+                break
+
+    if not has_real_word:
+        return {
+            "status":  "invalid",
+            "message": f'"{raw}" doesn\'t look like a valid topic. Please check your spelling.',
+        }
+
+    # Passed all checks — accept as a brand-new topic
     title_cased = raw.title()
     return {
         "status":     "new",
         "topic":      title_cased,
+        "category":   "Technical",
         "ai_context": (
             f"{title_cased} — core concepts, theory, and applied problems "
             f"as tested in engineering placement exams and technical interviews."
@@ -2117,11 +2936,10 @@ def resolve_topic(user_input: str) -> dict:
 
 
 # ===========================================================================
-# SECTION 6 - AI CONTEXT BUILDER
+# SECTION 7 - AI CONTEXT BUILDER
 # ===========================================================================
 
 def build_ai_context(topic: str, subtopic: str, ai_context: str = '') -> str:
-    """Compose the context string injected into the AI prompt."""
     if ai_context:
         first_word = subtopic.split()[0] if subtopic else topic.split()[0]
         return (
@@ -2129,71 +2947,208 @@ def build_ai_context(topic: str, subtopic: str, ai_context: str = '') -> str:
             f"Subtopic: {subtopic}\n"
             f"Context: Generate questions ONLY about: {ai_context}\n"
             f"Do NOT generate questions about the literal/everyday meaning of "
-            f'"{first_word}" - focus strictly on the placement exam context above.'
+            f'"{first_word}" — focus strictly on the placement exam context above.'
         )
     return f"Topic: {topic}\nSubtopic: {subtopic if subtopic else topic}"
 
 
 # ===========================================================================
-# SECTION 7 - QUICK SELF-TEST
+# SECTION 8 - SELF TEST
 # ===========================================================================
 
 if __name__ == "__main__":
     tests = [
-        # Technical - languages
-        "c", "java", "python", "cpp", "golang", "js", "sql",
-        # Technical - CS core
-        "dsa", "os", "dbms", "cn", "oop",
-        "dp", "greedy", "bst", "heap", "bfs", "dfs",
-        "dijkstra", "sorting", "binary search",
-        "normalization", "bcnf", "joins", "inner join",
-        "acid", "indexing",
-        "deadlock", "paging", "semaphore", "round robin",
-        "osi", "tcp", "dns", "subnetting",
-        "design patterns", "singleton", "solid",
-        "system design", "microservices", "kafka",
-        "agile", "sdlc", "git",
-        "machine learning", "nlp", "cnn",
-        "docker", "kubernetes",
-        # ECE/EEE
-        "vlsi", "verilog", "fpga",
-        "op amp", "bjt", "mosfet",
-        "pid", "root locus", "bode",
+        # Languages
+        ("c",                       "C Programming"),
+        ("cpp",                     "C++ Programming"),
+        ("java",                    "Java Programming"),
+        ("python",                  "Python Programming"),
+        ("js",                      "JavaScript"),
+        ("ts",                      "TypeScript"),
+        ("golang",                  "Golang"),
+        ("kotlin",                  "Kotlin"),
+        ("rust",                    "Rust"),
+        ("sql",                     "SQL"),
+        ("nosql",                   "NoSQL"),
+        ("mongodb",                 "NoSQL"),
+        ("react",                   "React"),
+        ("reactjs",                 "React"),
+        ("angular",                 "Angular"),
+        ("vue",                     "Vue.js"),
+        ("nodejs",                  "Node.js"),
+        ("express",                 "Node.js"),
+        ("django",                  "Django"),
+        ("flask",                   "Flask"),
+        ("spring boot",             "Spring Boot"),
+        ("rest api",                "REST APIs"),
+        ("jwt",                     "REST APIs"),
+        ("docker",                  "Docker"),
+        ("kubernetes",              "Kubernetes"),
+        ("k8s",                     "Kubernetes"),
+        ("aws",                     "AWS"),
+        ("ec2",                     "AWS"),
+        ("devops",                  "DevOps"),
+        ("jenkins",                 "DevOps"),
+        ("terraform",               "DevOps"),
+        # DSA
+        ("dsa",                     "Data Structures"),
+        ("linked list",             "Linked Lists"),
+        ("bst",                     "Trees"),
+        ("heap",                    "Heaps"),
+        ("bfs",                     "Graphs"),
+        ("dijkstra",                "Graphs"),
+        ("dp",                      "Dynamic Programming"),
+        ("greedy",                  "Greedy Algorithms"),
+        ("sorting",                 "Sorting Algorithms"),
+        ("binary search",           "Searching Algorithms"),
+        ("bit manipulation",        "Bit Manipulation"),
+        ("sliding window",          "Sliding Window"),
+        ("two pointer",             "Sliding Window"),
+        ("trie",                    "Tries"),
+        # DBMS
+        ("dbms",                    "DBMS"),
+        ("bcnf",                    "Normalization"),
+        ("acid",                    "ACID and Transactions"),
+        ("inner join",              "Database Joins"),
+        # OS
+        ("os",                      "Operating Systems"),
+        ("deadlock",                "Deadlock"),
+        ("round robin",             "CPU Scheduling"),
+        ("semaphore",               "Process Synchronization"),
+        ("lru",                     "Memory Management"),
+        # CN
+        ("osi",                     "OSI Model"),
+        ("tcp",                     "TCP/IP and Protocols"),
+        ("subnetting",              "IP Addressing and Subnetting"),
+        ("dns",                     "Application Layer Protocols"),
+        # CS theory
+        ("compiler design",         "Compiler Design"),
+        ("lex",                     "Compiler Design"),
+        ("automata",                "Theory of Computation"),
+        ("turing machine",          "Theory of Computation"),
+        ("computer architecture",   "Computer Architecture"),
+        ("pipelining",              "Computer Architecture"),
+        ("discrete math",           "Discrete Mathematics"),
+        # ML/AI
+        ("machine learning",        "Machine Learning"),
+        ("deep learning",           "Deep Learning"),
+        ("cnn",                     "Deep Learning"),
+        ("nlp",                     "Natural Language Processing"),
+        ("bert",                    "Natural Language Processing"),
+        ("data science",            "Data Science"),
+        ("pandas",                  "Data Science"),
+        ("hadoop",                  "Big Data"),
+        ("spark",                   "Big Data"),
+        # ECE
+        ("vlsi",                    "VLSI Design"),
+        ("verilog",                 "VLSI Design"),
+        ("op amp",                  "Analog Electronics"),
+        ("flip flop",               "Digital Electronics"),
+        ("pid",                     "Control Systems"),
+        ("fourier",                 "Signal Processing"),
+        ("8085",                    "Microprocessors"),
+        ("arduino",                 "Embedded Systems"),
+        ("iot",                     "Embedded Systems"),
+        # EEE
+        ("thevenin",                "Circuit Theory"),
+        ("transformer",             "Electrical Machines"),
+        ("thyristor",               "Power Electronics"),
         # MECH
-        "thermodynamics", "bernoulli", "som",
+        ("carnot cycle",            "Thermodynamics"),
+        ("bernoulli",               "Fluid Mechanics"),
+        ("som",                     "Strength of Materials"),
+        ("cnc",                     "Manufacturing Technology"),
+        ("spur gear",               "Machine Design"),
         # CIVIL
-        "rcc", "geotechnical", "surveying",
+        ("rcc",                     "Concrete Technology"),
+        ("pile foundation",         "Geotechnical Engineering"),
+        ("surveying",               "Surveying"),
+        ("structural analysis",     "Structural Analysis"),
         # Aptitude
-        "hcf", "percentage", "profit",
-        "si ci", "pipes", "trains", "boats",
-        "permutation", "probability", "syllogism",
-        "seating", "blood relation", "coding decoding",
-        "data interpretation", "bar chart",
+        ("hcf",                     "Number System"),
+        ("percentage",              "Percentages"),
+        ("profit",                  "Profit and Loss"),
+        ("si ci",                   "Simple and Compound Interest"),
+        ("pipes",                   "Time and Work"),
+        ("trains",                  "Time Speed Distance"),
+        ("boats",                   "Time Speed Distance"),
+        ("upstream",                "Time Speed Distance"),
+        ("speed",                   "Time Speed Distance"),
+        ("syllogism",               "Logical Reasoning"),
+        ("blood relation",          "Logical Reasoning"),
+        ("di",                      "Data Interpretation"),
+        ("mensuration",             "Mensuration"),
+        ("trigonometry",            "Trigonometry"),
+        ("algebra",                 "Algebra"),
         # Verbal
-        "grammar", "synonyms", "comprehension",
-        "error detection", "para jumbles", "soft skills",
-        # Prefix matches
-        "sort", "sorti", "perm", "prob",
-        "boat", "encap", "inherit",
-        # Invalid
-        "aaaa", "1234", "hello", "xyz", "qwerty",
-        # New
-        "quantum computing", "blockchain",
+        ("grammar",                 "Grammar"),
+        ("synonyms",                "Vocabulary"),
+        ("comprehension",           "Reading Comprehension"),
+        ("error detection",         "Sentence Correction"),
+        ("para jumble",             "Para Jumbles"),
+        # Blockchain/emerging
+        ("blockchain",              "Blockchain"),
+        ("solidity",                "Blockchain"),
+        # Typo correction (NEW in v6.0)
+        ("pyhton",                  "Python Programming"),
+        ("javascrip",               "JavaScript"),
+        ("dynmic programming",      "Dynamic Programming"),
+        ("machne learning",         "Machine Learning"),
+        ("databse",                 "DBMS"),
+        # Should be INVALID (gibberish / noise)
+        ("java scrop",              "INVALID"),
+        ("hello",                   "INVALID"),
+        ("aaaa",                    "INVALID"),
+        ("1234",                    "INVALID"),
+        ("xyz",                     "INVALID"),
+        ("qwerty",                  "INVALID"),
+        ("water",                   "INVALID"),
+        ("food",                    "INVALID"),
+        ("red",                     "INVALID"),
+        ("jjj",                     "INVALID"),
+        ("kkk",                     "INVALID"),
+        ("scrop",                   "INVALID"),
+        ("blarg",                   "INVALID"),
+        ("xyzabc",                  "INVALID"),
+        # Should be NEW topic
+        ("metaverse development",   "NEW"),
+        ("competitive programming", "NEW"),
+        ("robotics programming",    "NEW"),
     ]
 
-    print(f"\n{'─'*75}")
-    print(f"{'QUERY':<35} {'STATUS':<10} RESULT")
-    print(f"{'─'*75}")
-    for q in tests:
-        r = resolve_topic(q)
+    pass_count = fail_count = 0
+    print(f"\n{'═' * 105}")
+    print(f"{'QUERY':<32} {'EXPECTED':<30} {'GOT':<38} RESULT")
+    print(f"{'═' * 105}")
+
+    for query, expected in tests:
+        r = resolve_topic(query)
         st = r["status"]
+
         if st == "single":
-            detail = r["canonical"]
+            got_label = r["canonical"]
         elif st == "multi":
-            detail = "MULTI: " + " | ".join(o["canonical"] for o in r["options"][:3])
+            got_label = "MULTI: " + " | ".join(o["canonical"] for o in r["options"][:3])
         elif st == "new":
-            detail = "NEW: " + r["topic"]
+            got_label = "NEW"
         else:
-            detail = "INVALID"
-        print(f"{q:<35} {st:<10} {detail}")
-    print(f"{'─'*75}\n")
+            got_label = f"INVALID: {r.get('message', '')[:40]}"
+
+        if expected == "INVALID":
+            ok = (st == "invalid")
+        elif expected == "NEW":
+            ok = (st == "new")
+        else:
+            ok = (st == "single" and r.get("canonical") == expected) or \
+                 (st == "multi" and any(o["canonical"] == expected for o in r.get("options", [])))
+
+        mark = "✅" if ok else "❌"
+        if ok:
+            pass_count += 1
+        else:
+            fail_count += 1
+        print(f"{query:<32} {expected:<30} {got_label:<38} {mark}")
+
+    print(f"{'═' * 105}")
+    print(f"Results: {pass_count} passed, {fail_count} failed / {len(tests)} total")
+    print(f"{'═' * 105}\n")

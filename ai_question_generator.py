@@ -587,10 +587,36 @@ def generate_questions_with_ai(topic, subtopic, difficulty, num_questions=20,
         print(f"🤖 AI Generation: {topic}/{subtopic} ({difficulty})...")
 
         models_to_try = [
-            'gemini-2.0-flash-001',
-            'gemini-flash-latest',
+            'gemini-2.5-pro',
             'gemini-2.5-flash',
+            'gemini-2.0-flash-001',
+            'gemini-2.0-flash-lite-001',
+            'gemini-2.0-flash-lite',
+            'gemini-flash-latest',
+            'gemini-flash-lite-latest',
             'gemini-pro-latest',
+            'gemini-2.5-flash-lite',
+            'gemini-2.5-flash-image',
+            'gemini-2.5-flash-lite-preview-09-2025',
+            'gemini-3-pro-preview',
+            'gemini-3-flash-preview',
+            'gemini-3.1-pro-preview',
+            'gemini-3.1-pro-preview-customtools',
+            'gemini-3.1-flash-lite-preview',
+            'gemini-3-pro-image-preview',
+            'gemini-3.1-flash-image-preview',
+            'gemini-2.5-flash-preview-tts',
+            'gemini-2.5-pro-preview-tts',
+            'gemma-3-1b-it',
+            'gemma-3-4b-it',
+            'gemma-3-12b-it',
+            'gemma-3-27b-it',
+            'gemma-3n-e4b-it',
+            'gemma-3n-e2b-it',
+            'nano-banana-pro-preview',
+            'gemini-2.5-computer-use-preview-10-2025',
+            'gemini-robotics-er-1.5-preview',
+            'deep-research-pro-preview-12-2025',
         ]
         random.shuffle(models_to_try)
 
@@ -684,8 +710,14 @@ CRITICAL REQUIREMENTS:
 
 IMPORTANT: The answer must be a simple string that exactly matches one option.
 
-Generate {num_questions} questions now:"""
+CRITICAL JSON RULES:
+- Output ONLY the JSON array, no markdown, no backticks, no explanation
+- Every string value must use double quotes
+- Every object must have exactly: "q", "options" (array of 4), "answer"
+- No trailing commas anywhere
+- The entire output must be parseable by Python's json.loads()
 
+Generate {num_questions} questions now:"""
                 key_usage[key_idx]['calls'] += 1
 
                 if progress_callback:
@@ -695,7 +727,7 @@ Generate {num_questions} questions now:"""
                     prompt,
                     generation_config=genai.types.GenerationConfig(
                         temperature=0.85,
-                        max_output_tokens=4096,
+                        max_output_tokens=8192,   # ← doubled
                         top_p=0.95,
                         top_k=40
                     ),
@@ -724,28 +756,41 @@ Generate {num_questions} questions now:"""
                 data = None
                 try:
                     data = json.loads(raw)
-                except json.JSONDecodeError as e:
-                    print(f"   JSON error: {str(e)[:80]}")
+                except json.JSONDecodeError:
+                # Strategy 1: truncate at last complete object and close the array
                     try:
-                        pattern = r'\{[^{}]*"q"[^{}]*"options"[^{}]*"answer"[^{}]*\}'
-                        matches = re.findall(pattern, raw, re.DOTALL)
-                        if matches:
-                            valid_objects = []
-                            for match in matches:
-                                try:
-                                    obj = json.loads(match)
-                                    if all(k in obj for k in ['q', 'options', 'answer']):
-                                        valid_objects.append(obj)
-                                except:
-                                    continue
-                            if valid_objects:
-                                data = valid_objects
-                                print(f"   ✅ Repaired: extracted {len(data)} valid questions")
-                    except Exception as repair_error:
-                        print(f"   Repair failed: {str(repair_error)[:50]}")
+                        last_brace = raw.rfind('},')
+                        if last_brace == -1:
+                            last_brace = raw.rfind('}')
+                        if last_brace != -1:
+                            truncated = raw[:last_brace + 1] + ']'
+                            # ensure it starts with [
+                            start = truncated.find('[')
+                        if start != -1:
+                            truncated = truncated[start:]
+                        data = json.loads(truncated)
+                        print(f"   ✅ Repaired by truncation: {len(data)} questions")
+                    except Exception:
+                        pass
 
+                # Strategy 2: regex extraction of individual objects
                 if not data:
-                    raise json.JSONDecodeError("Could not parse JSON", raw, 0)
+                    try:
+                        pattern = r'\{\s*"q"\s*:[^{}]+?"options"\s*:\s*\[[^\[\]]+?\]\s*,\s*"answer"\s*:\s*"[^"]+"\s*\}'
+                        matches = re.findall(pattern, raw, re.DOTALL)
+                        valid_objects = []
+                        for match in matches:
+                            try:
+                                obj = json.loads(match)
+                                if all(k in obj for k in ['q', 'options', 'answer']):
+                                    valid_objects.append(obj)
+                            except Exception:
+                                continue
+                        if valid_objects:
+                            data = valid_objects
+                            print(f"   ✅ Repaired by regex: {len(data)} questions")
+                    except Exception as e:
+                        print(f"   Repair failed: {str(e)[:50]}")
 
                 if isinstance(data, list) and len(data) > 0:
                     valid = []
@@ -785,9 +830,52 @@ Generate {num_questions} questions now:"""
                             progress_callback(100, "Questions generated successfully!")
                         print(f"✅ Generated {len(result)} questions using {model_name}")
                         return result
-                    else:
-                        print(f"⚠️  Only {len(valid)}/{num_questions} valid questions, trying next model...")
 
+                    # NEW: if we got some valid questions, try a second smaller call to top up
+                    elif len(valid) >= 3:
+                        still_needed = num_questions - len(valid)
+                        print(f"   🔄 Got {len(valid)}, requesting {still_needed} more...")
+                        try:
+                            # reduce prompt size for top-up call
+                            top_up_prompt = prompt.replace(
+                                f"Generate {num_questions} UNIQUE",
+                                f"Generate {still_needed} UNIQUE"
+                            ).replace(f"Generate {num_questions} questions now:", 
+                                f"Generate {still_needed} questions now:")
+                            top_up_response = model.generate_content(
+                                top_up_prompt,
+                                generation_config=genai.types.GenerationConfig(
+                                    temperature=0.9,
+                                    max_output_tokens=4096,
+                                ),
+                                request_options={'timeout': 30}
+                            )
+                            # reuse same parse logic inline
+                            raw2 = top_up_response.text.strip()
+                            if '```json' in raw2:
+                                raw2 = raw2.split('```json')[1].split('```')[0].strip()
+                            elif '```' in raw2:
+                                raw2 = raw2.split('```')[1].split('```')[0].strip()
+                            s, e = raw2.find('['), raw2.rfind(']') + 1
+                            if s != -1 and e > s:
+                                raw2 = raw2[s:e]
+                            extra = json.loads(raw2)
+                            for item in extra:
+                                if all(k in item for k in ['q', 'options', 'answer']) and len(item['options']) == 4:
+                                    valid.append(item)
+                                    if len(valid) >= num_questions:
+                                        break
+                            print(f"   ✅ After top-up: {len(valid)} total questions")
+                        except Exception as topup_err:
+                            print(f"   ⚠️ Top-up failed: {str(topup_err)[:60]}")
+
+                        if len(valid) >= num_questions * 0.6:
+                            result = valid[:num_questions]
+                            if progress_callback:
+                                progress_callback(100, "Questions generated successfully!")
+                            return result
+                        else:
+                            print(f"⚠️  Only {len(valid)}/{num_questions} valid after top-up, trying next model...")
             except json.JSONDecodeError as e:
                 print(f"⚠️  JSON parse error with {model_name}: {str(e)[:50]}")
                 continue
