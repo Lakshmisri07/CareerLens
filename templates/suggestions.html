@@ -221,7 +221,7 @@
             <h1>📊 Performance Insights</h1>
         </div>
         
-        {% if readiness.total_attempts > 0 %}
+        {% if readiness.get('total_attempts', 0) > 0 %}
         
         <!-- Readiness Summary -->
         <div class="readiness">

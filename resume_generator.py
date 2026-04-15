@@ -50,7 +50,7 @@ Write in first person, be professional and achievement-focused."""
                 raise Exception("GenAI client not initialized")
             
             response = self.client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model='gemini-2.0-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     max_output_tokens=500,
@@ -87,7 +87,7 @@ Format as JSON:
                 raise Exception("GenAI client not initialized")
             
             response = self.client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model='gemini-2.0-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     max_output_tokens=1024,

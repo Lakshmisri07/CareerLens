@@ -25,7 +25,7 @@ except ImportError:
 # SMART API KEY ROTATION WITH QUOTA TRACKING
 # ============================================================================
 API_KEYS = []
-for i in range(1, 10):
+for i in range(1, 18):
     key = os.getenv(f"GEMINI_API_KEY_{i}")
     if key and key.strip():
         API_KEYS.append(key.strip())

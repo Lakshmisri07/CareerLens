@@ -179,7 +179,10 @@ class MLAnalysisEngine:
                 'score': 0,
                 'status': 'Insufficient Data',
                 'confidence': 0,
-                'ml_powered': False
+                'ml_powered': False,
+                'total_attempts': 0,
+                'topics_covered': 0,
+                'avg_score': 0,
             }
         
         # Prepare feature vector
